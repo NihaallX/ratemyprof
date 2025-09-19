@@ -1,0 +1,920 @@
+openapi: 3.0.3
+info:
+  title: RateMyProf India API
+  description: API for rating and discovering professors in Indian colleges
+  version: 0.1.0
+  contact:
+    name: RateMyProf India
+    url: https://github.com/NihaallX/ratemyprof.in
+
+servers:
+  - url: https://api.ratemyprof.in/v1
+    description: Production server
+  - url: http://localhost:8000/v1
+    description: Development server
+
+paths:
+  # Professor Discovery & Search
+  /professors:
+    get:
+      summary: Search professors by name, college, or department
+      operationId: searchProfessors
+      tags: [professors]
+      parameters:
+        - name: q
+          in: query
+          description: Search query (professor name)
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 100
+        - name: college_id
+          in: query
+          description: Filter by specific college
+          schema:
+            type: string
+            format: uuid
+        - name: college_name
+          in: query
+          description: Filter by college name (fuzzy match)
+          schema:
+            type: string
+            maxLength: 200
+        - name: department
+          in: query
+          description: Filter by department
+          schema:
+            type: string
+            maxLength: 100
+        - name: state
+          in: query
+          description: Filter by Indian state
+          schema:
+            type: string
+            maxLength: 50
+        - name: limit
+          in: query
+          description: Maximum results to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: offset
+          in: query
+          description: Number of results to skip
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Professor search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  professors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProfessorSummary'
+                  total:
+                    type: integer
+                    description: Total matching professors
+                  has_more:
+                    type: boolean
+                    description: Whether more results available
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /professors/{professor_id}:
+    get:
+      summary: Get professor profile with reviews
+      operationId: getProfessor
+      tags: [professors]
+      parameters:
+        - name: professor_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: reviews_limit
+          in: query
+          description: Number of reviews to include
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 100
+            default: 20
+        - name: reviews_offset
+          in: query
+          description: Reviews pagination offset
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Professor profile with reviews
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfessorProfile'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Reviews
+  /reviews:
+    post:
+      summary: Submit a review for a professor
+      operationId: createReview
+      tags: [reviews]
+      security:
+        - bearerAuth: []
+        - {}  # Allow anonymous reviews
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewCreate'
+      responses:
+        '201':
+          description: Review created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: User already reviewed this professor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /reviews/{review_id}:
+    put:
+      summary: Update an existing review
+      operationId: updateReview
+      tags: [reviews]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: review_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewUpdate'
+      responses:
+        '200':
+          description: Review updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /reviews/{review_id}/flag:
+    post:
+      summary: Flag a review for moderation
+      operationId: flagReview
+      tags: [reviews]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: review_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewFlag'
+      responses:
+        '201':
+          description: Review flagged successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Review flagged for moderation"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: User already flagged this review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Authentication
+  /auth/signup:
+    post:
+      summary: Register new user account
+      operationId: signup
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSignup'
+      responses:
+        '201':
+          description: User account created, verification email sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Account created. Please check your email for verification."
+                  user_id:
+                    type: string
+                    format: uuid
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      summary: Login with email and password
+      operationId: login
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLogin'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/verify:
+    post:
+      summary: Verify email address with OTP
+      operationId: verifyEmail
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                otp_code:
+                  type: string
+                  pattern: '^[0-9]{6}$'
+              required: [email, otp_code]
+      responses:
+        '200':
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Email verified successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Invalid or expired verification code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Colleges
+  /colleges:
+    get:
+      summary: Search colleges by name, city, or state
+      operationId: searchColleges
+      tags: [colleges]
+      parameters:
+        - name: q
+          in: query
+          description: Search query (college name)
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 100
+        - name: state
+          in: query
+          description: Filter by Indian state
+          schema:
+            type: string
+            maxLength: 50
+        - name: city
+          in: query
+          description: Filter by city
+          schema:
+            type: string
+            maxLength: 100
+        - name: limit
+          in: query
+          description: Maximum results to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+      responses:
+        '200':
+          description: College search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  colleges:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/College'
+                  total:
+                    type: integer
+
+  # Moderation (Admin only)
+  /moderation/reviews:
+    get:
+      summary: Get flagged reviews for moderation
+      operationId: getFlaggedReviews
+      tags: [moderation]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Filter by review status
+          schema:
+            type: string
+            enum: [pending, approved, removed]
+            default: pending
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Flagged reviews for moderation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reviews:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FlaggedReview'
+                  total:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /moderation/reviews/{review_id}/action:
+    post:
+      summary: Take moderation action on a review
+      operationId: moderateReview
+      tags: [moderation]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: review_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModerationAction'
+      responses:
+        '200':
+          description: Moderation action completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Review approved successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Core Models
+    College:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 200
+        city:
+          type: string
+          maxLength: 100
+        state:
+          type: string
+          maxLength: 50
+        college_type:
+          type: string
+          enum: [university, college, institute]
+        established_year:
+          type: integer
+          minimum: 1800
+          maximum: 2025
+          nullable: true
+      required: [id, name, city, state, college_type]
+
+    ProfessorSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        first_name:
+          type: string
+          maxLength: 50
+        last_name:
+          type: string
+          maxLength: 50
+        known_as:
+          type: string
+          maxLength: 50
+          nullable: true
+        department:
+          type: string
+          maxLength: 100
+        college:
+          $ref: '#/components/schemas/College'
+        avg_ratings:
+          $ref: '#/components/schemas/AverageRatings'
+        total_reviews:
+          type: integer
+          minimum: 0
+      required: [id, first_name, last_name, department, college, avg_ratings, total_reviews]
+
+    ProfessorProfile:
+      allOf:
+        - $ref: '#/components/schemas/ProfessorSummary'
+        - type: object
+          properties:
+            profile_photo_url:
+              type: string
+              format: uri
+              nullable: true
+            subjects_taught:
+              type: array
+              items:
+                type: string
+              nullable: true
+            reviews:
+              type: array
+              items:
+                $ref: '#/components/schemas/Review'
+            reviews_total:
+              type: integer
+            reviews_has_more:
+              type: boolean
+
+    AverageRatings:
+      type: object
+      properties:
+        clarity:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 5.0
+          nullable: true
+        helpfulness:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 5.0
+          nullable: true
+        workload:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 5.0
+          nullable: true
+        engagement:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 5.0
+          nullable: true
+        overall:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 5.0
+          nullable: true
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        professor_id:
+          type: string
+          format: uuid
+        author_name:
+          type: string
+          maxLength: 100
+          description: "Display name or 'Anonymous'"
+        ratings:
+          type: object
+          properties:
+            clarity:
+              type: integer
+              minimum: 1
+              maximum: 5
+            helpfulness:
+              type: integer
+              minimum: 1
+              maximum: 5
+            workload:
+              type: integer
+              minimum: 1
+              maximum: 5
+            engagement:
+              type: integer
+              minimum: 1
+              maximum: 5
+          required: [clarity, helpfulness, workload, engagement]
+        review_text:
+          type: string
+          maxLength: 2000
+          nullable: true
+        semester_taken:
+          type: string
+          maxLength: 50
+          nullable: true
+        course_taken:
+          type: string
+          maxLength: 100
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        is_flagged:
+          type: boolean
+        flags_count:
+          type: integer
+          minimum: 0
+      required: [id, professor_id, author_name, ratings, created_at, updated_at, is_flagged, flags_count]
+
+    # Request Models
+    ReviewCreate:
+      type: object
+      properties:
+        professor_id:
+          type: string
+          format: uuid
+        ratings:
+          type: object
+          properties:
+            clarity:
+              type: integer
+              minimum: 1
+              maximum: 5
+            helpfulness:
+              type: integer
+              minimum: 1
+              maximum: 5
+            workload:
+              type: integer
+              minimum: 1
+              maximum: 5
+            engagement:
+              type: integer
+              minimum: 1
+              maximum: 5
+          required: [clarity, helpfulness, workload, engagement]
+        review_text:
+          type: string
+          maxLength: 2000
+          nullable: true
+        semester_taken:
+          type: string
+          maxLength: 50
+          nullable: true
+        course_taken:
+          type: string
+          maxLength: 100
+          nullable: true
+        anonymous:
+          type: boolean
+          default: false
+          description: "Whether to post anonymously"
+        anon_display_name:
+          type: string
+          maxLength: 50
+          nullable: true
+          description: "Custom anonymous name (e.g., 'CS Senior')"
+      required: [professor_id, ratings]
+
+    ReviewUpdate:
+      type: object
+      properties:
+        ratings:
+          type: object
+          properties:
+            clarity:
+              type: integer
+              minimum: 1
+              maximum: 5
+            helpfulness:
+              type: integer
+              minimum: 1
+              maximum: 5
+            workload:
+              type: integer
+              minimum: 1
+              maximum: 5
+            engagement:
+              type: integer
+              minimum: 1
+              maximum: 5
+          required: [clarity, helpfulness, workload, engagement]
+        review_text:
+          type: string
+          maxLength: 2000
+          nullable: true
+        semester_taken:
+          type: string
+          maxLength: 50
+          nullable: true
+        course_taken:
+          type: string
+          maxLength: 100
+          nullable: true
+      required: [ratings]
+
+    ReviewFlag:
+      type: object
+      properties:
+        reason:
+          type: string
+          enum: [inappropriate, spam, offensive, irrelevant, personal_attack]
+        description:
+          type: string
+          maxLength: 500
+          nullable: true
+      required: [reason]
+
+    UserSignup:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+        name:
+          type: string
+          maxLength: 100
+          nullable: true
+        college_id:
+          type: string
+          format: uuid
+          nullable: true
+      required: [email, password]
+
+    UserLogin:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required: [email, password]
+
+    AuthResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: "JWT access token"
+        token_type:
+          type: string
+          example: "Bearer"
+        expires_in:
+          type: integer
+          description: "Token expiration in seconds"
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            email:
+              type: string
+              format: email
+            name:
+              type: string
+              nullable: true
+            is_verified:
+              type: boolean
+            is_moderator:
+              type: boolean
+          required: [id, email, is_verified, is_moderator]
+      required: [access_token, token_type, expires_in, user]
+
+    # Moderation Models
+    FlaggedReview:
+      allOf:
+        - $ref: '#/components/schemas/Review'
+        - type: object
+          properties:
+            flags:
+              type: array
+              items:
+                type: object
+                properties:
+                  reason:
+                    type: string
+                    enum: [inappropriate, spam, offensive, irrelevant, personal_attack]
+                  description:
+                    type: string
+                    nullable: true
+                  created_at:
+                    type: string
+                    format: date-time
+                required: [reason, created_at]
+            professor:
+              $ref: '#/components/schemas/ProfessorSummary'
+
+    ModerationAction:
+      type: object
+      properties:
+        action:
+          type: string
+          enum: [approved, removed, warned]
+        reason:
+          type: string
+          maxLength: 200
+        notes:
+          type: string
+          maxLength: 1000
+          nullable: true
+      required: [action, reason]
+
+    # Common Response Models
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: "Error type"
+        message:
+          type: string
+          description: "Human-readable error message"
+        details:
+          type: object
+          nullable: true
+          description: "Additional error context"
+      required: [error, message]
+
+  responses:
+    BadRequest:
+      description: Invalid request data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "validation_error"
+            message: "Invalid input data"
+            details:
+              field_errors:
+                email: ["Invalid email format"]
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "authentication_required"
+            message: "Valid authentication token required"
+
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "insufficient_permissions"
+            message: "Moderator access required"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "not_found"
+            message: "Professor not found"
+
+tags:
+  - name: professors
+    description: Professor discovery and profiles
+  - name: reviews
+    description: Review submission and management
+  - name: auth
+    description: User authentication and verification
+  - name: colleges
+    description: College information and search
+  - name: moderation
+    description: Content moderation (admin only)
