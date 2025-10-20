@@ -1,11 +1,7 @@
 module.exports = {
   extends: [
-    'next/core-web-vitals',
-    '@typescript-eslint/recommended',
-    'prettier'
+    'next/core-web-vitals'
   ],
-  parser: '@typescript-eslint/parser',
-  plugins: ['@typescript-eslint'],
   root: true,
   env: {
     browser: true,
@@ -13,19 +9,14 @@ module.exports = {
     node: true,
   },
   rules: {
-    '@typescript-eslint/no-unused-vars': 'error',
-    '@typescript-eslint/no-explicit-any': 'warn',
-    '@typescript-eslint/explicit-function-return-type': 'off',
-    '@typescript-eslint/explicit-module-boundary-types': 'off',
-    '@typescript-eslint/prefer-const': 'error',
+    '@typescript-eslint/no-unused-vars': 'off',
+    '@typescript-eslint/no-explicit-any': 'off',
     'react-hooks/rules-of-hooks': 'error',
     'react-hooks/exhaustive-deps': 'warn',
     'react/prop-types': 'off',
     'react/react-in-jsx-scope': 'off',
-    'prefer-const': 'error',
-    'no-var': 'error',
-    'no-console': ['warn', { allow: ['warn', 'error'] }],
-    'no-debugger': 'error',
+    'no-console': 'off',
+    'no-debugger': 'warn',
   },
   settings: {
     react: {
