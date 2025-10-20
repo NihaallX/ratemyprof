@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GetServerSideProps } from 'next';
+import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import { ArrowLeft, Globe, MapPin, Calendar, Users, GraduationCap } from 'lucide-react';
@@ -28,12 +28,14 @@ interface Professor {
   total_reviews?: number;
 }
 
-interface CollegeDetailProps {
-  college: College;
-  professors: Professor[];
-}
+interface CollegeDetailProps {}
 
-export default function CollegeDetail({ college, professors }: CollegeDetailProps) {
+export default function CollegeDetail() {
+  const router = useRouter();
+  const { id } = router.query;
+  const [college, setCollege] = useState<College | null>(null);
+  const [professors, setProfessors] = useState<Professor[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
@@ -41,6 +43,68 @@ export default function CollegeDetail({ college, professors }: CollegeDetailProp
     const token = localStorage.getItem('authToken');
     setIsAuthenticated(!!token);
   }, []);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Fetch college details
+        const collegeResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1'}/colleges/${id}`);
+        
+        if (!collegeResponse.ok) {
+          console.error('College not found');
+          setIsLoading(false);
+          return;
+        }
+        
+        const collegeData = await collegeResponse.json();
+        setCollege(collegeData);
+        
+        // Fetch professors for this college
+        const professorsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1'}/professors?college_id=${id}&limit=50`);
+        
+        if (professorsResponse.ok) {
+          const professorsData = await professorsResponse.json();
+          setProfessors(professorsData.professors || []);
+        }
+      } catch (error) {
+        console.error('Error fetching college data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading college details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!college) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">College Not Found</h1>
+          <p className="text-gray-600 mb-4">The college you're looking for doesn't exist.</p>
+          <Link href="/" className="text-blue-600 hover:underline">
+            Return to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <Head>
@@ -246,41 +310,3 @@ export default function CollegeDetail({ college, professors }: CollegeDetailProp
     </>
   );
 }
-
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { id } = context.params!;
-  
-  try {
-    // Fetch college details
-    const collegeResponse = await fetch(`http://localhost:8000/v1/colleges/${id}`);
-    
-    if (!collegeResponse.ok) {
-      return {
-        notFound: true,
-      };
-    }
-    
-    const college = await collegeResponse.json();
-    
-    // Fetch professors for this college
-    const professorsResponse = await fetch(`http://localhost:8000/v1/professors?college_id=${id}&limit=50`);
-    
-    let professors = [];
-    if (professorsResponse.ok) {
-      const professorsData = await professorsResponse.json();
-      professors = professorsData.professors || [];
-    }
-    
-    return {
-      props: {
-        college,
-        professors,
-      },
-    };
-  } catch (error) {
-    console.error('Error fetching college data:', error);
-    return {
-      notFound: true,
-    };
-  }
-};
