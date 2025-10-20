@@ -198,10 +198,9 @@ const ReviewCard: React.FC<ReviewProps> = ({
         <div className="border-t pt-4">
           <ReviewVoting
             reviewId={id}
-            helpfulCount={helpfulCount}
-            notHelpfulCount={notHelpfulCount}
+            initialHelpfulCount={helpfulCount}
+            initialNotHelpfulCount={notHelpfulCount}
             userVote={userVote}
-            onVoteUpdate={onVoteUpdate}
           />
         </div>
       </CardContent>
