@@ -1,47 +1,126 @@
 /**
  * Professor Profile Page - [id].tsx
- * Displays detailed information about a specific professor
+ * Displays detailed information about a specific professor with review submission
  */
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useAuth } from '../../contexts/AuthContext';
 import { RateMyProfAPI, Professor } from '../../services/api';
+import ReviewSubmissionForm from '../../components/ReviewSubmissionForm';
+import FlagReviewButton from '../../components/FlagReviewButton';
+import ReviewVoting from '../../components/ReviewVoting';
+import { 
+  ArrowLeft, 
+  Star, 
+  User, 
+  Building, 
+  BookOpen, 
+  MessageSquare,
+  Award,
+  Lock,
+  Calendar
+} from 'lucide-react';
+
+interface Review {
+  id: string
+  overall_rating: number
+  difficulty_rating: number
+  clarity_rating: number
+  helpfulness_rating: number
+  course_name?: string
+  semester?: string
+  academic_year?: string
+  review_text?: string
+  created_at: string
+  anonymous: boolean
+  anon_display_name?: string
+  would_take_again?: boolean
+  assignment_load?: string
+  helpful_count?: number
+  not_helpful_count?: number
+  user_vote?: 'helpful' | 'not_helpful' | null
+}
 
 export default function ProfessorProfile() {
   const router = useRouter();
   const { id } = router.query;
+  const { user, loading: authLoading } = useAuth();
   
   const [professor, setProfessor] = useState<Professor | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     if (id && typeof id === 'string') {
       fetchProfessor(id);
+      fetchReviews(id);
     }
   }, [id]);
 
   const fetchProfessor = async (professorId: string) => {
     try {
       setLoading(true);
+      setError(null);
       const data = await RateMyProfAPI.getProfessor(professorId);
       setProfessor(data);
     } catch (err) {
       console.error('Failed to fetch professor:', err);
-      setError('Professor not found');
+      setError('Failed to load professor information. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchReviews = async (professorId: string) => {
+    try {
+      setReviewsLoading(true);
+      const response = await fetch(`http://localhost:8000/v1/reviews/professor/${professorId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setReviews(data.reviews || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch reviews:', err);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  const renderStars = (rating: number) => {
+    const fullStars = Math.floor(rating)
+    const hasHalfStar = rating % 1 !== 0
+    
+    return (
+      <div className="flex items-center">
+        {[...Array(5)].map((_, index) => {
+          if (index < fullStars) {
+            return <Star key={index} className="w-5 h-5 text-yellow-400 fill-current" />
+          } else if (index === fullStars && hasHalfStar) {
+            return <Star key={index} className="w-5 h-5 text-yellow-400 fill-current opacity-50" />
+          } else {
+            return <Star key={index} className="w-5 h-5 text-gray-300" />
+          }
+        })}
+        <span className="ml-2 text-lg font-semibold text-gray-900">
+          {rating > 0 ? rating.toFixed(1) : 'N/A'}
+        </span>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="loading-spinner mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading professor profile...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading professor information...</p>
         </div>
       </div>
     );
@@ -51,10 +130,10 @@ export default function ProfessorProfile() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Professor Not Found</h1>
-          <p className="text-gray-600 mb-8">The professor you're looking for doesn't exist.</p>
-          <Link href="/" className="btn-primary">
-            Back to Search
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Professor Not Found</h2>
+          <p className="text-gray-600 mb-4">{error || 'The professor you are looking for does not exist.'}</p>
+          <Link href="/" className="text-indigo-600 hover:text-indigo-700">
+            ← Back to Search
           </Link>
         </div>
       </div>
@@ -62,144 +141,256 @@ export default function ProfessorProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
       <Head>
         <title>{professor.name} - RateMyProf India</title>
-        <meta name="description" content={`Professor profile for ${professor.name} at Vishwakarma University`} />
+        <meta name="description" content={`Rate and review ${professor.name} from ${professor.department}`} />
       </Head>
 
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center text-indigo-600 hover:text-indigo-700">
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
+      {/* Success/Error Notification */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transition-all duration-300 ${
+          notification.type === 'success' 
+            ? 'bg-green-600 text-white' 
+            : 'bg-red-600 text-white'
+        }`}>
+          <div className="flex items-center">
+            <span className="mr-2">
+              {notification.type === 'success' ? '✅' : '❌'}
+            </span>
+            {notification.message}
+            <button 
+              onClick={() => setNotification(null)}
+              className="ml-3 text-white hover:text-gray-200"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <Link href="/" className="flex items-center text-gray-600 hover:text-gray-800 mb-4">
+              <ArrowLeft className="w-5 h-5 mr-2" />
               Back to Search
             </Link>
-            <div className="text-lg font-semibold text-gray-900">
-              RateMyProf India
-            </div>
           </div>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        {/* Professor Header */}
-        <div className="bg-white rounded-lg shadow-md p-8 mb-8">
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between">
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {professor.name}
-              </h1>
-              <p className="text-xl text-gray-600 mb-2">
-                {professor.department} Department
-              </p>
-              <p className="text-lg text-gray-500 mb-4">
-                {professor.designation || 'Faculty'} • Vishwakarma University
-              </p>
-              
-              {/* Subjects */}
-              {professor.subjects && professor.subjects.length > 0 && (
-                <div className="mb-4">
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">Subjects Taught:</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {professor.subjects.map((subject, index) => (
-                      <span 
-                        key={index}
-                        className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm"
-                      >
-                        {subject}
-                      </span>
-                    ))}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Professor Info - Left Column */}
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                {/* Professor Header */}
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center">
+                      <User className="w-8 h-8 text-indigo-600" />
+                    </div>
+                    <div>
+                      <h1 className="text-3xl font-bold text-gray-900 mb-1">{professor.name}</h1>
+                      <div className="flex flex-wrap items-center gap-4 text-gray-600">
+                        <div className="flex items-center">
+                          <Building className="w-4 h-4 mr-1" />
+                          {professor.department}
+                        </div>
+                        <div className="flex items-center">
+                          <Award className="w-4 h-4 mr-1" />
+                          Vishwakarma University
+                        </div>
+                        <div className="flex items-center">
+                          <MessageSquare className="w-4 h-4 mr-1" />
+                          {professor.total_reviews} reviews
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              )}
+
+                {/* Overall Rating */}
+                <div className="border-t border-gray-200 pt-6 mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Overall Rating</h3>
+                  <div className="flex items-center space-x-8">
+                    <div>
+                      {renderStars(professor.average_rating || 0)}
+                      <p className="text-sm text-gray-600 mt-1">
+                        Based on {professor.total_reviews} reviews
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Subjects Taught */}
+                {professor.subjects && professor.subjects.length > 0 && (
+                  <div className="border-t border-gray-200 pt-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                      <BookOpen className="w-5 h-5 mr-2" />
+                      Subjects Taught
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {professor.subjects.map((subject, index) => (
+                        <span
+                          key={index}
+                          className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium"
+                        >
+                          {subject}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Reviews Section */}
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Student Reviews ({reviews.length})</h3>
+                
+                {reviewsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                    <p className="mt-2 text-gray-600">Loading reviews...</p>
+                  </div>
+                ) : reviews.length > 0 ? (
+                  <div className="space-y-6">
+                    {reviews.map((review) => (
+                      <div key={review.id} className="border-b border-gray-200 pb-6 last:border-b-0">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center space-x-4">
+                            <div className="flex space-x-1">
+                              {/* Overall rating - using overall_rating field */}
+                              {renderStars(review.overall_rating)}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {review.course_name && <span className="font-medium">{review.course_name}</span>}
+                              {review.semester && <span> • {review.semester}</span>}
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-400">
+                            {new Date(review.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                        
+                        {/* Detailed ratings */}
+                        <div className="grid grid-cols-2 gap-3 mb-3 text-sm">
+                          <div className="flex justify-between">
+                            <span>Clarity:</span>
+                            <span className="flex">{renderStars(review.clarity_rating)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Helpfulness:</span>
+                            <span className="flex">{renderStars(review.helpfulness_rating)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Overall:</span>
+                            <span className="flex">{renderStars(review.overall_rating)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Difficulty:</span>
+                            <span className="flex">{renderStars(review.difficulty_rating)}</span>
+                          </div>
+                        </div>
+
+                        {review.review_text && (
+                          <div className="text-gray-700 bg-gray-50 p-3 rounded-lg mb-4">
+                            <p>"{review.review_text}"</p>
+                          </div>
+                        )}
+                        
+                        {/* Review Actions */}
+                        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                          <ReviewVoting 
+                            reviewId={review.id}
+                            initialHelpfulCount={review.helpful_count || 0}
+                            initialNotHelpfulCount={review.not_helpful_count || 0}
+                            userVote={review.user_vote || null}
+                          />
+                          <FlagReviewButton 
+                            reviewId={review.id}
+                            onFlagSubmitted={() => {
+                              // Optionally refresh reviews or show a success message
+                              console.log('Review flagged successfully');
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>No reviews yet. Be the first to review this professor!</p>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Rating Card */}
-            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-lg p-6 md:ml-8 mt-6 md:mt-0 min-w-[200px]">
-              <div className="text-center">
-                <div className="text-4xl font-bold mb-2">
-                  {professor.average_rating > 0 ? professor.average_rating.toFixed(1) : 'N/A'}
-                </div>
-                <div className="text-indigo-100 mb-2">Overall Rating</div>
-                <div className="text-sm text-indigo-200">
-                  Based on {professor.total_reviews} review{professor.total_reviews !== 1 ? 's' : ''}
+            {/* Review Submission - Right Column */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-8">
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Rate This Professor</h3>
+                  
+                  {!authLoading && user ? (
+                    showReviewForm ? (
+                      <ReviewSubmissionForm 
+                        professor={professor}
+                        onCancel={() => setShowReviewForm(false)}
+                        onSubmit={() => {
+                          setShowReviewForm(false)
+                          // Refresh reviews after submission
+                          if (id && typeof id === 'string') {
+                            fetchReviews(id)
+                            fetchProfessor(id) // Also refresh professor data to update review count
+                          }
+                          // Show success notification
+                          setNotification({ message: '🎉 Your review has been submitted successfully!', type: 'success' })
+                          setTimeout(() => setNotification(null), 5000) // Auto hide after 5 seconds
+                        }}
+                      />
+                    ) : (
+                      <button
+                        onClick={() => setShowReviewForm(true)}
+                        className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                      >
+                        Write a Review
+                      </button>
+                    )
+                  ) : authLoading ? (
+                    <div className="text-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600 mx-auto"></div>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <div className="flex items-center justify-center mb-3">
+                        <Lock className="w-5 h-5 text-gray-400 mr-2" />
+                        <span className="text-gray-600">Sign in to review</span>
+                      </div>
+                      <div className="space-y-2">
+                        <Link
+                          href="/auth/login"
+                          className="block w-full bg-indigo-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-indigo-700 text-center"
+                        >
+                          Sign In
+                        </Link>
+                        <Link
+                          href="/auth/signup"
+                          className="block w-full border border-indigo-600 text-indigo-600 py-2 px-4 rounded-lg font-medium hover:bg-indigo-50 text-center"
+                        >
+                          Create Account
+                        </Link>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Reviews Section */}
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Student Reviews</h2>
-          
-          {professor.total_reviews === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-gray-400 mb-4">
-                <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.955 8.955 0 01-2.706-.42l-3.5 3.5a.978.978 0 01-1.414 0 .978.978 0 010-1.414l3.5-3.5A8.955 8.955 0 014 12C4 7.582 7.582 4 12 4s8 3.582 8 8z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Reviews Yet</h3>
-              <p className="text-gray-600 mb-6">
-                Be the first to review {professor.name.split(' ').slice(-1)[0]}!
-              </p>
-              
-              {/* Add Review Button - Disabled for now since we don't have auth */}
-              <button 
-                className="bg-gray-300 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed"
-                disabled
-                title="Login required to add reviews"
-              >
-                Add Review (Login Required)
-              </button>
-            </div>
-          ) : (
-            <div>
-              <p className="text-gray-600 mb-4">
-                {professor.total_reviews} review{professor.total_reviews !== 1 ? 's' : ''} found
-              </p>
-              
-              {/* Placeholder for actual reviews - we'd fetch these from reviews API */}
-              <div className="text-center py-8 text-gray-500">
-                <p>Review details would be displayed here.</p>
-                <p className="text-sm mt-2">(Reviews API requires authentication)</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Quick Actions */}
-        <div className="mt-8 flex flex-col sm:flex-row gap-4">
-          <button 
-            className="bg-gray-300 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed flex-1 sm:flex-none"
-            disabled
-            title="Login required"
-          >
-            📝 Write a Review
-          </button>
-          <button 
-            className="bg-gray-300 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed flex-1 sm:flex-none"
-            disabled
-            title="Login required"
-          >
-            ⭐ Rate Professor
-          </button>
-          <button 
-            className="btn-secondary flex-1 sm:flex-none"
-            onClick={() => router.push(`/?college_id=${professor.college_id}`)}
-          >
-            🏫 View College Professors
-          </button>
-        </div>
-
-      </main>
-    </div>
+      </div>
+    </>
   );
 }

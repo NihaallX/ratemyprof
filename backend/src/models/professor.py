@@ -26,13 +26,13 @@ class Professor(Base):
     
     Attributes:
         id: Unique UUID identifier
-        first_name: Professor's first name
-        last_name: Professor's last name
+        name: Professor's full name
         email: Contact email (optional)
         department: Academic department
         designation: Job title (Professor, Associate Professor, etc.)
         college_id: Reference to college where professor teaches
-        subjects: Comma-separated list of subjects taught
+        subjects: JSON array of subjects taught (stored as text)
+        specializations: Areas of specialization
         biography: Professor's background and expertise
         years_of_experience: Teaching experience in years
         education: Educational background
@@ -59,8 +59,7 @@ class Professor(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     
     # Basic information
-    first_name = Column(String(100), nullable=False)
-    last_name = Column(String(100), nullable=False)
+    name = Column(String(200), nullable=False)  # Combined name field to match database
     email = Column(String(255), nullable=True)
     
     # Academic details
@@ -68,10 +67,11 @@ class Professor(Base):
     designation = Column(String(100), nullable=False)  # Professor, Associate Professor, etc.
     
     # College association
-    college_id = Column(UUID(as_uuid=True), ForeignKey("colleges.id"), nullable=False, index=True)
+    college_id = Column(String(50), ForeignKey("colleges.id"), nullable=False, index=True)
     
-    # Teaching information
-    subjects = Column(Text, nullable=True)  # Comma-separated subjects
+    # Teaching information  
+    subjects = Column(Text, nullable=True)  # JSON array stored as text to match database
+    specializations = Column(Text, nullable=True)  # Added to match database
     biography = Column(Text, nullable=True)
     years_of_experience = Column(Integer, nullable=True)
     education = Column(Text, nullable=True)
@@ -99,12 +99,12 @@ class Professor(Base):
     
     def __repr__(self) -> str:
         """String representation of Professor."""
-        return f"<Professor(id={self.id}, name={self.full_name}, department={self.department})>"
+        return f"<Professor(id={self.id}, name={self.name}, department={self.department})>"
     
     @property
     def full_name(self) -> str:
         """Get professor's full name."""
-        return f"{self.first_name} {self.last_name}"
+        return self.name
     
     @property
     def subjects_list(self) -> List[str]:
@@ -187,8 +187,7 @@ class Professor(Base):
         """
         data = {
             "id": str(self.id),
-            "first_name": self.first_name,
-            "last_name": self.last_name,
+            "name": self.name,
             "full_name": self.full_name,
             "email": self.email,
             "department": self.department,

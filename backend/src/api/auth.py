@@ -165,6 +165,42 @@ async def login(
     Validates user credentials and returns JWT tokens for API access.
     """
     try:
+        # Check for hardcoded admin credentials first
+        if request.email == "admin@gmail.com" and request.password == "gauravnihal123":
+            # Create admin token using the same JWT system
+            from datetime import datetime, timedelta
+            import jwt
+            
+            SECRET_KEY = "ratemyprof-admin-secret-key-2025"
+            ALGORITHM = "HS256"
+            ACCESS_TOKEN_EXPIRE_HOURS = 24
+            
+            expire = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
+            admin_token_data = {
+                "sub": "admin@gmail.com",
+                "email": "admin@gmail.com",
+                "username": "admin@gmail.com",
+                "role": "admin",
+                "exp": expire
+            }
+            admin_token = jwt.encode(admin_token_data, SECRET_KEY, algorithm=ALGORITHM)
+            
+            admin_user_data = {
+                "id": "admin-user-id",
+                "email": "admin@gmail.com", 
+                "is_verified": True,
+                "is_moderator": True,
+                "name": "Administrator"
+            }
+            
+            return TokenResponse(
+                access_token=admin_token,
+                token_type="bearer",
+                expires_in=ACCESS_TOKEN_EXPIRE_HOURS * 3600,
+                user=admin_user_data
+            )
+        
+        # Regular Supabase authentication
         auth_response = supabase.auth.sign_in_with_password({
             "email": request.email,
             "password": request.password

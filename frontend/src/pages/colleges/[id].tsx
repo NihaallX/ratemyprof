@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { GetServerSideProps } from 'next';
 import Head from 'next/head';
 import Link from 'next/link';
 import { ArrowLeft, Globe, MapPin, Calendar, Users, GraduationCap } from 'lucide-react';
+import CollegeReviews from '../../components/CollegeReviews';
 
 interface College {
   id: string;
@@ -33,6 +34,13 @@ interface CollegeDetailProps {
 }
 
 export default function CollegeDetail({ college, professors }: CollegeDetailProps) {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // Check if user is authenticated
+    const token = localStorage.getItem('authToken');
+    setIsAuthenticated(!!token);
+  }, []);
   return (
     <>
       <Head>
@@ -86,6 +94,19 @@ export default function CollegeDetail({ college, professors }: CollegeDetailProp
         </div>
 
         <div className="max-w-6xl mx-auto px-4 py-8">
+          {/* College Reviews Section - Moved to Top */}
+          <div className="mb-8">
+            <CollegeReviews
+              collegeId={college.id}
+              collegeName={college.name}
+              canReview={isAuthenticated}
+              onReviewSubmitted={() => {
+                // Optionally refresh college data or show success message
+                console.log('Review submitted successfully');
+              }}
+            />
+          </div>
+
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white rounded-lg p-6 shadow-sm border">
@@ -175,9 +196,18 @@ export default function CollegeDetail({ college, professors }: CollegeDetailProp
 
           {/* Professors */}
           <div className="bg-white rounded-lg p-6 shadow-sm border">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
-              Professors ({professors.length})
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-900">
+                Professors ({professors.length})
+              </h2>
+              <Link
+                href={`/professors/add?college_id=${college.id}`}
+                className="text-sm text-white px-4 py-2 rounded-md font-medium hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: '#4e46e5' }}
+              >
+                Add Professor
+              </Link>
+            </div>
             
             {professors.length === 0 ? (
               <p className="text-gray-600">No professors found for this college.</p>

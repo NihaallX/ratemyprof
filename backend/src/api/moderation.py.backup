@@ -1,0 +1,810 @@
+"""Moderation API routes for RateMyProf backend.
+
+Handles content moderation and administrative endpoints for the platform.
+"""
+from typing import Optional, List, Dict, Any
+from uuid import UUID
+from datetime import datetime, timedelta
+import jwt
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel, field_validator
+from supabase import Client
+
+from src.lib.database import get_supabase
+from src.lib.auth import get_current_user
+
+router = APIRouter()
+
+# Admin Authentication Models
+class AdminLogin(BaseModel):
+
+router = APIRouter()
+
+# Admin Authentication Models
+class AdminLogin(BaseModel):
+    username: str
+    password: str
+
+class AdminLoginResponse(BaseModel):
+    access_token: str
+    token_type: str
+    expires_in: int
+    user: Dict[str, Any]
+
+# Hardcoded admin credentials
+ADMIN_USERNAME = "admin@gmail.com"
+ADMIN_PASSWORD = "gauravnihal123"
+SECRET_KEY = "ratemyprof-admin-secret-key-2025"  # In production, use environment variable
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_HOURS = 24
+
+# Request/Response Models
+class ModerationAction(BaseModel):
+    action: str
+    reason: str
+    
+    @field_validator('action')
+    @classmethod
+    def validate_action(cls, v):
+        valid_actions = ['approve', 'remove', 'pending']
+        if v not in valid_actions:
+            raise ValueError(f'Invalid action. Must be one of: {", ".join(valid_actions)}')
+        return v
+    
+    @field_validator('reason')
+    @classmethod
+    def validate_reason(cls, v):
+        if not v or len(v.strip()) == 0:
+            raise ValueError('Reason is required for moderation action')
+        if len(v) > 1000:
+            raise ValueError('Reason cannot exceed 1000 characters')
+        return v.strip()
+
+
+class ReviewFlag(BaseModel):
+    id: str
+    reason: str
+    description: Optional[str] = None
+    flagged_by: str
+    created_at: str
+
+
+class FlaggedReview(BaseModel):
+    id: str
+    professor_id: str
+    user_id: Optional[str] = None
+    review_text: Optional[str] = None
+    ratings: Dict[str, int]
+    anonymous: bool
+    anon_display_name: Optional[str] = None
+    created_at: str
+    updated_at: str
+    status: str  # pending, approved, removed
+    flags: List[ReviewFlag]
+
+
+class FlaggedReviewsResponse(BaseModel):
+    reviews: List[FlaggedReview]
+    total: int
+
+
+def create_admin_token(username: str) -> str:
+    """Create JWT token for admin user."""
+    expire = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
+    to_encode = {
+        "sub": username,
+        "username": username,
+        "email": "admin@gmail.com",
+        "role": "admin",
+        "exp": expire
+    }
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def verify_admin_token(token: str) -> Optional[dict]:
+    """Verify and decode admin JWT token."""
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        if username == ADMIN_USERNAME:
+            return {
+                "username": username,
+                "email": "admin@gmail.com",
+                "role": "admin",
+                "user_metadata": {"role": "admin"}
+            }
+        return None
+    except jwt.PyJWTError:
+        return None
+
+
+@router.post("/admin/login", response_model=AdminLoginResponse)
+async def admin_login(credentials: AdminLogin):
+    """Admin login endpoint with hardcoded credentials."""
+    if credentials.username != ADMIN_USERNAME or credentials.password != ADMIN_PASSWORD:
+        raise HTTPException(
+            status_code=http_status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid admin credentials",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    
+    access_token = create_admin_token(credentials.username)
+    
+    return AdminLoginResponse(
+        access_token=access_token,
+        token_type="bearer",
+        expires_in=ACCESS_TOKEN_EXPIRE_HOURS * 3600,
+        user={
+            "username": credentials.username,
+            "email": "admin@gmail.com",
+            "role": "admin"
+        }
+    )
+
+
+def is_admin_user(current_user: dict) -> bool:
+    """Check if current user has admin/moderator privileges."""
+    # Check for hardcoded admin user
+    if current_user.get('email') == 'admin@gmail.com' or current_user.get('username') == 'admin@gmail.com':
+        return True
+    
+    # Check user metadata for admin role
+    user_metadata = current_user.get('user_metadata', {})
+    return (
+        user_metadata.get('role') == 'admin' or
+        user_metadata.get('is_moderator') == True or
+        current_user.get('email', '').endswith('@ratemyprof.in')  # Simple admin check
+    )
+
+
+@router.get("/reviews", response_model=FlaggedReviewsResponse)
+async def get_flagged_reviews(
+    status: str = Query('pending', pattern='^(pending|approved|removed)$'),
+    limit: int = Query(20, ge=1, le=100),
+    current_user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase)
+):
+    """Get flagged reviews for moderation.
+    
+    Returns reviews that have been flagged by users and require
+    moderation attention. Admin-only endpoint.
+    """
+    try:
+        # Check admin privileges
+        if not is_admin_user(current_user):
+            raise HTTPException(
+                status_code=http_status.HTTP_403_FORBIDDEN,
+                detail="Admin privileges required for moderation endpoints"
+            )
+        
+        # Get flagged reviews with their flags
+        query = supabase.table('reviews').select(
+            '''
+            id,
+            professor_id,
+            user_id,
+            review_text,
+            ratings,
+            anonymous,
+            anon_display_name,
+            created_at,
+            updated_at,
+            status,
+            review_flags (
+                id,
+                reason,
+                description,
+                flagged_by,
+                created_at
+            )
+            '''
+        ).eq('status', status).order('created_at', desc=True).limit(limit)
+        
+        # Only get reviews that have flags
+        query = query.not_.is_('review_flags', 'null')
+        
+        result = query.execute()
+        
+        # Transform data for response
+        flagged_reviews = []
+        for review_data in result.data:
+            flags_data = review_data.pop('review_flags', [])
+            flags = [ReviewFlag(**flag) for flag in flags_data if flag]
+            
+            # Only include reviews that actually have flags
+            if flags:
+                flagged_review = FlaggedReview(
+                    **review_data,
+                    flags=flags
+                )
+                flagged_reviews.append(flagged_review)
+        
+        # Get total count
+        count_query = supabase.table('reviews').select(
+            'id', count='exact'
+        ).eq('status', status).not_.is_('review_flags', 'null')
+        
+        count_result = count_query.execute()
+        total = count_result.count or 0
+        
+        return FlaggedReviewsResponse(
+            reviews=flagged_reviews,
+            total=total
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get flagged reviews: {str(e)}"
+        )
+
+
+@router.post("/reviews/{review_id}/action")
+async def moderate_review(
+    review_id: str,
+    request: ModerationAction,
+    current_user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase)
+):
+    """Take moderation action on a review.
+    
+    Allows admin users to approve, remove, or mark reviews as pending
+    based on moderation guidelines and flag reports.
+    """
+    try:
+        # Validate UUID format
+        try:
+            UUID(review_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid review ID format"
+            )
+        
+        # Check admin privileges
+        if not is_admin_user(current_user):
+            raise HTTPException(
+                status_code=http_status.HTTP_403_FORBIDDEN,
+                detail="Admin privileges required for moderation actions"
+            )
+        
+        # Check if review exists
+        review_check = supabase.table('reviews').select('id, status').eq('id', review_id).single().execute()
+        if not review_check.data:
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail="Review not found"
+            )
+        
+        # Update review status
+        update_result = supabase.table('reviews').update({
+            'status': request.action,
+            'moderated_at': 'now()',
+            'moderated_by': current_user['id']
+        }).eq('id', review_id).execute()
+        
+        # Log moderation action
+        log_data = {
+            'review_id': review_id,
+            'moderator_id': current_user['id'],
+            'action': request.action,
+            'reason': request.reason,
+            'previous_status': review_check.data['status']
+        }
+        
+        supabase.table('moderation_logs').insert(log_data).execute()
+        
+        action_messages = {
+            'approve': 'Review approved successfully',
+            'remove': 'Review removed successfully', 
+            'pending': 'Review marked as pending review'
+        }
+        
+        return {"message": action_messages.get(request.action, "Moderation action completed")}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to moderate review: {str(e)}"
+        )
+
+
+class UserAction(BaseModel):
+    action: str
+    reason: str
+    duration_days: Optional[int] = None
+    
+    @field_validator('action')
+    @classmethod
+    def validate_action(cls, v):
+        valid_actions = ['ban', 'unban', 'warn', 'delete_account']
+        if v not in valid_actions:
+            raise ValueError(f'Invalid action. Must be one of: {", ".join(valid_actions)}')
+        return v
+
+
+class UserInfo(BaseModel):
+    id: str
+    email: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    is_active: bool
+    created_at: str
+    total_reviews: int = 0
+    total_flags_submitted: int = 0
+
+
+@router.get("/test-users")
+async def test_users_endpoint():
+    """Test endpoint to isolate the issue"""
+    return {"message": "Test endpoint working", "users": []}
+
+
+@router.get("/users", response_model=List[UserInfo])
+async def get_users(
+    status: str = Query('all', pattern='^(all|active|banned)$'),
+    limit: int = Query(50, ge=1, le=200),
+    current_user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase)
+):
+    """Get users for admin management.
+    
+    Returns list of users with their activity statistics
+    for administrative review and moderation.
+    """
+    try:
+        # Check admin privileges
+        if not is_admin_user(current_user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin privileges required"
+            )
+        
+        # Simplified approach - just return test data for now
+        users = [
+            UserInfo(
+                id="test-user-1",
+                email="test@example.com",
+                is_active=True,
+                created_at="2025-01-01T00:00:00Z",
+                total_reviews=0,
+                total_flags_submitted=0
+            )
+        ]
+        
+        return users
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch users: {str(e)}"
+        )
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get users: {str(e)}"
+        )
+
+
+@router.post("/users/{user_id}/action", status_code=http_status.HTTP_200_OK)
+async def moderate_user(
+    user_id: str,
+    request: UserAction,
+    current_user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase)
+):
+    """Take moderation action on a user.
+    
+    Admin can ban, unban, warn, or delete user accounts
+    based on community guidelines violations.
+    """
+    try:
+        # Check admin privileges
+        if not is_admin_user(current_user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin privileges required"
+            )
+        
+        # Validate user ID
+        try:
+            UUID(user_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid user ID format"
+            )
+        
+        # Check if user exists
+        user_check = supabase.table('users').select('id, email, is_active').eq(
+            'id', user_id
+        ).single().execute()
+        
+        if not user_check.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        user_data = user_check.data
+        
+        # Prevent admin from acting on themselves
+        if user_id == current_user['id']:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot perform moderation actions on yourself"
+            )
+        
+        # Perform the action
+        if request.action == 'ban':
+            supabase.table('users').update({
+                'is_active': False
+            }).eq('id', user_id).execute()
+            
+            message = f"User {user_data['email']} has been banned"
+            
+        elif request.action == 'unban':
+            supabase.table('users').update({
+                'is_active': True
+            }).eq('id', user_id).execute()
+            
+            message = f"User {user_data['email']} has been unbanned"
+            
+        elif request.action == 'warn':
+            # For now, just log the warning
+            message = f"Warning sent to user {user_data['email']}"
+            
+        elif request.action == 'delete_account':
+            # Soft delete - mark as inactive and clear personal data
+            supabase.table('users').update({
+                'is_active': False,
+                'email': f"deleted_{user_id}@deleted.com",
+                'first_name': None,
+                'last_name': None
+            }).eq('id', user_id).execute()
+            
+            message = f"User account has been deleted"
+        
+        # Log the moderation action
+        log_data = {
+            'user_id': user_id,
+            'moderator_id': current_user['id'],
+            'action': request.action,
+            'reason': request.reason,
+            'duration_days': request.duration_days
+        }
+        
+        supabase.table('user_moderation_logs').insert(log_data).execute()
+        
+        return {"message": message}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to moderate user: {str(e)}"
+        )
+
+
+class ProfessorVerification(BaseModel):
+    action: str
+    verification_notes: Optional[str] = None
+    
+    @field_validator('action')
+    @classmethod
+    def validate_action(cls, v):
+        valid_actions = ['verify', 'reject', 'request_more_info']
+        if v not in valid_actions:
+            raise ValueError(f'Invalid action. Must be one of: {", ".join(valid_actions)}')
+        return v
+
+
+@router.get("/professors/pending")
+async def get_pending_professors(
+    limit: int = Query(50, ge=1, le=200),
+    current_user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase)
+):
+    """Get professors pending verification.
+    
+    Returns list of professors that have been submitted
+    but need admin verification before appearing in search.
+    """
+    try:
+        # Check admin privileges
+        if not is_admin_user(current_user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin privileges required"
+            )
+        
+        result = supabase.table('professors').select(
+            '''
+            id,
+            name,
+            email,
+            department,
+            designation,
+            college_id,
+            subjects,
+            biography,
+            years_of_experience,
+            education,
+            research_interests,
+            created_at
+            '''
+        ).eq('is_verified', False).limit(limit).order('created_at', desc=False).execute()
+        
+        return {"professors": result.data, "total": len(result.data)}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get pending professors: {str(e)}"
+        )
+
+
+@router.post("/professors/{professor_id}/verify", status_code=status.HTTP_200_OK)
+async def verify_professor(
+    professor_id: str,
+    request: ProfessorVerification,
+    current_user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase)
+):
+    """Verify or reject a professor profile.
+    
+    Admin can verify professor profiles to make them
+    searchable or reject them with feedback.
+    """
+    try:
+        # Check admin privileges
+        if not is_admin_user(current_user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin privileges required"
+            )
+        
+        # Validate professor ID
+        try:
+            UUID(professor_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid professor ID format"
+            )
+        
+        # Check if professor exists
+        prof_check = supabase.table('professors').select('id, name').eq(
+            'id', professor_id
+        ).single().execute()
+        
+        if not prof_check.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Professor not found"
+            )
+        
+        prof_data = prof_check.data
+        
+        # Perform verification action
+        if request.action == 'verify':
+            supabase.table('professors').update({
+                'is_verified': True,
+                'updated_at': 'now()'
+            }).eq('id', professor_id).execute()
+            
+            message = f"Professor {prof_data['name']} has been verified and is now visible to users"
+            
+        elif request.action == 'reject':
+            # For rejected professors, we can either delete them or mark them as rejected
+            supabase.table('professors').delete().eq('id', professor_id).execute()
+            
+            message = f"Professor {prof_data['name']} submission has been rejected and removed"
+        
+        # Log the verification action (if logging table exists)
+        try:
+            log_data = {
+                'professor_id': professor_id,
+                'action': request.action,
+                'notes': request.verification_notes,
+                'created_at': 'now()'
+            }
+            supabase.table('moderation_logs').insert(log_data).execute()
+        except:
+            # Logging is optional, don't fail if table doesn't exist
+            pass
+        
+        return {"message": message}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to verify professor: {str(e)}"
+        )
+
+
+# Professor Edit/Delete Models
+class ProfessorUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    department: Optional[str] = None
+    designation: Optional[str] = None
+    subjects: Optional[List[str]] = None
+    biography: Optional[str] = None
+    years_of_experience: Optional[int] = None
+    education: Optional[str] = None
+    research_interests: Optional[str] = None
+
+
+@router.put("/professors/{professor_id}", status_code=status.HTTP_200_OK)
+async def update_professor(
+    professor_id: str,
+    professor_update: ProfessorUpdate,
+    current_user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase)
+):
+    """Update professor information.
+    
+    Admin-only endpoint for editing professor profiles.
+    """
+    try:
+        # Check admin privileges
+        if not is_admin_user(current_user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin privileges required"
+            )
+        
+        # Check if professor exists
+        existing_prof = supabase.table('professors').select('*').eq('id', professor_id).single().execute()
+        
+        if not existing_prof.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Professor not found"
+            )
+        
+        # Build update data (only include non-None fields)
+        update_data = {}
+        if professor_update.name is not None:
+            update_data['name'] = professor_update.name
+        if professor_update.email is not None:
+            update_data['email'] = professor_update.email
+        if professor_update.department is not None:
+            update_data['department'] = professor_update.department
+        if professor_update.designation is not None:
+            update_data['designation'] = professor_update.designation
+        if professor_update.subjects is not None:
+            update_data['subjects'] = ','.join(professor_update.subjects) if professor_update.subjects else None
+        if professor_update.biography is not None:
+            update_data['biography'] = professor_update.biography
+        if professor_update.years_of_experience is not None:
+            update_data['years_of_experience'] = professor_update.years_of_experience
+        if professor_update.education is not None:
+            update_data['education'] = professor_update.education
+        if professor_update.research_interests is not None:
+            update_data['research_interests'] = professor_update.research_interests
+        
+        if not update_data:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No valid fields to update"
+            )
+        
+        # Add updated timestamp
+        update_data['updated_at'] = 'now()'
+        
+        # Update professor
+        result = supabase.table('professors').update(update_data).eq('id', professor_id).execute()
+        
+        if not result.data:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to update professor"
+            )
+        
+        # Log moderation action
+        try:
+            log_data = {
+                'moderator_id': current_user['id'],
+                'action_type': 'professor_updated',
+                'target_type': 'professor',
+                'target_id': professor_id,
+                'reason': 'Admin updated professor information',
+                'details': f"Updated fields: {', '.join(update_data.keys())}",
+                'created_at': 'now()'
+            }
+            supabase.table('moderation_logs').insert(log_data).execute()
+        except:
+            # Logging is optional
+            pass
+        
+        return {
+            "message": "Professor updated successfully",
+            "professor": result.data[0]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update professor: {str(e)}"
+        )
+
+
+@router.delete("/professors/{professor_id}", status_code=status.HTTP_200_OK)
+async def delete_professor(
+    professor_id: str,
+    current_user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase)
+):
+    """Delete professor profile.
+    
+    Admin-only endpoint for removing professor profiles.
+    This will also delete all associated reviews.
+    """
+    try:
+        # Check admin privileges
+        if not is_admin_user(current_user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin privileges required"
+            )
+        
+        # Check if professor exists
+        existing_prof = supabase.table('professors').select('*').eq('id', professor_id).single().execute()
+        
+        if not existing_prof.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Professor not found"
+            )
+        
+        professor_name = existing_prof.data.get('name', 'Unknown')
+        
+        # Delete associated reviews first (due to foreign key constraints)
+        supabase.table('reviews').delete().eq('professor_id', professor_id).execute()
+        
+        # Delete the professor
+        result = supabase.table('professors').delete().eq('id', professor_id).execute()
+        
+        # Log moderation action
+        try:
+            log_data = {
+                'moderator_id': current_user['id'],
+                'action_type': 'professor_deleted',
+                'target_type': 'professor',
+                'target_id': professor_id,
+                'reason': 'Admin deleted professor profile',
+                'details': f"Deleted professor: {professor_name}",
+                'created_at': 'now()'
+            }
+            supabase.table('moderation_logs').insert(log_data).execute()
+        except:
+            # Logging is optional
+            pass
+        
+        return {
+            "message": f"Professor '{professor_name}' and all associated reviews have been deleted successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete professor: {str(e)}"
+        )

@@ -36,6 +36,8 @@ export interface College {
   state: string;
   college_type: string;
   established_year?: number;
+  average_rating: number;
+  total_reviews: number;
 }
 
 export interface CollegeDetail {
@@ -48,6 +50,8 @@ export interface CollegeDetail {
   website?: string;
   total_professors: number;
   email_domain?: string;
+  average_rating: number;
+  total_reviews: number;
   created_at?: string;
   updated_at?: string;
 }

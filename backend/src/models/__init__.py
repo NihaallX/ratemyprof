@@ -24,6 +24,8 @@ from src.models.professor import Professor
 from src.models.review import Review
 from src.models.review_flag import ReviewFlag
 from src.models.moderation_log import ModerationLog
+from src.models.user_activity import UserActivity
+from src.models.college_review_flag import CollegeReviewFlag
 
 # Make models available at package level
 __all__ = [
@@ -33,4 +35,6 @@ __all__ = [
     "Review",
     "ReviewFlag",
     "ModerationLog",
+    "UserActivity",
+    "CollegeReviewFlag",
 ]
