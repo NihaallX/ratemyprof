@@ -13,3 +13,5 @@ python-dotenv>=1.0.0
 structlog>=23.1.0
 httpx>=0.25.0
 supabase>=2.0.0
+better-profanity>=0.7.0
+textblob>=0.17.0
