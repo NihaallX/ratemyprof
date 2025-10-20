@@ -71,6 +71,8 @@ class User(Base):
     # Relationships
     reviews = relationship("Review", back_populates="student", cascade="all, delete-orphan")
     review_flags = relationship("ReviewFlag", back_populates="reporter", cascade="all, delete-orphan")
+    review_votes = relationship("ReviewVote", back_populates="user", cascade="all, delete-orphan")
+    college_reviews = relationship("CollegeReview", back_populates="student", cascade="all, delete-orphan")
     
     def __repr__(self) -> str:
         """String representation of User."""

@@ -4,6 +4,7 @@ Provides Supabase authentication integration, user management, and session handl
 for securing API endpoints and managing user authentication flows.
 """
 import os
+import jwt
 from typing import Optional, Dict, Any
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -12,7 +13,11 @@ from supabase import Client
 from src.lib.database import get_supabase
 
 # HTTP Bearer token scheme
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
+
+# Admin token configuration
+ADMIN_SECRET_KEY = "ratemyprof-admin-secret-key-2025"
+ADMIN_ALGORITHM = "HS256"
 
 
 class AuthError(HTTPException):
@@ -27,20 +32,40 @@ class AuthError(HTTPException):
 
 
 def get_user_from_token(supabase: Client, access_token: str) -> Optional[Dict[str, Any]]:
-    """Get user information from Supabase access token.
+    """Get user information from Supabase access token or admin token.
     
     Args:
         supabase: Supabase client instance
-        access_token: JWT access token from Supabase Auth
+        access_token: JWT access token from Supabase Auth or admin token
         
     Returns:
-        dict: User information from Supabase, or None if invalid token
+        dict: User information from Supabase or admin user, or None if invalid token
     """
+    # First, try to verify as admin token
     try:
-        # Set the session with the access token
-        supabase.auth.set_session(access_token, "")  # refresh_token not needed for verification
-        
-        # Get current user
+        payload = jwt.decode(access_token, ADMIN_SECRET_KEY, algorithms=[ADMIN_ALGORITHM])
+        username = payload.get("sub")
+        if username == "admin@gmail.com":
+            return {
+                "id": "admin-user-id",
+                "email": "admin@gmail.com",
+                "username": "admin@gmail.com",
+                "email_confirmed": True,
+                "created_at": "2025-01-01T00:00:00Z",
+                "updated_at": "2025-01-01T00:00:00Z",
+                "user_metadata": {"role": "admin"},
+                "app_metadata": {"role": "admin"},
+            }
+    except jwt.PyJWTError:
+        # Not an admin token, continue to Supabase verification
+        pass
+    except Exception:
+        # Any other error with admin token, continue to Supabase
+        pass
+    
+    # Try Supabase token verification
+    try:
+        # Get current user directly without setting session
         user_response = supabase.auth.get_user(access_token)
         
         if user_response.user:
@@ -55,12 +80,12 @@ def get_user_from_token(supabase: Client, access_token: str) -> Optional[Dict[st
             }
         return None
     except Exception as e:
-        print(f"Token verification failed: {e}")
+        # Silently handle - likely invalid token
         return None
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     supabase: Client = Depends(get_supabase)
 ) -> Dict[str, Any]:
     """Get current authenticated user from Supabase JWT token.
@@ -75,6 +100,9 @@ async def get_current_user(
     Raises:
         AuthError: If token is invalid or user not found
     """
+    if not credentials:
+        raise AuthError("Authorization header missing")
+    
     token = credentials.credentials
     
     user = get_user_from_token(supabase, token)

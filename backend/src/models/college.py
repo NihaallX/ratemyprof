@@ -25,14 +25,15 @@ class College(Base):
     Each college has location data and can have multiple professors and student users.
     
     Attributes:
-        id: Unique UUID identifier
+        id: Unique college code identifier (e.g., VU-PUNE-001)
         name: Official college name
         short_name: Abbreviated name or acronym
         description: College description and details
         city: City where college is located
         state: State/union territory where college is located
         country: Country (default: India)
-        website_url: Official college website
+        website: Official college website
+        email_domain: Email domain for college addresses
         established_year: Year college was established
         college_type: Type of institution (University, College, Institute)
         is_verified: Whether college is verified by administrators
@@ -49,7 +50,7 @@ class College(Base):
     __tablename__ = "colleges"
     
     # Primary key
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id = Column(String(50), primary_key=True, index=True)  # College code like VU-PUNE-001
     
     # Basic information
     name = Column(String(255), nullable=False, index=True)
@@ -62,7 +63,8 @@ class College(Base):
     country = Column(String(100), nullable=False, default="India")
     
     # External links
-    website_url = Column(String(255), nullable=True)
+    website = Column(String(255), nullable=True)
+    email_domain = Column(String(100), nullable=True)  # Domain for college email addresses
     
     # Institutional details
     established_year = Column(Integer, nullable=True)
@@ -82,6 +84,7 @@ class College(Base):
     # Relationships
     professors = relationship("Professor", back_populates="college", cascade="all, delete-orphan")
     users = relationship("User", backref="college")
+    college_reviews = relationship("CollegeReview", back_populates="college", cascade="all, delete-orphan")
     
     def __repr__(self) -> str:
         """String representation of College."""

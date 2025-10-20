@@ -27,7 +27,6 @@ class Review(Base):
     
     Attributes:
         id: Unique UUID identifier
-        student_id: Reference to student who submitted review
         professor_id: Reference to professor being reviewed
         overall_rating: Overall rating (1-5 scale)
         difficulty_rating: Course difficulty rating (1-5 scale)
@@ -41,7 +40,7 @@ class Review(Base):
         attendance_required: Whether attendance was required
         review_text: Written review comments
         tags: Comma-separated tags (funny, tough, caring, etc.)
-        is_anonymous: Whether review is submitted anonymously
+        verified_student: Whether review is from verified student (always True)
         status: Moderation status (pending, approved, rejected, flagged)
         created_at: Review submission timestamp
         updated_at: Last modification timestamp
@@ -61,7 +60,6 @@ class Review(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     
     # Foreign keys
-    student_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     professor_id = Column(UUID(as_uuid=True), ForeignKey("professors.id"), nullable=False, index=True)
     
     # Rating fields (1-5 scale)
@@ -85,7 +83,7 @@ class Review(Base):
     tags = Column(String(500), nullable=True)  # Comma-separated tags
     
     # Privacy and moderation
-    is_anonymous = Column(Boolean, default=False, nullable=False)
+    verified_student = Column(Boolean, default=True, nullable=False)  # All reviews are verified
     status = Column(String(20), default="pending", nullable=False, index=True)  # pending, approved, rejected, flagged
     
     # Timestamps
@@ -97,10 +95,14 @@ class Review(Base):
     moderated_by = Column(UUID(as_uuid=True), nullable=True)  # Admin user ID
     moderation_reason = Column(Text, nullable=True)
     
-    # Relationships
-    student = relationship("User", back_populates="reviews")
+    # Voting counts
+    helpful_count = Column(Integer, default=0, nullable=False)
+    not_helpful_count = Column(Integer, default=0, nullable=False)
+    
+    # Relationships - removed student relationship (now in mapping table)
     professor = relationship("Professor", back_populates="reviews")
     flags = relationship("ReviewFlag", back_populates="review", cascade="all, delete-orphan")
+    votes = relationship("ReviewVote", back_populates="review", cascade="all, delete-orphan")
     
     def __repr__(self) -> str:
         """String representation of Review."""
@@ -206,10 +208,10 @@ class Review(Base):
         """Convert review to dictionary representation.
         
         Args:
-            include_student: Whether to include student information
+            include_student: Deprecated - all reviews are anonymous
             
         Returns:
-            dict: Review data
+            dict: Review data (without user information)
         """
         data = {
             "id": str(self.id),
@@ -222,22 +224,12 @@ class Review(Base):
             "attendance_required": self.attendance_required,
             "review_text": self.review_text,
             "tags": self.tags_list,
-            "is_anonymous": self.is_anonymous,
+            "verified_student": self.verified_student,
             "status": self.status,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "moderated_at": self.moderated_at.isoformat() if self.moderated_at else None,
             "moderation_reason": self.moderation_reason,
         }
-        
-        # Include student info only if not anonymous and requested
-        if include_student and not self.is_anonymous and self.student:
-            data["student"] = {
-                "id": str(self.student.id),
-                "first_name": self.student.first_name,
-                "last_name": self.student.last_name,
-            }
-        elif self.is_anonymous:
-            data["student"] = {"name": "Anonymous"}
             
         return data

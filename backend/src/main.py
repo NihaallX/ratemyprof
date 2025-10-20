@@ -20,7 +20,10 @@ from src.api.professors_simple import router as professors_router  # Using simpl
 from src.api.reviews import router as reviews_router
 from src.api.auth import router as auth_router
 from src.api.colleges import router as colleges_router
+from src.api.college_reviews import router as college_reviews_router
 from src.api.moderation import router as moderation_router
+from src.api.user_limits import router as user_limits_router
+from src.api.college_review_moderation import router as college_review_moderation_router
 
 
 @asynccontextmanager
@@ -57,7 +60,9 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",  # Next.js development
+        "http://localhost:3000",  # Next.js development (default)
+        "http://localhost:3001",  # Next.js development (alternative port)
+        "http://localhost:3002",  # Next.js development (backup port)
         "https://ratemyprof-india.vercel.app",  # Production frontend
         os.getenv("FRONTEND_URL", "http://localhost:3000"),  # Configurable frontend URL
     ],
@@ -172,10 +177,23 @@ app.include_router(
     tags=["Authentication"]
 )
 
+# Add backward compatibility routes without v1 prefix
+app.include_router(
+    auth_router,
+    prefix="/api/auth",
+    tags=["Authentication (Legacy)"]
+)
+
 app.include_router(
     professors_router,
     prefix="/v1/professors",
     tags=["Professors"]
+)
+
+app.include_router(
+    professors_router,
+    prefix="/api/professors",
+    tags=["Professors (Legacy)"]
 )
 
 app.include_router(
@@ -185,15 +203,69 @@ app.include_router(
 )
 
 app.include_router(
+    reviews_router,
+    prefix="/api/reviews",
+    tags=["Reviews (Legacy)"]
+)
+
+app.include_router(
     colleges_router,
     prefix="/v1/colleges",
     tags=["Colleges"]
 )
 
 app.include_router(
+    colleges_router,
+    prefix="/api/colleges",
+    tags=["Colleges (Legacy)"]
+)
+
+app.include_router(
+    college_reviews_router,
+    prefix="/v1/college-reviews",
+    tags=["College Reviews"]
+)
+
+app.include_router(
+    college_reviews_router,
+    prefix="/api/college-reviews",
+    tags=["College Reviews (Legacy)"]
+)
+
+app.include_router(
     moderation_router,
     prefix="/v1/moderation",
     tags=["Moderation"]
+)
+
+app.include_router(
+    moderation_router,
+    prefix="/api/moderation",
+    tags=["Moderation (Legacy)"]
+)
+
+app.include_router(
+    user_limits_router,
+    prefix="/v1/user",
+    tags=["User Limits"]
+)
+
+app.include_router(
+    user_limits_router,
+    prefix="/api/user",
+    tags=["User Limits (Legacy)"]
+)
+
+app.include_router(
+    college_review_moderation_router,
+    prefix="/v1/college-review-moderation",
+    tags=["College Review Moderation"]
+)
+
+app.include_router(
+    college_review_moderation_router,
+    prefix="/api/college-review-moderation",
+    tags=["College Review Moderation (Legacy)"]
 )
 
 

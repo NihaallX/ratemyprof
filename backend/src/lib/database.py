@@ -11,7 +11,18 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 from sqlalchemy.orm import declarative_base
 
 # Load environment variables
-load_dotenv()
+import pathlib
+# The .env file is in the backend directory (2 levels up from src/lib/)
+backend_env_path = pathlib.Path(__file__).parent.parent.parent / ".env"
+
+# Load from backend directory
+if backend_env_path.exists():
+    load_dotenv(backend_env_path)
+    print(f"✅ Loaded .env from backend directory: {backend_env_path}")
+else:
+    print(f"⚠️ .env not found at: {backend_env_path}")
+    print(f"Current file: {__file__}")
+    print(f"Calculated backend path: {backend_env_path}")
 
 # Supabase configuration
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -19,6 +30,8 @@ SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_ANON_KEY:
+    print(f"SUPABASE_URL: {SUPABASE_URL}")
+    print(f"SUPABASE_ANON_KEY: {SUPABASE_ANON_KEY}")
     raise ValueError("Missing required Supabase configuration. Please check your .env file.")
 
 # Create Supabase clients
