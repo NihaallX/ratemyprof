@@ -12,6 +12,7 @@ import { RateMyProfAPI, Professor } from '../../services/api';
 import ReviewSubmissionForm from '../../components/ReviewSubmissionForm';
 import FlagReviewButton from '../../components/FlagReviewButton';
 import ReviewVoting from '../../components/ReviewVoting';
+import { API_BASE_URL } from '../../config/api';
 import { 
   ArrowLeft, 
   Star, 
@@ -81,7 +82,7 @@ export default function ProfessorProfile() {
   const fetchReviews = async (professorId: string) => {
     try {
       setReviewsLoading(true);
-      const response = await fetch(`http://localhost:8000/v1/reviews/professor/${professorId}`);
+      const response = await fetch(`${API_BASE_URL}/reviews/professor/${professorId}`);
       if (response.ok) {
         const data = await response.json();
         setReviews(data.reviews || []);

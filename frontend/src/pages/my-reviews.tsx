@@ -10,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useNotification } from '../contexts/NotificationContext'
 import { useRouter } from 'next/router'
 import { MessageSquare, Edit3, Trash2, Star, ArrowLeft, Calendar, User } from 'lucide-react'
+import { API_BASE_URL } from '../config/api'
 
 interface ReviewData {
   id: string
@@ -44,7 +45,7 @@ export default function MyReviewsPage() {
 
     const fetchUserReviews = async () => {
       try {
-        const response = await fetch('http://localhost:8000/v1/reviews/my-reviews', {
+        const response = await fetch(`${API_BASE_URL}/reviews/my-reviews`, {
           headers: {
             'Authorization': `Bearer ${session?.access_token}`,
           },
@@ -74,7 +75,7 @@ export default function MyReviewsPage() {
       'Are you sure you want to delete this review? This action cannot be undone.',
       async () => {
         try {
-          const response = await fetch(`http://localhost:8000/v1/reviews/${reviewId}`, {
+          const response = await fetch(`${API_BASE_URL}/reviews/${reviewId}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${session?.access_token}`,

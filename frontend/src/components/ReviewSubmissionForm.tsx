@@ -10,6 +10,7 @@ import { useNotification } from '../contexts/NotificationContext'
 import { supabase } from '../lib/supabase'
 import Link from 'next/link'
 import ColorBarRating from './ColorBarRating'
+import { API_BASE_URL } from '../config/api'
 import { 
   Star, 
   BookOpen, 
@@ -161,7 +162,7 @@ export default function ReviewSubmissionForm({ professor, onCancel, onSubmit }: 
       }
 
       // Submit to backend API
-      const response = await fetch('http://localhost:8000/v1/reviews', {
+      const response = await fetch(`${API_BASE_URL}/reviews`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

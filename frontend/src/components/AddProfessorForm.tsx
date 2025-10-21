@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { API_LEGACY_BASE } from '../config/api';
 
 interface College {
   id: string;
@@ -39,7 +40,7 @@ const AddProfessorForm: React.FC = () => {
 
   const fetchColleges = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/colleges');
+      const response = await fetch(`${API_LEGACY_BASE}/colleges`);
       if (response.ok) {
         const data = await response.json();
         setColleges(data.colleges || data || []);
@@ -146,7 +147,7 @@ const AddProfessorForm: React.FC = () => {
         message: `Professor ${formData.name} submitted by user ${user.email}`, // Add context for admin
       };
 
-      const response = await fetch('http://localhost:8000/api/professors/', {
+      const response = await fetch(`${API_LEGACY_BASE}/professors/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

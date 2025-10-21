@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
+import { API_BASE_URL } from '../config/api';
 
 interface ReviewVotingProps {
   reviewId: string;
@@ -35,7 +36,7 @@ const ReviewVoting: React.FC<ReviewVotingProps> = ({
       // Get the access token from the session
       const token = session.access_token;
       
-      const response = await fetch(`http://localhost:8000/v1/reviews/${reviewId}/vote`, {
+      const response = await fetch(`${API_BASE_URL}/reviews/${reviewId}/vote`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
