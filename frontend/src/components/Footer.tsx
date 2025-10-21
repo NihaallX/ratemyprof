@@ -41,8 +41,8 @@ export default function Footer() {
         </div>
 
         {/* Copyright Row */}
-        <div className="mt-6 flex flex-col items-center space-y-2">
-          <div className="flex items-center space-x-3">
+        <div className="mt-6 flex flex-col items-center space-y-3">
+          <div className="flex items-center justify-center space-x-3">
             <span className="font-logo text-lg text-white" style={{ letterSpacing: '0.02em' }}>
               RateMyProf
             </span>
@@ -52,9 +52,8 @@ export default function Footer() {
           </div>
           
           {/* Legal Disclaimer */}
-          <p className="text-xs text-gray-500 text-center max-w-3xl">
-            RateMyProf India is an intermediary under Section 79 of the Information Technology Act, 2000. 
-            User-generated content does not represent our views.
+          <p className="text-xs text-gray-500 text-center max-w-4xl px-4 leading-relaxed">
+            RateMyProf India is an intermediary under Section 79 of the Information Technology Act, 2000. User-generated content does not represent our views.
           </p>
         </div>
       </div>
