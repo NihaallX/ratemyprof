@@ -5,8 +5,8 @@ export default function Document() {
     <Html lang="en">
       <Head>
         {/* Favicon */}
-        <link rel="icon" type="image/png" href="/favicon.png" />
-        <link rel="shortcut icon" type="image/png" href="/favicon.png" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="shortcut icon" type="image/svg+xml" href="/favicon.svg" />
         
         {/* Google Fonts - Inter, Poppins & Pacifico */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
