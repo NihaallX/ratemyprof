@@ -11,6 +11,10 @@ import AdminLoginModal from '../components/AdminLoginModal';
 import { supabase } from '../lib/supabase';
 import { Professor } from '../services/api';
 
+// API Base URL - works for both local dev and production
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1';
+const API_BASE = API_BASE_URL.replace('/v1', ''); // For endpoints that don't use /v1 prefix
+
 const AdminPage: NextPage = () => {
   const router = useRouter();
   const { user, session, loading: authLoading, signIn } = useAuth();
@@ -97,7 +101,7 @@ const AdminPage: NextPage = () => {
       // If no stored token, try to login as admin
       if (!adminToken) {
         try {
-          const adminLoginResponse = await fetch('http://localhost:8000/api/moderation/admin/login', {
+          const adminLoginResponse = await fetch(`${API_BASE}/api/moderation/admin/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -131,7 +135,7 @@ const AdminPage: NextPage = () => {
       // Use single optimized endpoint for all dashboard stats
       if (adminToken) {
         try {
-          const statsResponse = await fetch('http://localhost:8000/api/moderation/dashboard/stats', { headers });
+          const statsResponse = await fetch(`${API_BASE}/api/moderation/dashboard/stats`, { headers });
           if (statsResponse.ok) {
             const stats = await statsResponse.json();
             
@@ -160,7 +164,7 @@ const AdminPage: NextPage = () => {
       // Fallback: Load minimal data for dashboard stats (old method)
       // Just get counts, don't load full datasets
       // Fetch enough professors to calculate "no reviews" count accurately
-      const professorsResponse = await fetch('http://localhost:8000/api/professors?limit=200&offset=0', { headers });
+      const professorsResponse = await fetch(`${API_BASE}/api/professors?limit=200&offset=0`, { headers });
       let professors = [];
       if (professorsResponse.ok) {
         const professorsData = await professorsResponse.json();
@@ -175,7 +179,7 @@ const AdminPage: NextPage = () => {
       if (adminToken) {
         try {
           // Load flagged reviews
-          const flaggedResponse = await fetch('http://localhost:8000/api/moderation/reviews', { headers });
+          const flaggedResponse = await fetch(`${API_BASE}/api/moderation/reviews`, { headers });
           if (flaggedResponse.ok) {
             const flaggedData = await flaggedResponse.json();
             flaggedReviews = Array.isArray(flaggedData.flagged_reviews) ? flaggedData.flagged_reviews : [];
@@ -183,7 +187,7 @@ const AdminPage: NextPage = () => {
           }
           
           // Load users (when table exists)
-          const usersResponse = await fetch('http://localhost:8000/api/moderation/users', { headers });
+          const usersResponse = await fetch(`${API_BASE}/api/moderation/users`, { headers });
           console.log('Users response status:', usersResponse.status);
           if (usersResponse.ok) {
             const usersData = await usersResponse.json();
@@ -196,7 +200,7 @@ const AdminPage: NextPage = () => {
           }
           
           // Load pending professors
-          const pendingResponse = await fetch('http://localhost:8000/api/moderation/professors/pending', { headers });
+          const pendingResponse = await fetch(`${API_BASE}/api/moderation/professors/pending`, { headers });
           if (pendingResponse.ok) {
             const pendingData = await pendingResponse.json();
             pendingApprovalProfs = Array.isArray(pendingData.professors) ? pendingData.professors : [];
@@ -218,7 +222,7 @@ const AdminPage: NextPage = () => {
       // Get total professors count from API metadata
       let totalProfsCount = professors.length;
       try {
-        const countResponse = await fetch('http://localhost:8000/api/professors?limit=1', { headers });
+        const countResponse = await fetch(`${API_BASE}/api/professors?limit=1`, { headers });
         if (countResponse.ok) {
           const countData = await countResponse.json();
           totalProfsCount = countData.total || professors.length;
@@ -333,7 +337,7 @@ const AdminPage: NextPage = () => {
       };
 
       console.log('Loading all users...');
-      const usersResponse = await fetch('http://localhost:8000/api/moderation/users', { headers });
+      const usersResponse = await fetch(`${API_BASE}/api/moderation/users`, { headers });
       
       if (usersResponse.ok) {
         const usersData = await usersResponse.json();
@@ -381,7 +385,7 @@ const AdminPage: NextPage = () => {
       let hasMore = true;
 
       while (hasMore) {
-        const response = await fetch(`http://localhost:8000/api/professors?limit=${limit}&offset=${offset}`, { headers });
+        const response = await fetch(`${API_BASE}/api/professors?limit=${limit}&offset=${offset}`, { headers });
         if (response.ok) {
           const data = await response.json();
           const batch = Array.isArray(data.professors) ? data.professors : [];
@@ -412,7 +416,7 @@ const AdminPage: NextPage = () => {
   const fetchStats = async () => {
     try {
       // Fetch professors data 
-      const professorsResponse = await fetch('http://localhost:8000/api/professors');
+      const professorsResponse = await fetch(`${API_BASE}/api/professors`);
       if (professorsResponse.ok) {
         const professorsResult = await professorsResponse.json();
         const professorsData = professorsResult.professors || [];
@@ -434,7 +438,7 @@ const AdminPage: NextPage = () => {
           // Get the current Supabase session token
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.access_token) {
-            const usersResponse = await fetch('http://localhost:8000/api/moderation/users', {
+            const usersResponse = await fetch(`${API_BASE}/api/moderation/users`, {
               headers: {
                 'Authorization': `Bearer ${session.access_token}`,
                 'Content-Type': 'application/json'
@@ -469,7 +473,7 @@ const AdminPage: NextPage = () => {
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.access_token) {
-            const pendingResponse = await fetch('http://localhost:8000/api/moderation/professors/pending', {
+            const pendingResponse = await fetch(`${API_BASE}/api/moderation/professors/pending`, {
               headers: {
                 'Authorization': `Bearer ${session.access_token}`,
                 'Content-Type': 'application/json'
@@ -520,7 +524,7 @@ const AdminPage: NextPage = () => {
         }
         
         if (authToken) {
-          const flaggedResponse = await fetch('http://localhost:8000/api/moderation/reviews', {
+          const flaggedResponse = await fetch(`${API_BASE}/api/moderation/reviews`, {
             headers: {
               'Authorization': `Bearer ${authToken}`,
               'Content-Type': 'application/json'
@@ -546,7 +550,7 @@ const AdminPage: NextPage = () => {
   // Management functions
   const handleReviewAction = async (reviewId: string, action: 'approve' | 'delete') => {
     try {
-      const response = await fetch(`http://localhost:8000/api/admin/reviews/${reviewId}/${action}`, {
+      const response = await fetch(`${API_BASE}/api/admin/reviews/${reviewId}/${action}`, {
         method: 'POST'
       });
       if (response.ok) {
@@ -559,7 +563,7 @@ const AdminPage: NextPage = () => {
 
   const handleProfessorVerify = async (professorId: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/admin/verify-professor/${professorId}`, {
+      const response = await fetch(`${API_BASE}/api/admin/verify-professor/${professorId}`, {
         method: 'POST'
       });
       if (response.ok) {
@@ -576,7 +580,7 @@ const AdminPage: NextPage = () => {
       async () => {
         try {
           // First, get admin token
-          const adminLoginResponse = await fetch('http://localhost:8000/api/moderation/admin/login', {
+          const adminLoginResponse = await fetch(`${API_BASE}/api/moderation/admin/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -595,7 +599,7 @@ const AdminPage: NextPage = () => {
           const adminToken = adminData.access_token;
 
           // Now delete the professor with admin token
-          const response = await fetch(`http://localhost:8000/api/moderation/professors/${professorId}`, {
+          const response = await fetch(`${API_BASE}/api/moderation/professors/${professorId}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${adminToken}`,
@@ -627,7 +631,7 @@ const AdminPage: NextPage = () => {
   const handleProfessorUpdate = async (updatedData: any) => {
     try {
       // First, get admin token
-      const adminLoginResponse = await fetch('http://localhost:8000/api/moderation/admin/login', {
+      const adminLoginResponse = await fetch(`${API_BASE}/api/moderation/admin/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -646,7 +650,7 @@ const AdminPage: NextPage = () => {
       const adminToken = adminData.access_token;
 
       // Now update the professor with admin token
-      const response = await fetch(`http://localhost:8000/api/moderation/professors/${editingProfessor.id}`, {
+      const response = await fetch(`${API_BASE}/api/moderation/professors/${editingProfessor.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${adminToken}`,
@@ -676,7 +680,7 @@ const AdminPage: NextPage = () => {
       `Are you sure you want to ${actionText} this user?`,
       async () => {
         try {
-          const response = await fetch(`http://localhost:8000/api/admin/users/${userId}/${action}`, {
+          const response = await fetch(`${API_BASE}/api/admin/users/${userId}/${action}`, {
             method: 'POST'
           });
           if (response.ok) {
@@ -1261,7 +1265,7 @@ const AdminPage: NextPage = () => {
                                       return;
                                     }
                                     
-                                    const response = await fetch(`http://localhost:8000/api/moderation/professors/${professor.id}/verify`, {
+                                    const response = await fetch(`${API_BASE}/api/moderation/professors/${professor.id}/verify`, {
                                       method: 'POST',
                                       headers: {
                                         'Authorization': `Bearer ${token}`,
@@ -1314,7 +1318,7 @@ const AdminPage: NextPage = () => {
                                       return;
                                     }
                                     
-                                    const response = await fetch(`http://localhost:8000/api/moderation/professors/${professor.id}/verify`, {
+                                    const response = await fetch(`${API_BASE}/api/moderation/professors/${professor.id}/verify`, {
                                       method: 'POST',
                                       headers: {
                                         'Authorization': `Bearer ${token}`,
@@ -1559,7 +1563,7 @@ const AdminPage: NextPage = () => {
                 Access the complete admin API documentation for advanced management features.
               </p>
               <button 
-                onClick={() => window.open('http://localhost:8000/docs', '_blank')}
+                onClick={() => window.open(`${API_BASE}/docs`, '_blank')}
                 className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors"
               >
                 Open API Docs
