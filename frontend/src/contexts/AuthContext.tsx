@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { User, Session, AuthError } from '@supabase/supabase-js'
 import { supabase, auth } from '../lib/supabase'
+import { API_LEGACY_BASE } from '../config/api'
 
 interface AuthContextType {
   user: User | null
@@ -122,7 +123,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         // Check for admin login first
         if (email === 'admin@gmail.com') {
-          const response = await fetch('http://localhost:8000/api/auth/login', {
+          const response = await fetch(`${API_LEGACY_BASE}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })

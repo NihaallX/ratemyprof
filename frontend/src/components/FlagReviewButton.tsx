@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Flag, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
+import { API_LEGACY_BASE } from '../config/api';
 
 interface FlagReviewButtonProps {
   reviewId: string;
@@ -42,7 +43,7 @@ const FlagReviewButton: React.FC<FlagReviewButtonProps> = ({
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/api/reviews/${reviewId}/flag`, {
+      const response = await fetch(`${API_LEGACY_BASE}/reviews/${reviewId}/flag`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

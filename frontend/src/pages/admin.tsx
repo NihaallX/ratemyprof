@@ -10,10 +10,7 @@ import Link from 'next/link';
 import AdminLoginModal from '../components/AdminLoginModal';
 import { supabase } from '../lib/supabase';
 import { Professor } from '../services/api';
-
-// API Base URL - works for both local dev and production
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1';
-const API_BASE = API_BASE_URL.replace('/v1', ''); // For endpoints that don't use /v1 prefix
+import { API_BASE_URL, API_BASE } from '../config/api';
 
 const AdminPage: NextPage = () => {
   const router = useRouter();

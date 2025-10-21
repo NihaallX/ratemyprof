@@ -9,6 +9,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
 import { ArrowLeft, User, Building, BookOpen, Plus, AlertCircle } from 'lucide-react';
+import { API_LEGACY_BASE } from '../config/api';
 
 interface CollegeOption {
   id: string;
@@ -39,7 +40,7 @@ export default function AddProfessor() {
 
   const fetchColleges = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/colleges');
+      const response = await fetch(`${API_LEGACY_BASE}/colleges`);
       if (response.ok) {
         const data = await response.json();
         setColleges(data);
@@ -91,7 +92,7 @@ export default function AddProfessor() {
         return;
       }
       
-      const response = await fetch('http://localhost:8000/api/professors', {
+      const response = await fetch(`${API_LEGACY_BASE}/professors`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
