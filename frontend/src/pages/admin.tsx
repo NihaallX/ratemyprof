@@ -11,6 +11,10 @@ import AdminLoginModal from '../components/AdminLoginModal';
 import { supabase } from '../lib/supabase';
 import { Professor } from '../services/api';
 
+// API Base URL - works for both local dev and production
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1';
+const API_BASE = API_BASE_URL.replace('/v1', ''); // For endpoints that don't use /v1 prefix
+
 const AdminPage: NextPage = () => {
   const router = useRouter();
   const { user, session, loading: authLoading, signIn } = useAuth();
@@ -48,6 +52,17 @@ const AdminPage: NextPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProfessorsCount, setTotalProfessorsCount] = useState(0);
   const PAGE_SIZE = 100;
+
+  // College Reviews Moderation state
+  const [flaggedCollegeReviews, setFlaggedCollegeReviews] = useState([]);
+  const [collegeReviewStats, setCollegeReviewStats] = useState({
+    pending_college_review_flags: 0,
+    total_college_review_flags: 0,
+    flagged_college_reviews: 0,
+    total_college_reviews: 0,
+  });
+  const [collegeReviewStatusFilter, setCollegeReviewStatusFilter] = useState<string>('pending');
+  const [isLoadingCollegeReviews, setIsLoadingCollegeReviews] = useState(false);
 
   const showAdminWelcomeNotification = () => {
     setShowWelcomeModal(true);
@@ -97,7 +112,7 @@ const AdminPage: NextPage = () => {
       // If no stored token, try to login as admin
       if (!adminToken) {
         try {
-          const adminLoginResponse = await fetch('http://localhost:8000/api/moderation/admin/login', {
+          const adminLoginResponse = await fetch(`${API_BASE}/api/moderation/admin/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -131,7 +146,7 @@ const AdminPage: NextPage = () => {
       // Use single optimized endpoint for all dashboard stats
       if (adminToken) {
         try {
-          const statsResponse = await fetch('http://localhost:8000/api/moderation/dashboard/stats', { headers });
+          const statsResponse = await fetch(`${API_BASE}/api/moderation/dashboard/stats`, { headers });
           if (statsResponse.ok) {
             const stats = await statsResponse.json();
             
@@ -160,7 +175,7 @@ const AdminPage: NextPage = () => {
       // Fallback: Load minimal data for dashboard stats (old method)
       // Just get counts, don't load full datasets
       // Fetch enough professors to calculate "no reviews" count accurately
-      const professorsResponse = await fetch('http://localhost:8000/api/professors?limit=200&offset=0', { headers });
+      const professorsResponse = await fetch(`${API_BASE}/api/professors?limit=200&offset=0`, { headers });
       let professors = [];
       if (professorsResponse.ok) {
         const professorsData = await professorsResponse.json();
@@ -175,7 +190,7 @@ const AdminPage: NextPage = () => {
       if (adminToken) {
         try {
           // Load flagged reviews
-          const flaggedResponse = await fetch('http://localhost:8000/api/moderation/reviews', { headers });
+          const flaggedResponse = await fetch(`${API_BASE}/api/moderation/reviews`, { headers });
           if (flaggedResponse.ok) {
             const flaggedData = await flaggedResponse.json();
             flaggedReviews = Array.isArray(flaggedData.flagged_reviews) ? flaggedData.flagged_reviews : [];
@@ -183,7 +198,7 @@ const AdminPage: NextPage = () => {
           }
           
           // Load users (when table exists)
-          const usersResponse = await fetch('http://localhost:8000/api/moderation/users', { headers });
+          const usersResponse = await fetch(`${API_BASE}/api/moderation/users`, { headers });
           console.log('Users response status:', usersResponse.status);
           if (usersResponse.ok) {
             const usersData = await usersResponse.json();
@@ -196,7 +211,7 @@ const AdminPage: NextPage = () => {
           }
           
           // Load pending professors
-          const pendingResponse = await fetch('http://localhost:8000/api/moderation/professors/pending', { headers });
+          const pendingResponse = await fetch(`${API_BASE}/api/moderation/professors/pending`, { headers });
           if (pendingResponse.ok) {
             const pendingData = await pendingResponse.json();
             pendingApprovalProfs = Array.isArray(pendingData.professors) ? pendingData.professors : [];
@@ -218,7 +233,7 @@ const AdminPage: NextPage = () => {
       // Get total professors count from API metadata
       let totalProfsCount = professors.length;
       try {
-        const countResponse = await fetch('http://localhost:8000/api/professors?limit=1', { headers });
+        const countResponse = await fetch(`${API_BASE}/api/professors?limit=1`, { headers });
         if (countResponse.ok) {
           const countData = await countResponse.json();
           totalProfsCount = countData.total || professors.length;
@@ -333,7 +348,7 @@ const AdminPage: NextPage = () => {
       };
 
       console.log('Loading all users...');
-      const usersResponse = await fetch('http://localhost:8000/api/moderation/users', { headers });
+      const usersResponse = await fetch(`${API_BASE}/api/moderation/users`, { headers });
       
       if (usersResponse.ok) {
         const usersData = await usersResponse.json();
@@ -381,7 +396,7 @@ const AdminPage: NextPage = () => {
       let hasMore = true;
 
       while (hasMore) {
-        const response = await fetch(`http://localhost:8000/api/professors?limit=${limit}&offset=${offset}`, { headers });
+        const response = await fetch(`${API_BASE}/api/professors?limit=${limit}&offset=${offset}`, { headers });
         if (response.ok) {
           const data = await response.json();
           const batch = Array.isArray(data.professors) ? data.professors : [];
@@ -412,7 +427,7 @@ const AdminPage: NextPage = () => {
   const fetchStats = async () => {
     try {
       // Fetch professors data 
-      const professorsResponse = await fetch('http://localhost:8000/api/professors');
+      const professorsResponse = await fetch(`${API_BASE}/api/professors`);
       if (professorsResponse.ok) {
         const professorsResult = await professorsResponse.json();
         const professorsData = professorsResult.professors || [];
@@ -434,7 +449,7 @@ const AdminPage: NextPage = () => {
           // Get the current Supabase session token
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.access_token) {
-            const usersResponse = await fetch('http://localhost:8000/api/moderation/users', {
+            const usersResponse = await fetch(`${API_BASE}/api/moderation/users`, {
               headers: {
                 'Authorization': `Bearer ${session.access_token}`,
                 'Content-Type': 'application/json'
@@ -469,7 +484,7 @@ const AdminPage: NextPage = () => {
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.access_token) {
-            const pendingResponse = await fetch('http://localhost:8000/api/moderation/professors/pending', {
+            const pendingResponse = await fetch(`${API_BASE}/api/moderation/professors/pending`, {
               headers: {
                 'Authorization': `Bearer ${session.access_token}`,
                 'Content-Type': 'application/json'
@@ -520,7 +535,7 @@ const AdminPage: NextPage = () => {
         }
         
         if (authToken) {
-          const flaggedResponse = await fetch('http://localhost:8000/api/moderation/reviews', {
+          const flaggedResponse = await fetch(`${API_BASE}/api/moderation/reviews`, {
             headers: {
               'Authorization': `Bearer ${authToken}`,
               'Content-Type': 'application/json'
@@ -546,7 +561,7 @@ const AdminPage: NextPage = () => {
   // Management functions
   const handleReviewAction = async (reviewId: string, action: 'approve' | 'delete') => {
     try {
-      const response = await fetch(`http://localhost:8000/api/admin/reviews/${reviewId}/${action}`, {
+      const response = await fetch(`${API_BASE}/api/admin/reviews/${reviewId}/${action}`, {
         method: 'POST'
       });
       if (response.ok) {
@@ -559,7 +574,7 @@ const AdminPage: NextPage = () => {
 
   const handleProfessorVerify = async (professorId: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/admin/verify-professor/${professorId}`, {
+      const response = await fetch(`${API_BASE}/api/admin/verify-professor/${professorId}`, {
         method: 'POST'
       });
       if (response.ok) {
@@ -576,7 +591,7 @@ const AdminPage: NextPage = () => {
       async () => {
         try {
           // First, get admin token
-          const adminLoginResponse = await fetch('http://localhost:8000/api/moderation/admin/login', {
+          const adminLoginResponse = await fetch(`${API_BASE}/api/moderation/admin/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -595,7 +610,7 @@ const AdminPage: NextPage = () => {
           const adminToken = adminData.access_token;
 
           // Now delete the professor with admin token
-          const response = await fetch(`http://localhost:8000/api/moderation/professors/${professorId}`, {
+          const response = await fetch(`${API_BASE}/api/moderation/professors/${professorId}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${adminToken}`,
@@ -627,7 +642,7 @@ const AdminPage: NextPage = () => {
   const handleProfessorUpdate = async (updatedData: any) => {
     try {
       // First, get admin token
-      const adminLoginResponse = await fetch('http://localhost:8000/api/moderation/admin/login', {
+      const adminLoginResponse = await fetch(`${API_BASE}/api/moderation/admin/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -646,7 +661,7 @@ const AdminPage: NextPage = () => {
       const adminToken = adminData.access_token;
 
       // Now update the professor with admin token
-      const response = await fetch(`http://localhost:8000/api/moderation/professors/${editingProfessor.id}`, {
+      const response = await fetch(`${API_BASE}/api/moderation/professors/${editingProfessor.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${adminToken}`,
@@ -676,7 +691,7 @@ const AdminPage: NextPage = () => {
       `Are you sure you want to ${actionText} this user?`,
       async () => {
         try {
-          const response = await fetch(`http://localhost:8000/api/admin/users/${userId}/${action}`, {
+          const response = await fetch(`${API_BASE}/api/admin/users/${userId}/${action}`, {
             method: 'POST'
           });
           if (response.ok) {
@@ -692,6 +707,125 @@ const AdminPage: NextPage = () => {
     );
   };
 
+  // College Reviews Moderation Functions
+  const loadFlaggedCollegeReviews = async () => {
+    setIsLoadingCollegeReviews(true);
+    try {
+      // Get admin token
+      const storedSession = localStorage.getItem('adminSession');
+      let adminToken = null;
+      
+      if (storedSession) {
+        try {
+          const sessionData = JSON.parse(storedSession);
+          adminToken = sessionData.access_token;
+        } catch (e) {
+          console.error('Failed to parse admin session');
+        }
+      }
+
+      if (!adminToken) {
+        const adminLoginResponse = await fetch(`${API_BASE}/api/moderation/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: 'admin@gmail.com',
+            password: 'gauravnihal123'
+          })
+        });
+        
+        if (adminLoginResponse.ok) {
+          const adminData = await adminLoginResponse.json();
+          adminToken = adminData.access_token;
+          localStorage.setItem('adminSession', JSON.stringify(adminData));
+        }
+      }
+
+      if (!adminToken) {
+        throw new Error('Failed to get admin token');
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${adminToken}`,
+        'Content-Type': 'application/json'
+      };
+
+      // Load flagged college reviews
+      const flaggedResponse = await fetch(
+        `${API_BASE}/v1/college-review-moderation/admin/flagged-reviews?status_filter=${collegeReviewStatusFilter || 'pending'}&limit=100`,
+        { headers }
+      );
+
+      if (flaggedResponse.ok) {
+        const data = await flaggedResponse.json();
+        setFlaggedCollegeReviews(data.flagged_reviews || []);
+      }
+
+      // Load college review stats
+      const statsResponse = await fetch(
+        `${API_BASE}/v1/college-review-moderation/admin/stats`,
+        { headers }
+      );
+
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        setCollegeReviewStats(statsData);
+      }
+
+    } catch (error) {
+      console.error('Failed to load flagged college reviews:', error);
+      showToast('Failed to load college reviews', 'error');
+    } finally {
+      setIsLoadingCollegeReviews(false);
+    }
+  };
+
+  const handleCollegeReviewFlagAction = async (flagId: string, action: 'approve_flag' | 'dismiss_flag') => {
+    try {
+      const storedSession = localStorage.getItem('adminSession');
+      let adminToken = null;
+      
+      if (storedSession) {
+        const sessionData = JSON.parse(storedSession);
+        adminToken = sessionData.access_token;
+      }
+
+      if (!adminToken) {
+        showToast('Admin authentication required', 'error');
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE}/v1/college-review-moderation/admin/flags/${flagId}/review`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            action: action,
+            admin_notes: action === 'approve_flag' ? 'Flagged content removed by admin' : 'Flag dismissed by admin'
+          })
+        }
+      );
+
+      if (response.ok) {
+        showToast(
+          action === 'approve_flag' ? 'Flag approved successfully' : 'Flag dismissed successfully',
+          'success'
+        );
+        await loadFlaggedCollegeReviews(); // Reload data
+      } else {
+        const error = await response.json();
+        showToast(error.detail || 'Action failed', 'error');
+      }
+    } catch (error) {
+      console.error('Failed to process flag action:', error);
+      showToast('Failed to process action', 'error');
+    }
+  };
+
   // Set up real-time updates
   // DISABLED: Old auto-refresh conflicting with loadRealTimeStats()
   // useEffect(() => {
@@ -703,6 +837,13 @@ const AdminPage: NextPage = () => {
 
   //   return () => clearInterval(interval);
   // }, [isAdmin]);
+
+  // Load college reviews when tab changes
+  useEffect(() => {
+    if (isAdmin && activeTab === 'college-reviews') {
+      loadFlaggedCollegeReviews();
+    }
+  }, [isAdmin, activeTab, collegeReviewStatusFilter]);
 
   // Show loading while checking auth
   if (authLoading || isLoading) {
@@ -1261,7 +1402,7 @@ const AdminPage: NextPage = () => {
                                       return;
                                     }
                                     
-                                    const response = await fetch(`http://localhost:8000/api/moderation/professors/${professor.id}/verify`, {
+                                    const response = await fetch(`${API_BASE}/api/moderation/professors/${professor.id}/verify`, {
                                       method: 'POST',
                                       headers: {
                                         'Authorization': `Bearer ${token}`,
@@ -1314,7 +1455,7 @@ const AdminPage: NextPage = () => {
                                       return;
                                     }
                                     
-                                    const response = await fetch(`http://localhost:8000/api/moderation/professors/${professor.id}/verify`, {
+                                    const response = await fetch(`${API_BASE}/api/moderation/professors/${professor.id}/verify`, {
                                       method: 'POST',
                                       headers: {
                                         'Authorization': `Bearer ${token}`,
@@ -1491,63 +1632,189 @@ const AdminPage: NextPage = () => {
 
           {activeTab === 'college-reviews' && (
             <div className="space-y-6">
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-yellow-800 mb-2">College Review Moderation</h3>
-                <p className="text-yellow-700">
-                  This feature will be available soon! College review moderation system is currently being implemented.
-                </p>
-                <div className="mt-4 space-y-2 text-sm text-yellow-600">
-                  <div>✅ Backend API endpoints created</div>
-                  <div>✅ Database schema designed</div>
-                  <div>🔄 Frontend UI in development</div>
-                  <div>⏳ Coming in next update</div>
-                </div>
-              </div>
-              
-              <div className="bg-white rounded-lg shadow overflow-hidden">
-                <div className="px-6 py-4 bg-gray-50 border-b">
-                  <h3 className="text-lg font-semibold text-gray-900">Planned Features</h3>
-                </div>
-                <div className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-2">User Reporting</h4>
-                      <ul className="text-sm text-gray-600 space-y-1">
-                        <li>• Flag inappropriate college reviews</li>
-                        <li>• Multiple flag types (spam, fake, offensive, etc.)</li>
-                        <li>• Detailed reason submission</li>
-                        <li>• Prevent duplicate flags</li>
-                      </ul>
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 bg-yellow-100 rounded-md p-3">
+                      <Flag className="h-6 w-6 text-yellow-600" />
                     </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-2">Admin Moderation</h4>
-                      <ul className="text-sm text-gray-600 space-y-1">
-                        <li>• Review flagged college reviews</li>
-                        <li>• Approve or dismiss flags</li>
-                        <li>• Add admin notes</li>
-                        <li>• Hide inappropriate content</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-2">Analytics</h4>
-                      <ul className="text-sm text-gray-600 space-y-1">
-                        <li>• College review moderation stats</li>
-                        <li>• Flag trend analysis</li>
-                        <li>• Violation pattern detection</li>
-                        <li>• Moderation performance metrics</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900 mb-2">Rate Limiting</h4>
-                      <ul className="text-sm text-gray-600 space-y-1">
-                        <li>• Daily limits on review submissions</li>
-                        <li>• Abuse prevention mechanisms</li>
-                        <li>• IP-based monitoring</li>
-                        <li>• Automated content filtering</li>
-                      </ul>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Pending Flags</p>
+                      <p className="text-2xl font-bold text-gray-900">{collegeReviewStats.pending_college_review_flags}</p>
                     </div>
                   </div>
                 </div>
+                
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 bg-blue-100 rounded-md p-3">
+                      <Flag className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Total Flags</p>
+                      <p className="text-2xl font-bold text-gray-900">{collegeReviewStats.total_college_review_flags}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 bg-red-100 rounded-md p-3">
+                      <Shield className="h-6 w-6 text-red-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Flagged Reviews</p>
+                      <p className="text-2xl font-bold text-gray-900">{collegeReviewStats.flagged_college_reviews}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 bg-green-100 rounded-md p-3">
+                      <Check className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Total Reviews</p>
+                      <p className="text-2xl font-bold text-gray-900">{collegeReviewStats.total_college_reviews}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Filters */}
+              <div className="bg-white rounded-lg shadow p-4">
+                <div className="flex items-center space-x-4">
+                  <label className="text-sm font-medium text-gray-700">Filter by status:</label>
+                  <select
+                    value={collegeReviewStatusFilter}
+                    onChange={(e) => setCollegeReviewStatusFilter(e.target.value)}
+                    className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  >
+                    <option value="pending">Pending Review</option>
+                    <option value="approved">Approved Flags</option>
+                    <option value="dismissed">Dismissed Flags</option>
+                    <option value="">All Flags</option>
+                  </select>
+                  <button
+                    onClick={loadFlaggedCollegeReviews}
+                    disabled={isLoadingCollegeReviews}
+                    className="ml-auto px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                  >
+                    {isLoadingCollegeReviews ? 'Loading...' : 'Refresh'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Flagged College Reviews Table */}
+              <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="px-6 py-4 bg-gray-50 border-b">
+                  <h3 className="text-lg font-semibold text-gray-900">Flagged College Reviews</h3>
+                </div>
+                
+                {isLoadingCollegeReviews ? (
+                  <div className="p-8 text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading flagged reviews...</p>
+                  </div>
+                ) : flaggedCollegeReviews.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500">
+                    <Flag className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <p>No flagged college reviews found</p>
+                    <p className="text-sm mt-2">Change the filter to see different results</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">College</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Review Content</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Flag Type</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reason</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Flagged Date</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {flaggedCollegeReviews.map((flag: any) => (
+                          <tr key={flag.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4">
+                              <div className="text-sm font-medium text-gray-900">
+                                {flag.college?.name || 'Unknown College'}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {flag.college?.city}, {flag.college?.state}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="text-sm text-gray-900 max-w-md">
+                                <p className="line-clamp-2">{flag.college_review?.review_text || 'No content'}</p>
+                                <div className="mt-1 flex items-center space-x-2 text-xs text-gray-500">
+                                  <span>Rating: {flag.college_review?.overall_rating || 'N/A'}/5</span>
+                                  <span>•</span>
+                                  <span>Reviews: {flag.college_review?.total_reviews || 0}</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                flag.flag_type === 'spam' ? 'bg-red-100 text-red-800' :
+                                flag.flag_type === 'fake' ? 'bg-orange-100 text-orange-800' :
+                                flag.flag_type === 'offensive' ? 'bg-purple-100 text-purple-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {flag.flag_type}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="text-sm text-gray-600 max-w-xs truncate">
+                                {flag.reason || 'No reason provided'}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                flag.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                flag.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {flag.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              {new Date(flag.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="px-6 py-4 text-sm space-x-2">
+                              {flag.status === 'pending' && (
+                                <>
+                                  <button
+                                    onClick={() => handleCollegeReviewFlagAction(flag.id, 'approve_flag')}
+                                    className="text-green-600 hover:text-green-900 font-medium"
+                                  >
+                                    Approve
+                                  </button>
+                                  <button
+                                    onClick={() => handleCollegeReviewFlagAction(flag.id, 'dismiss_flag')}
+                                    className="text-red-600 hover:text-red-900 font-medium"
+                                  >
+                                    Dismiss
+                                  </button>
+                                </>
+                              )}
+                              {flag.status !== 'pending' && (
+                                <span className="text-gray-400">
+                                  {flag.status === 'approved' ? 'Flag Approved' : 'Flag Dismissed'}
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1559,7 +1826,7 @@ const AdminPage: NextPage = () => {
                 Access the complete admin API documentation for advanced management features.
               </p>
               <button 
-                onClick={() => window.open('http://localhost:8000/docs', '_blank')}
+                onClick={() => window.open(`${API_BASE}/docs`, '_blank')}
                 className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors"
               >
                 Open API Docs
