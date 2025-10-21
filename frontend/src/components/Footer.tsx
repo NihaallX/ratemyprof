@@ -44,7 +44,7 @@ export default function Footer() {
         <div className="mt-6 flex flex-col items-center space-y-2">
           <div className="flex items-center space-x-3">
             <span className="font-logo text-lg text-white" style={{ letterSpacing: '0.02em' }}>
-              RateMyProf.in
+              RateMyProf
             </span>
             <span className="text-sm">
               © {currentYear} All Rights Reserved
