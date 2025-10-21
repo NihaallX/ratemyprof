@@ -64,6 +64,8 @@ app.add_middleware(
         "http://localhost:3001",  # Next.js development (alternative port)
         "http://localhost:3002",  # Next.js development (backup port)
         "https://ratemyprof-india.vercel.app",  # Production frontend
+        "https://ratemyprof.me",  # Production custom domain
+        "http://ratemyprof.me",  # Production custom domain (http)
         os.getenv("FRONTEND_URL", "http://localhost:3000"),  # Configurable frontend URL
     ],
     allow_credentials=True,
