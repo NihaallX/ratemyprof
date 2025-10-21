@@ -102,7 +102,7 @@ export default function Login() {
           {/* Header */}
           <div className="text-center">
             <Link href="/" className="text-3xl font-logo text-indigo-600 hover:text-indigo-700 inline-block" style={{ letterSpacing: '0.02em' }}>
-              RateMyProf.in
+              RateMyProf
             </Link>
             <h2 className="mt-6 text-3xl font-extrabold text-gray-900 font-heading">
               Sign in to your account

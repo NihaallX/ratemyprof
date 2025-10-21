@@ -340,7 +340,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <h1 className="text-3xl font-logo text-indigo-600" style={{ letterSpacing: '0.02em' }}>
-                RateMyProf.in
+                RateMyProf
               </h1>
               <span className="ml-3 text-sm text-gray-500 font-sans">Beta</span>
             </div>
