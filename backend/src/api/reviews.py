@@ -397,7 +397,7 @@ async def flag_review(
         # Check if user already flagged this review
         existing_flag = supabase.table('review_flags').select('id').eq(
             'review_id', review_id
-        ).eq('flagged_by', current_user['id']).execute()
+        ).eq('flagger_user_id', current_user['id']).execute()
         
         if existing_flag.data:
             raise HTTPException(
@@ -408,7 +408,7 @@ async def flag_review(
         # Create flag record
         flag_data = {
             'review_id': review_id,
-            'flagged_by': current_user['id'],
+            'flagger_user_id': current_user['id'],
             'reason': request.reason,
             'description': request.description
         }
