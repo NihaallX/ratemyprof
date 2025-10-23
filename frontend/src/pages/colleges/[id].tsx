@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
-import { ArrowLeft, Globe, MapPin, Calendar, Users, GraduationCap } from 'lucide-react';
+import { ArrowLeft, Globe, MapPin, Calendar, Users, GraduationCap, Search } from 'lucide-react';
 import CollegeReviews from '../../components/CollegeReviews';
 
 interface College {
@@ -35,8 +35,12 @@ export default function CollegeDetail() {
   const { id } = router.query;
   const [college, setCollege] = useState<College | null>(null);
   const [professors, setProfessors] = useState<Professor[]>([]);
+  const [filteredProfessors, setFilteredProfessors] = useState<Professor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
+  const [departments, setDepartments] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   useEffect(() => {
     // Check if user is authenticated
@@ -63,12 +67,18 @@ export default function CollegeDetail() {
         const collegeData = await collegeResponse.json();
         setCollege(collegeData);
         
-        // Fetch professors for this college
-        const professorsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1'}/professors?college_id=${id}&limit=50`);
+        // Fetch ALL professors for this college (backend max limit is 200)
+        const professorsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1'}/professors?college_id=${id}&limit=200`);
         
         if (professorsResponse.ok) {
           const professorsData = await professorsResponse.json();
-          setProfessors(professorsData.professors || []);
+          const profsList = professorsData.professors || [];
+          setProfessors(profsList);
+          setFilteredProfessors(profsList);
+          
+          // Extract unique departments for filter
+          const uniqueDepts = Array.from(new Set(profsList.map((p: Professor) => p.department).filter(Boolean)));
+          setDepartments(uniqueDepts.sort());
         }
       } catch (error) {
         console.error('Error fetching college data:', error);
@@ -79,6 +89,37 @@ export default function CollegeDetail() {
 
     fetchData();
   }, [id]);
+
+  // Filter professors when department selection changes
+  useEffect(() => {
+    if (selectedDepartment === 'all') {
+      setFilteredProfessors(professors);
+    } else {
+      setFilteredProfessors(professors.filter(p => p.department === selectedDepartment));
+    }
+  }, [selectedDepartment, professors]);
+
+  // Filter professors by search query (letter-by-letter search)
+  useEffect(() => {
+    let result = professors;
+    
+    // Filter by department
+    if (selectedDepartment !== 'all') {
+      result = result.filter(p => p.department === selectedDepartment);
+    }
+    
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(p => 
+        p.name.toLowerCase().includes(query) ||
+        p.department.toLowerCase().includes(query) ||
+        (p.specialization && p.specialization.toLowerCase().includes(query))
+      );
+    }
+    
+    setFilteredProfessors(result);
+  }, [selectedDepartment, searchQuery, professors]);
 
   if (isLoading) {
     return (
@@ -262,7 +303,7 @@ export default function CollegeDetail() {
           <div className="bg-white rounded-lg p-6 shadow-sm border">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gray-900">
-                Professors ({professors.length})
+                Professors ({filteredProfessors.length})
               </h2>
               <Link
                 href={`/professors/add?college_id=${college.id}`}
@@ -273,11 +314,59 @@ export default function CollegeDetail() {
               </Link>
             </div>
             
-            {professors.length === 0 ? (
-              <p className="text-gray-600">No professors found for this college.</p>
+            {/* Search Bar */}
+            <div className="mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search professors by name, department, or specialization..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            {/* Department Filter */}
+            {departments.length > 1 && (
+              <div className="mb-4">
+                <label htmlFor="department-filter" className="block text-sm font-medium text-gray-700 mb-2">
+                  Filter by Department
+                </label>
+                <select
+                  id="department-filter"
+                  value={selectedDepartment}
+                  onChange={(e) => setSelectedDepartment(e.target.value)}
+                  className="w-full md:w-64 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="all">All Departments ({professors.length})</option>
+                  {departments.map((dept) => (
+                    <option key={dept} value={dept}>
+                      {dept} ({professors.filter(p => p.department === dept).length})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            
+            {filteredProfessors.length === 0 ? (
+              <p className="text-gray-600">
+                {searchQuery || selectedDepartment !== 'all'
+                  ? 'No professors found matching your search criteria.' 
+                  : 'No professors found for this college.'}
+              </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {professors.map((professor) => (
+                {filteredProfessors.map((professor) => (
                   <Link
                     key={professor.id}
                     href={`/professors/${professor.id}`}
