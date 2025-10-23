@@ -93,11 +93,15 @@ const ReviewCard: React.FC<ReviewProps> = ({
       <CardHeader className="pb-4">
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1">
-              {renderStars(ratings.overall)}
-              <span className={`ml-2 font-semibold ${getRatingColor(ratings.overall)}`}>
-                {ratings.overall}/5
-              </span>
+            {/* Overall Rating Pill Badge */}
+            <div className={`inline-flex items-center px-3 py-1 rounded-full font-bold text-sm ${
+              ratings.overall >= 4 
+                ? 'bg-green-500 text-white' 
+                : ratings.overall >= 3 
+                ? 'bg-yellow-500 text-white' 
+                : 'bg-red-500 text-white'
+            }`}>
+              ★ {ratings.overall.toFixed(1)}
             </div>
             
             <Badge variant={wouldTakeAgain ? 'default' : 'destructive'}>
@@ -141,35 +145,71 @@ const ReviewCard: React.FC<ReviewProps> = ({
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {/* Rating Breakdown */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-          <div>
-            <span className="text-gray-600">Clarity:</span>
-            <div className="flex items-center gap-1">
-              {renderStars(ratings.clarity)}
-              <span className={getRatingColor(ratings.clarity)}>
-                {ratings.clarity}/5
+        {/* Rating Breakdown with Horizontal Progress Bars */}
+        <div className="space-y-3 text-sm">
+          {/* Clarity */}
+          <div className="flex items-center gap-3">
+            <span className="text-gray-700 font-medium w-24">Clarity:</span>
+            <div className="flex-1 flex items-center gap-2">
+              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full rounded-full transition-all ${
+                    ratings.clarity >= 4 ? 'bg-green-500' :
+                    ratings.clarity >= 3 ? 'bg-yellow-500' : 'bg-red-500'
+                  }`}
+                  style={{ width: `${(ratings.clarity / 5) * 100}%` }}
+                />
+              </div>
+              <span className={`font-semibold w-8 ${
+                ratings.clarity >= 4 ? 'text-green-600' :
+                ratings.clarity >= 3 ? 'text-yellow-600' : 'text-red-600'
+              }`}>
+                {ratings.clarity.toFixed(1)}
               </span>
             </div>
           </div>
-          
-          <div>
-            <span className="text-gray-600">Helpfulness:</span>
-            <div className="flex items-center gap-1">
-              {renderStars(ratings.helpfulness)}
-              <span className={getRatingColor(ratings.helpfulness)}>
-                {ratings.helpfulness}/5
+
+          {/* Helpfulness */}
+          <div className="flex items-center gap-3">
+            <span className="text-gray-700 font-medium w-24">Helpfulness:</span>
+            <div className="flex-1 flex items-center gap-2">
+              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full rounded-full transition-all ${
+                    ratings.helpfulness >= 4 ? 'bg-green-500' :
+                    ratings.helpfulness >= 3 ? 'bg-yellow-500' : 'bg-red-500'
+                  }`}
+                  style={{ width: `${(ratings.helpfulness / 5) * 100}%` }}
+                />
+              </div>
+              <span className={`font-semibold w-8 ${
+                ratings.helpfulness >= 4 ? 'text-green-600' :
+                ratings.helpfulness >= 3 ? 'text-yellow-600' : 'text-red-600'
+              }`}>
+                {ratings.helpfulness.toFixed(1)}
               </span>
             </div>
           </div>
-          
-          <div>
-            <span className="text-gray-600">Difficulty:</span>
-            <div className="flex items-center gap-2">
-              <Badge className={getDifficultyColor(ratings.difficulty)}>
-                {getDifficultyLabel(ratings.difficulty)}
-              </Badge>
-              <span className="text-gray-500">({ratings.difficulty}/5)</span>
+
+          {/* Difficulty */}
+          <div className="flex items-center gap-3">
+            <span className="text-gray-700 font-medium w-24">Difficulty:</span>
+            <div className="flex-1 flex items-center gap-2">
+              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full rounded-full transition-all ${
+                    ratings.difficulty <= 2 ? 'bg-green-500' :
+                    ratings.difficulty <= 3 ? 'bg-yellow-500' : 'bg-red-500'
+                  }`}
+                  style={{ width: `${(ratings.difficulty / 5) * 100}%` }}
+                />
+              </div>
+              <span className={`font-semibold w-8 ${
+                ratings.difficulty <= 2 ? 'text-green-600' :
+                ratings.difficulty <= 3 ? 'text-yellow-600' : 'text-red-600'
+              }`}>
+                {ratings.difficulty.toFixed(1)}
+              </span>
             </div>
           </div>
         </div>
