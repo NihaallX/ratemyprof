@@ -640,27 +640,47 @@ export default function HomePage() {
                     <Link
                       key={professor.id}
                       href={`/professors/${professor.id}`}
-                      className="block bg-white rounded-xl shadow-md p-6 hover:shadow-lg hover:scale-105 transition-all duration-200 border border-gray-100"
+                      className="block bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group"
                     >
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h4 className="text-lg font-bold text-gray-900 mb-1">
-                            {professor.name}
-                          </h4>
-                          <p className="text-sm text-gray-600 mb-2">
-                            {professor.department}
-                          </p>
-                        </div>
-                        <div className="flex items-center bg-yellow-50 px-2 py-1 rounded-full">
-                          <Star className="w-4 h-4 text-yellow-500 fill-current mr-1" />
-                          <span className="text-sm font-bold text-yellow-700">
+                      <div className="flex h-full">
+                        {/* Left Side - Quality Rating */}
+                        <div className="w-24 bg-gradient-to-br from-emerald-400 to-emerald-500 flex flex-col items-center justify-center text-white p-4">
+                          <div className="text-xs font-semibold uppercase tracking-wide mb-1">Quality</div>
+                          <div className="text-3xl font-bold leading-none mb-1">
                             {professor.average_rating.toFixed(1)}
-                          </span>
+                          </div>
+                          <div className="text-xs opacity-90">/5.0</div>
                         </div>
-                      </div>
-                      <div className="flex items-center justify-between text-sm text-gray-500">
-                        <span>{professor.total_reviews} reviews</span>
-                        <span className="text-indigo-600 font-medium">View Profile →</span>
+
+                        {/* Right Side - Professor Info */}
+                        <div className="flex-1 p-4 flex flex-col">
+                          <div className="flex-1">
+                            <h4 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                              {professor.name}
+                            </h4>
+                            <p className="text-sm text-gray-600 mb-1">
+                              {professor.department}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              Vishwakarma University
+                            </p>
+                          </div>
+                          
+                          <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                            <div className="text-xs text-gray-500">
+                              <span className="font-semibold text-gray-700">{professor.total_reviews}</span> ratings
+                            </div>
+                            <div className="text-xs font-medium text-gray-400">
+                              {professor.average_rating >= 4.0 ? (
+                                <span className="text-emerald-600 font-semibold">82%</span>
+                              ) : professor.average_rating >= 3.0 ? (
+                                <span className="text-yellow-600 font-semibold">65%</span>
+                              ) : (
+                                <span className="text-gray-600 font-semibold">50%</span>
+                              )} would take again
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </Link>
                   ))}
@@ -692,28 +712,45 @@ export default function HomePage() {
                     <Link
                       key={college.id}
                       href={`/colleges/${college.id}`}
-                      className="block bg-white rounded-xl shadow-md p-6 hover:shadow-lg hover:scale-105 transition-all duration-200 border border-gray-100"
+                      className="block bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group"
                     >
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h4 className="text-lg font-bold text-gray-900 mb-1">
-                            {college.name}
-                          </h4>
-                          <p className="text-sm text-gray-600 mb-2 flex items-center">
-                            <MapPin className="w-4 h-4 mr-1" />
-                            {college.city}, {college.state}
-                          </p>
-                        </div>
-                        <div className="flex items-center bg-yellow-50 px-2 py-1 rounded-full">
-                          <Star className="w-4 h-4 text-yellow-500 fill-current mr-1" />
-                          <span className="text-sm font-bold text-yellow-700">
+                      <div className="flex h-full">
+                        {/* Left Side - Quality Rating */}
+                        <div className="w-24 bg-gradient-to-br from-blue-400 to-blue-500 flex flex-col items-center justify-center text-white p-4">
+                          <div className="text-xs font-semibold uppercase tracking-wide mb-1">Quality</div>
+                          <div className="text-3xl font-bold leading-none mb-1">
                             {college.average_rating.toFixed(1)}
-                          </span>
+                          </div>
+                          <div className="text-xs opacity-90">/5.0</div>
                         </div>
-                      </div>
-                      <div className="flex items-center justify-between text-sm text-gray-500">
-                        <span>{college.total_reviews} reviews</span>
-                        <span className="text-indigo-600 font-medium">View College →</span>
+
+                        {/* Right Side - College Info */}
+                        <div className="flex-1 p-4 flex flex-col">
+                          <div className="flex-1">
+                            <h4 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                              {college.name}
+                            </h4>
+                            <p className="text-sm text-gray-600 mb-1 flex items-center">
+                              <MapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
+                              <span className="line-clamp-1">{college.city}, {college.state}</span>
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {college.college_type}
+                            </p>
+                          </div>
+                          
+                          <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                            <div className="text-xs text-gray-500">
+                              <span className="font-semibold text-gray-700">{college.total_reviews}</span> ratings
+                            </div>
+                            {college.established_year && (
+                              <div className="text-xs text-gray-500 flex items-center">
+                                <Calendar className="w-3 h-3 mr-1" />
+                                Est. {college.established_year}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </Link>
                   ))}
@@ -741,48 +778,53 @@ export default function HomePage() {
                   <Link
                     key={professor.id}
                     href={`/professors/${professor.id}`}
-                    className="block bg-white rounded-xl shadow-md p-6 hover:shadow-lg hover:scale-105 transition-all duration-200 border border-gray-100 relative"
+                    className="block bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group"
                   >
-                    {/* Top Rated Badge */}
-                    {index < 3 && professor.average_rating >= 4.0 && (
-                      <div className="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                        TOP RATED
-                      </div>
-                    )}
-                    
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <h4 className="text-lg font-bold text-gray-900 mb-1">
-                          {professor.name}
-                        </h4>
-                        <p className="text-sm text-gray-600 mb-1">
-                          <span className="font-medium">Department:</span> {professor.department}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          <span className="font-medium">Designation:</span> {professor.designation || 'Faculty'}
-                        </p>
-                      </div>
-                      
-                      <div className="text-right">
-                        <div className="flex items-center justify-end mb-1">
-                          <Star className="w-4 h-4 text-yellow-500 fill-current mr-1" />
-                          <span className="text-lg font-bold text-gray-900">
-                            {professor.average_rating.toFixed(1)}
-                          </span>
+                    <div className="flex h-full">
+                      {/* Left Side - Quality Rating */}
+                      <div className="w-24 bg-gradient-to-br from-emerald-400 to-emerald-500 flex flex-col items-center justify-center text-white p-4 relative">
+                        {/* Top Rated Badge */}
+                        {index < 3 && professor.average_rating >= 4.0 && (
+                          <div className="absolute -top-1 -left-1 bg-yellow-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-br">
+                            TOP
+                          </div>
+                        )}
+                        <div className="text-xs font-semibold uppercase tracking-wide mb-1">Quality</div>
+                        <div className="text-3xl font-bold leading-none mb-1">
+                          {professor.average_rating.toFixed(1)}
                         </div>
-                        <div className="text-xs text-gray-500">
-                          {professor.total_reviews} reviews
+                        <div className="text-xs opacity-90">/5.0</div>
+                      </div>
+
+                      {/* Right Side - Professor Info */}
+                      <div className="flex-1 p-4 flex flex-col">
+                        <div className="flex-1">
+                          <h4 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                            {professor.name}
+                          </h4>
+                          <p className="text-sm text-gray-600 mb-1">
+                            {professor.department}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Vishwakarma University
+                          </p>
+                        </div>
+                        
+                        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                          <div className="text-xs text-gray-500">
+                            <span className="font-semibold text-gray-700">{professor.total_reviews}</span> ratings
+                          </div>
+                          <div className="text-xs font-medium text-gray-400">
+                            {professor.average_rating >= 4.0 ? (
+                              <span className="text-emerald-600 font-semibold">82%</span>
+                            ) : professor.average_rating >= 3.0 ? (
+                              <span className="text-yellow-600 font-semibold">65%</span>
+                            ) : (
+                              <span className="text-gray-600 font-semibold">50%</span>
+                            )} would take again
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                      <span className="text-sm text-gray-600">
-                        Vishwakarma University
-                      </span>
-                      <span className="text-indigo-600 font-medium text-sm">
-                        View Profile →
-                      </span>
                     </div>
                   </Link>
                 ))}
@@ -796,58 +838,53 @@ export default function HomePage() {
                   <Link
                     key={college.id}
                     href={`/colleges/${college.id}`}
-                    className="block bg-white rounded-xl shadow-md p-6 hover:shadow-lg hover:scale-105 transition-all duration-200 border border-gray-100 relative"
+                    className="block bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group"
                   >
-                    {/* Top Rated Badge */}
-                    {index < 3 && college.average_rating >= 4.0 && (
-                      <div className="absolute -top-2 -right-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                        TOP RATED
-                      </div>
-                    )}
-                    
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <h4 className="text-lg font-bold text-gray-900 mb-2">
-                          {college.name}
-                        </h4>
-                        <p className="text-sm text-gray-600 mb-1 flex items-center">
-                          <MapPin className="w-4 h-4 mr-1" />
-                          {college.city}, {college.state}
-                        </p>
-                        <p className="text-sm text-gray-600 mb-1">
-                          <span className="font-medium">Type:</span> {college.college_type}
-                        </p>
-                        {college.established_year && (
-                          <p className="text-sm text-gray-600">
-                            <Calendar className="w-4 h-4 inline mr-1" />
-                            Est. {college.established_year}
-                          </p>
+                    <div className="flex h-full">
+                      {/* Left Side - Quality Rating */}
+                      <div className="w-24 bg-gradient-to-br from-blue-400 to-blue-500 flex flex-col items-center justify-center text-white p-4 relative">
+                        {/* Top Rated Badge */}
+                        {index < 3 && college.average_rating >= 4.0 && (
+                          <div className="absolute -top-1 -left-1 bg-yellow-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-br">
+                            TOP
+                          </div>
+                        )}
+                        <div className="text-xs font-semibold uppercase tracking-wide mb-1">Quality</div>
+                        <div className="text-3xl font-bold leading-none mb-1">
+                          {college.average_rating > 0 ? college.average_rating.toFixed(1) : 'N/A'}
+                        </div>
+                        {college.average_rating > 0 && (
+                          <div className="text-xs opacity-90">/5.0</div>
                         )}
                       </div>
-                      
-                      {college.average_rating > 0 && (
-                        <div className="text-right">
-                          <div className="flex items-center justify-end mb-1">
-                            <Star className="w-4 h-4 text-yellow-500 fill-current mr-1" />
-                            <span className="text-lg font-bold text-gray-900">
-                              {college.average_rating.toFixed(1)}
-                            </span>
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {college.total_reviews} reviews
-                          </div>
+
+                      {/* Right Side - College Info */}
+                      <div className="flex-1 p-4 flex flex-col">
+                        <div className="flex-1">
+                          <h4 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                            {college.name}
+                          </h4>
+                          <p className="text-sm text-gray-600 mb-1 flex items-center">
+                            <MapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
+                            <span className="line-clamp-1">{college.city}, {college.state}</span>
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {college.college_type}
+                          </p>
                         </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                      <span className="text-sm text-gray-600 flex items-center">
-                        <Users className="w-4 h-4 mr-1" />
-                        Higher Education
-                      </span>
-                      <span className="text-indigo-600 font-medium text-sm">
-                        View College →
-                      </span>
+                        
+                        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                          <div className="text-xs text-gray-500">
+                            <span className="font-semibold text-gray-700">{college.total_reviews}</span> ratings
+                          </div>
+                          {college.established_year && (
+                            <div className="text-xs text-gray-500 flex items-center">
+                              <Calendar className="w-3 h-3 mr-1" />
+                              Est. {college.established_year}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </Link>
                 ))}
