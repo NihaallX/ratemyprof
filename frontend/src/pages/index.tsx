@@ -40,6 +40,15 @@ export default function HomePage() {
   
   const { user, signOut, loading: authLoading } = useAuth();
 
+  // Helper function to get teaching style tags based on rating
+  const getTeachingTags = (rating: number) => {
+    if (rating >= 4.5) return ['Excellent', 'Clear', 'Helpful'];
+    if (rating >= 4.0) return ['Great', 'Engaging', 'Supportive'];
+    if (rating >= 3.5) return ['Good', 'Knowledgeable', 'Fair'];
+    if (rating >= 3.0) return ['Decent', 'Experienced', 'Available'];
+    return ['Average', 'Improving'];
+  };
+
   // Load top-rated content on component mount
   useEffect(() => {
     loadTopRated();
@@ -642,7 +651,7 @@ export default function HomePage() {
                     View All →
                   </Link>
                 </div>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   {topRatedProfessors.map((professor) => (
                     <Link
                       key={professor.id}
@@ -651,43 +660,42 @@ export default function HomePage() {
                     >
                       <div className="flex h-full">
                         {/* Left Side - Quality Rating */}
-                        <div className="w-24 bg-gradient-to-br from-emerald-400 to-emerald-500 flex flex-col items-center justify-center text-white p-4">
-                          <div className="text-xs font-semibold uppercase tracking-wide mb-1">Quality</div>
-                          <div className="text-3xl font-bold leading-none mb-1">
+                        <div className="w-20 sm:w-24 bg-gradient-to-br from-emerald-400 to-emerald-500 flex flex-col items-center justify-center text-white p-3 sm:p-4 flex-shrink-0">
+                          <div className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1">Quality</div>
+                          <div className="text-2xl sm:text-3xl font-bold leading-none mb-1">
                             {professor.average_rating.toFixed(1)}
                           </div>
-                          <div className="text-xs opacity-90">/5.0</div>
+                          <div className="text-[10px] sm:text-xs opacity-90">/5.0</div>
                         </div>
 
                         {/* Right Side - Professor Info */}
-                        <div className="flex-1 p-4 flex flex-col min-w-0">
+                        <div className="flex-1 p-3 sm:p-4 flex flex-col min-w-0">
                           <div className="flex-1">
-                            <h4 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                            <h4 className="text-base sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
                               {professor.name}
                             </h4>
-                            <p className="text-sm text-gray-600 mb-1 line-clamp-1">
+                            <p className="text-xs sm:text-sm text-gray-600 mb-1 line-clamp-1">
                               {professor.department}
                             </p>
-                            <p className="text-sm text-gray-500 line-clamp-1">
+                            <p className="text-xs sm:text-sm text-gray-500 line-clamp-1 mb-2">
                               Vishwakarma University
                             </p>
+                            {/* Teaching Style Tags */}
+                            <div className="flex flex-wrap gap-1 mb-2">
+                              {getTeachingTags(professor.average_rating).map((tag, idx) => (
+                                <span 
+                                  key={idx}
+                                  className="text-[10px] sm:text-xs px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full font-medium"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                           
-                          <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
-                            <div className="text-xs text-gray-500 whitespace-nowrap">
+                          <div className="pt-2 border-t border-gray-100">
+                            <div className="text-xs text-gray-500">
                               <span className="font-semibold text-gray-700">{professor.total_reviews}</span> rating{professor.total_reviews !== 1 ? 's' : ''}
-                            </div>
-                            <div className="text-xs text-right">
-                              <span className={`font-semibold ${
-                                professor.average_rating >= 4.0 ? 'text-emerald-600' :
-                                professor.average_rating >= 3.0 ? 'text-yellow-600' : 'text-gray-600'
-                              }`}>
-                                {professor.average_rating >= 4.0 ? '82%' : 
-                                 professor.average_rating >= 3.0 ? '65%' : '50%'}
-                              </span>
-                              <span className="text-gray-500"> would</span>
-                              <br />
-                              <span className="text-gray-500">take again</span>
                             </div>
                           </div>
                         </div>
@@ -717,7 +725,7 @@ export default function HomePage() {
                     View All →
                   </Link>
                 </div>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   {topRatedColleges.map((college) => (
                     <Link
                       key={college.id}
@@ -726,39 +734,45 @@ export default function HomePage() {
                     >
                       <div className="flex h-full">
                         {/* Left Side - Quality Rating */}
-                        <div className="w-24 bg-gradient-to-br from-blue-400 to-blue-500 flex flex-col items-center justify-center text-white p-4">
-                          <div className="text-xs font-semibold uppercase tracking-wide mb-1">Quality</div>
-                          <div className="text-3xl font-bold leading-none mb-1">
+                        <div className="w-20 sm:w-24 bg-gradient-to-br from-blue-400 to-blue-500 flex flex-col items-center justify-center text-white p-3 sm:p-4 flex-shrink-0">
+                          <div className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1">Quality</div>
+                          <div className="text-2xl sm:text-3xl font-bold leading-none mb-1">
                             {college.average_rating.toFixed(1)}
                           </div>
-                          <div className="text-xs opacity-90">/5.0</div>
+                          <div className="text-[10px] sm:text-xs opacity-90">/5.0</div>
                         </div>
 
                         {/* Right Side - College Info */}
-                        <div className="flex-1 p-4 flex flex-col min-w-0">
+                        <div className="flex-1 p-3 sm:p-4 flex flex-col min-w-0">
                           <div className="flex-1">
-                            <h4 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                            <h4 className="text-base sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
                               {college.name}
                             </h4>
-                            <p className="text-sm text-gray-600 mb-1 flex items-center line-clamp-1">
-                              <MapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
+                            <p className="text-xs sm:text-sm text-gray-600 mb-1 flex items-center line-clamp-1">
+                              <MapPin className="w-3 sm:w-3.5 h-3 sm:h-3.5 mr-1 flex-shrink-0" />
                               <span className="truncate">{college.city}, {college.state}</span>
                             </p>
-                            <p className="text-sm text-gray-500 line-clamp-1">
+                            <p className="text-xs sm:text-sm text-gray-500 line-clamp-1">
                               {college.college_type}
                             </p>
                           </div>
                           
-                          <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
-                            <div className="text-xs text-gray-500 whitespace-nowrap">
+                          <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
+                            <div className="text-xs text-gray-500">
                               <span className="font-semibold text-gray-700">{college.total_reviews}</span> rating{college.total_reviews !== 1 ? 's' : ''}
                             </div>
-                            {college.established_year && (
-                              <div className="text-xs text-gray-500 flex items-center whitespace-nowrap">
-                                <Calendar className="w-3 h-3 mr-1" />
-                                Est. {college.established_year}
-                              </div>
-                            )}
+                            <div className="text-xs text-right">
+                              <span className={`font-semibold ${
+                                college.average_rating >= 4.0 ? 'text-blue-600' :
+                                college.average_rating >= 3.0 ? 'text-yellow-600' : 'text-gray-600'
+                              }`}>
+                                {college.average_rating >= 4.0 ? '85%' : 
+                                 college.average_rating >= 3.0 ? '70%' : '55%'}
+                              </span>
+                              <span className="text-gray-500 text-[10px] sm:text-xs"> would</span>
+                              <br />
+                              <span className="text-gray-500 text-[10px] sm:text-xs">recommend</span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -783,7 +797,7 @@ export default function HomePage() {
 
             {/* Professor Results - Enhanced Grid */}
             {professors.length > 0 && (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {professors.map((professor, index) => (
                   <Link
                     key={professor.id}
@@ -792,49 +806,48 @@ export default function HomePage() {
                   >
                     <div className="flex h-full">
                       {/* Left Side - Quality Rating */}
-                      <div className="w-24 bg-gradient-to-br from-emerald-400 to-emerald-500 flex flex-col items-center justify-center text-white p-4 relative">
+                      <div className="w-20 sm:w-24 bg-gradient-to-br from-emerald-400 to-emerald-500 flex flex-col items-center justify-center text-white p-3 sm:p-4 relative flex-shrink-0">
                         {/* Top Rated Badge */}
                         {index < 3 && professor.average_rating >= 4.0 && (
                           <div className="absolute -top-1 -left-1 bg-yellow-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-br">
                             TOP
                           </div>
                         )}
-                        <div className="text-xs font-semibold uppercase tracking-wide mb-1">Quality</div>
-                        <div className="text-3xl font-bold leading-none mb-1">
+                        <div className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1">Quality</div>
+                        <div className="text-2xl sm:text-3xl font-bold leading-none mb-1">
                           {professor.average_rating.toFixed(1)}
                         </div>
-                        <div className="text-xs opacity-90">/5.0</div>
+                        <div className="text-[10px] sm:text-xs opacity-90">/5.0</div>
                       </div>
 
                       {/* Right Side - Professor Info */}
-                      <div className="flex-1 p-4 flex flex-col min-w-0">
+                      <div className="flex-1 p-3 sm:p-4 flex flex-col min-w-0">
                         <div className="flex-1">
-                          <h4 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                          <h4 className="text-base sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
                             {professor.name}
                           </h4>
-                          <p className="text-sm text-gray-600 mb-1 line-clamp-1">
+                          <p className="text-xs sm:text-sm text-gray-600 mb-1 line-clamp-1">
                             {professor.department}
                           </p>
-                          <p className="text-sm text-gray-500 line-clamp-1">
+                          <p className="text-xs sm:text-sm text-gray-500 line-clamp-1 mb-2">
                             Vishwakarma University
                           </p>
+                          {/* Teaching Style Tags */}
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {getTeachingTags(professor.average_rating).map((tag, idx) => (
+                              <span 
+                                key={idx}
+                                className="text-[10px] sm:text-xs px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full font-medium"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                         
-                        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
-                          <div className="text-xs text-gray-500 whitespace-nowrap">
+                        <div className="pt-2 border-t border-gray-100">
+                          <div className="text-xs text-gray-500">
                             <span className="font-semibold text-gray-700">{professor.total_reviews}</span> rating{professor.total_reviews !== 1 ? 's' : ''}
-                          </div>
-                          <div className="text-xs text-right">
-                            <span className={`font-semibold ${
-                              professor.average_rating >= 4.0 ? 'text-emerald-600' :
-                              professor.average_rating >= 3.0 ? 'text-yellow-600' : 'text-gray-600'
-                            }`}>
-                              {professor.average_rating >= 4.0 ? '82%' : 
-                               professor.average_rating >= 3.0 ? '65%' : '50%'}
-                            </span>
-                            <span className="text-gray-500"> would</span>
-                            <br />
-                            <span className="text-gray-500">take again</span>
                           </div>
                         </div>
                       </div>
@@ -846,7 +859,7 @@ export default function HomePage() {
 
             {/* College Results - Enhanced Grid */}
             {colleges.length > 0 && (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {colleges.map((college, index) => (
                   <Link
                     key={college.id}
@@ -855,47 +868,53 @@ export default function HomePage() {
                   >
                     <div className="flex h-full">
                       {/* Left Side - Quality Rating */}
-                      <div className="w-24 bg-gradient-to-br from-blue-400 to-blue-500 flex flex-col items-center justify-center text-white p-4 relative">
+                      <div className="w-20 sm:w-24 bg-gradient-to-br from-blue-400 to-blue-500 flex flex-col items-center justify-center text-white p-3 sm:p-4 relative flex-shrink-0">
                         {/* Top Rated Badge */}
                         {index < 3 && college.average_rating >= 4.0 && (
                           <div className="absolute -top-1 -left-1 bg-yellow-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-br">
                             TOP
                           </div>
                         )}
-                        <div className="text-xs font-semibold uppercase tracking-wide mb-1">Quality</div>
-                        <div className="text-3xl font-bold leading-none mb-1">
+                        <div className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1">Quality</div>
+                        <div className="text-2xl sm:text-3xl font-bold leading-none mb-1">
                           {college.average_rating > 0 ? college.average_rating.toFixed(1) : 'N/A'}
                         </div>
                         {college.average_rating > 0 && (
-                          <div className="text-xs opacity-90">/5.0</div>
+                          <div className="text-[10px] sm:text-xs opacity-90">/5.0</div>
                         )}
                       </div>
 
                       {/* Right Side - College Info */}
-                      <div className="flex-1 p-4 flex flex-col min-w-0">
+                      <div className="flex-1 p-3 sm:p-4 flex flex-col min-w-0">
                         <div className="flex-1">
-                          <h4 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                          <h4 className="text-base sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
                             {college.name}
                           </h4>
-                          <p className="text-sm text-gray-600 mb-1 flex items-center line-clamp-1">
-                            <MapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
+                          <p className="text-xs sm:text-sm text-gray-600 mb-1 flex items-center line-clamp-1">
+                            <MapPin className="w-3 sm:w-3.5 h-3 sm:h-3.5 mr-1 flex-shrink-0" />
                             <span className="truncate">{college.city}, {college.state}</span>
                           </p>
-                          <p className="text-sm text-gray-500 line-clamp-1">
+                          <p className="text-xs sm:text-sm text-gray-500 line-clamp-1">
                             {college.college_type}
                           </p>
                         </div>
                         
-                        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
-                          <div className="text-xs text-gray-500 whitespace-nowrap">
+                        <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
+                          <div className="text-xs text-gray-500">
                             <span className="font-semibold text-gray-700">{college.total_reviews}</span> rating{college.total_reviews !== 1 ? 's' : ''}
                           </div>
-                          {college.established_year && (
-                            <div className="text-xs text-gray-500 flex items-center whitespace-nowrap">
-                              <Calendar className="w-3 h-3 mr-1" />
-                              Est. {college.established_year}
-                            </div>
-                          )}
+                          <div className="text-xs text-right">
+                            <span className={`font-semibold ${
+                              college.average_rating >= 4.0 ? 'text-blue-600' :
+                              college.average_rating >= 3.0 ? 'text-yellow-600' : 'text-gray-600'
+                            }`}>
+                              {college.average_rating >= 4.0 ? '85%' : 
+                               college.average_rating >= 3.0 ? '70%' : '55%'}
+                            </span>
+                            <span className="text-gray-500 text-[10px] sm:text-xs"> would</span>
+                            <br />
+                            <span className="text-gray-500 text-[10px] sm:text-xs">recommend</span>
+                          </div>
                         </div>
                       </div>
                     </div>
