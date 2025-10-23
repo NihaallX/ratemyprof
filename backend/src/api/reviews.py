@@ -375,6 +375,15 @@ async def flag_review(
     Users cannot flag the same review multiple times.
     """
     try:
+        # Get admin client for database operations (bypasses RLS)
+        from lib.database import get_supabase_admin
+        supabase_admin = get_supabase_admin()
+        if not supabase_admin:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database admin client not available"
+            )
+        
         # Validate UUID format
         try:
             UUID(review_id)
@@ -392,8 +401,8 @@ async def flag_review(
                 detail="Review not found"
             )
         
-        # Check if user already flagged this review
-        existing_flag = supabase.table('review_flags').select('id').eq(
+        # Check if user already flagged this review (use admin client)
+        existing_flag = supabase_admin.table('review_flags').select('id').eq(
             'review_id', review_id
         ).eq('flagger_user_id', current_user['id']).execute()
         
@@ -403,7 +412,7 @@ async def flag_review(
                 detail="User has already flagged this review"
             )
         
-        # Create flag record
+        # Create flag record (use admin client)
         flag_data = {
             'review_id': review_id,
             'flagger_user_id': current_user['id'],
@@ -411,7 +420,7 @@ async def flag_review(
             'description': request.description
         }
         
-        supabase.table('review_flags').insert(flag_data).execute()
+        supabase_admin.table('review_flags').insert(flag_data).execute()
         
         return {"message": "Review flagged for moderation"}
         
@@ -679,6 +688,15 @@ async def vote_on_review(
     Streamlined to reduce database round-trips.
     """
     try:
+        # Get admin client for database operations (bypasses RLS)
+        from lib.database import get_supabase_admin
+        supabase_admin = get_supabase_admin()
+        if not supabase_admin:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database admin client not available"
+            )
+        
         # Validate review ID
         try:
             UUID(review_id)
@@ -690,8 +708,8 @@ async def vote_on_review(
         
         user_id = current_user['id']
         
-        # Check existing vote (use .single() to get one result or null)
-        existing_result = supabase.table('review_votes').select('vote_type').eq(
+        # Check existing vote (use admin client)
+        existing_result = supabase_admin.table('review_votes').select('vote_type').eq(
             'review_id', review_id
         ).eq('user_id', user_id).execute()
         
@@ -705,7 +723,7 @@ async def vote_on_review(
         
         if old_vote == request.vote_type:
             # Toggle off - remove vote
-            supabase.table('review_votes').delete().eq(
+            supabase_admin.table('review_votes').delete().eq(
                 'review_id', review_id
             ).eq('user_id', user_id).execute()
             
@@ -720,7 +738,7 @@ async def vote_on_review(
             
         elif old_vote and old_vote != request.vote_type:
             # Change vote
-            supabase.table('review_votes').update({
+            supabase_admin.table('review_votes').update({
                 'vote_type': request.vote_type
             }).eq('review_id', review_id).eq('user_id', user_id).execute()
             
@@ -737,7 +755,7 @@ async def vote_on_review(
             
         else:
             # New vote
-            supabase.table('review_votes').insert({
+            supabase_admin.table('review_votes').insert({
                 'review_id': review_id,
                 'user_id': user_id,
                 'vote_type': request.vote_type
@@ -755,7 +773,7 @@ async def vote_on_review(
         # Update counts if needed (single query)
         if helpful_delta != 0 or not_helpful_delta != 0:
             # Get current review to calculate new counts
-            review = supabase.table('reviews').select(
+            review = supabase_admin.table('reviews').select(
                 'helpful_count, not_helpful_count'
             ).eq('id', review_id).single().execute()
             
@@ -764,7 +782,7 @@ async def vote_on_review(
                 new_not_helpful = max(0, review.data.get('not_helpful_count', 0) + not_helpful_delta)
                 
                 # Update in one query
-                supabase.table('reviews').update({
+                supabase_admin.table('reviews').update({
                     'helpful_count': new_helpful,
                     'not_helpful_count': new_not_helpful
                 }).eq('id', review_id).execute()
