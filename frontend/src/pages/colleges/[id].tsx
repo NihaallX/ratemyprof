@@ -77,7 +77,13 @@ export default function CollegeDetail() {
           setFilteredProfessors(profsList);
           
           // Extract unique departments for filter
-          const uniqueDepts = Array.from(new Set(profsList.map((p: Professor) => p.department).filter(Boolean)));
+          const uniqueDepts = Array.from(
+            new Set(
+              profsList
+                .map((p: Professor) => p.department)
+                .filter((dept): dept is string => Boolean(dept))
+            )
+          );
           setDepartments(uniqueDepts.sort());
         }
       } catch (error) {
