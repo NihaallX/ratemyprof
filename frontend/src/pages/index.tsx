@@ -344,7 +344,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <Head>
         <title>RateMyProf India - Find & Rate Your Professors</title>
         <meta name="description" content="Discover and rate professors at Indian colleges and universities" />
@@ -413,7 +413,7 @@ export default function HomePage() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         
         {/* Hero Section */}
         <div className="text-center mb-12">

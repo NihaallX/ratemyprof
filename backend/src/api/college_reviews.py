@@ -165,6 +165,86 @@ async def get_review_guidelines():
     )
 
 
+@router.get("/my-reviews")
+async def get_my_college_reviews(
+    current_user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase)
+):
+    """Get current user's college reviews using the mapping table.
+    
+    Returns all college reviews submitted by the authenticated user.
+    Uses the college_review_author_mappings table to find user's reviews.
+    """
+    try:
+        if not current_user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required"
+            )
+        
+        # Get user's review IDs from the mapping table
+        # RLS policy: Users can read their own mappings via auth.uid()
+        mappings = supabase.table('college_review_author_mappings').select(
+            'review_id'
+        ).eq('author_id', current_user['id']).execute()
+        
+        if not mappings.data:
+            return {"reviews": [], "total": 0}
+        
+        # Extract review IDs
+        review_ids = [m['review_id'] for m in mappings.data]
+        
+        # Fetch the actual reviews with college details
+        reviews_result = supabase.table('college_reviews').select(
+            '*, colleges(id, name, city, state)'
+        ).in_('id', review_ids).order('created_at', desc=True).execute()
+        
+        if not reviews_result.data:
+            return {"reviews": [], "total": 0}
+        
+        # Format response
+        formatted_reviews = []
+        for review in reviews_result.data:
+            formatted_reviews.append({
+                "id": review['id'],
+                "collegeId": review['college_id'],
+                "collegeName": review['colleges']['name'] if review.get('colleges') else 'Unknown',
+                "collegeCity": review['colleges']['city'] if review.get('colleges') else 'Unknown',
+                "collegeState": review['colleges']['state'] if review.get('colleges') else 'Unknown',
+                "courseName": review.get('course_name'),
+                "yearOfStudy": review.get('year_of_study'),
+                "graduationYear": review.get('graduation_year'),
+                "ratings": {
+                    "food": review.get('food_rating', 0),
+                    "internet": review.get('internet_rating', 0),
+                    "clubs": review.get('clubs_rating', 0),
+                    "opportunities": review.get('opportunities_rating', 0),
+                    "facilities": review.get('facilities_rating', 0),
+                    "teaching": review.get('teaching_rating', 0),
+                    "overall": review.get('overall_rating', 0)
+                },
+                "reviewText": review.get('review_text'),
+                "createdAt": str(review.get('created_at')),
+                "status": review.get('status', 'approved')
+            })
+        
+        return {
+            "reviews": formatted_reviews,
+            "total": len(formatted_reviews)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching user's college reviews: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch college reviews: {str(e)}"
+        )
+
+
 @router.post("", response_model=CollegeReview, status_code=status.HTTP_201_CREATED)
 async def create_college_review(
     request: CollegeReviewCreate,
