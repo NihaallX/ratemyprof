@@ -83,7 +83,7 @@ export default function CollegeDetail() {
                 .map((p: Professor) => p.department)
                 .filter((dept): dept is string => Boolean(dept))
             )
-          );
+          ) as string[];
           setDepartments(uniqueDepts.sort());
         }
       } catch (error) {
