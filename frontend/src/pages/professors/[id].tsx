@@ -215,13 +215,20 @@ export default function ProfessorProfile() {
                 {/* Overall Rating */}
                 <div className="border-t border-gray-200 pt-6 mb-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Overall Rating</h3>
-                  <div className="flex items-center space-x-8">
-                    <div>
-                      {renderStars(professor.average_rating || 0)}
-                      <p className="text-sm text-gray-600 mt-1">
-                        Based on {professor.total_reviews} reviews
-                      </p>
+                  <div className="flex items-center space-x-4">
+                    {/* Colored Pill Badge */}
+                    <div className={`inline-flex items-center px-4 py-2 rounded-full font-bold text-lg ${
+                      (professor.average_rating || 0) >= 4 
+                        ? 'bg-green-500 text-white' 
+                        : (professor.average_rating || 0) >= 3 
+                        ? 'bg-yellow-500 text-white' 
+                        : 'bg-red-500 text-white'
+                    }`}>
+                      ★ {(professor.average_rating || 0).toFixed(1)}
                     </div>
+                    <p className="text-sm text-gray-600">
+                      Based on {professor.total_reviews} review{professor.total_reviews !== 1 ? 's' : ''}
+                    </p>
                   </div>
                 </div>
 
@@ -261,9 +268,15 @@ export default function ProfessorProfile() {
                       <div key={review.id} className="border-b border-gray-200 pb-6 last:border-b-0">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center space-x-4">
-                            <div className="flex space-x-1">
-                              {/* Overall rating - using overall_rating field */}
-                              {renderStars(review.overall_rating)}
+                            {/* Overall rating pill badge */}
+                            <div className={`inline-flex items-center px-3 py-1 rounded-full font-bold text-sm ${
+                              review.overall_rating >= 4 
+                                ? 'bg-green-500 text-white' 
+                                : review.overall_rating >= 3 
+                                ? 'bg-yellow-500 text-white' 
+                                : 'bg-red-500 text-white'
+                            }`}>
+                              ★ {review.overall_rating.toFixed(1)}
                             </div>
                             <div className="text-sm text-gray-500">
                               {review.course_name && <span className="font-medium">{review.course_name}</span>}
@@ -275,23 +288,94 @@ export default function ProfessorProfile() {
                           </div>
                         </div>
                         
-                        {/* Detailed ratings */}
-                        <div className="grid grid-cols-2 gap-3 mb-3 text-sm">
-                          <div className="flex justify-between">
-                            <span>Clarity:</span>
-                            <span className="flex">{renderStars(review.clarity_rating)}</span>
+                        {/* Detailed ratings with horizontal progress bars */}
+                        <div className="space-y-3 mb-3 text-sm">
+                          {/* Clarity */}
+                          <div className="flex items-center gap-3">
+                            <span className="text-gray-700 font-medium w-24">Clarity:</span>
+                            <div className="flex-1 flex items-center gap-2">
+                              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-full rounded-full transition-all ${
+                                    review.clarity_rating >= 4 ? 'bg-green-500' :
+                                    review.clarity_rating >= 3 ? 'bg-yellow-500' : 'bg-red-500'
+                                  }`}
+                                  style={{ width: `${(review.clarity_rating / 5) * 100}%` }}
+                                />
+                              </div>
+                              <span className={`font-semibold w-8 ${
+                                review.clarity_rating >= 4 ? 'text-green-600' :
+                                review.clarity_rating >= 3 ? 'text-yellow-600' : 'text-red-600'
+                              }`}>
+                                {review.clarity_rating.toFixed(1)}
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex justify-between">
-                            <span>Helpfulness:</span>
-                            <span className="flex">{renderStars(review.helpfulness_rating)}</span>
+
+                          {/* Helpfulness */}
+                          <div className="flex items-center gap-3">
+                            <span className="text-gray-700 font-medium w-24">Helpfulness:</span>
+                            <div className="flex-1 flex items-center gap-2">
+                              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-full rounded-full transition-all ${
+                                    review.helpfulness_rating >= 4 ? 'bg-green-500' :
+                                    review.helpfulness_rating >= 3 ? 'bg-yellow-500' : 'bg-red-500'
+                                  }`}
+                                  style={{ width: `${(review.helpfulness_rating / 5) * 100}%` }}
+                                />
+                              </div>
+                              <span className={`font-semibold w-8 ${
+                                review.helpfulness_rating >= 4 ? 'text-green-600' :
+                                review.helpfulness_rating >= 3 ? 'text-yellow-600' : 'text-red-600'
+                              }`}>
+                                {review.helpfulness_rating.toFixed(1)}
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex justify-between">
-                            <span>Overall:</span>
-                            <span className="flex">{renderStars(review.overall_rating)}</span>
+
+                          {/* Overall */}
+                          <div className="flex items-center gap-3">
+                            <span className="text-gray-700 font-medium w-24">Overall:</span>
+                            <div className="flex-1 flex items-center gap-2">
+                              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-full rounded-full transition-all ${
+                                    review.overall_rating >= 4 ? 'bg-green-500' :
+                                    review.overall_rating >= 3 ? 'bg-yellow-500' : 'bg-red-500'
+                                  }`}
+                                  style={{ width: `${(review.overall_rating / 5) * 100}%` }}
+                                />
+                              </div>
+                              <span className={`font-semibold w-8 ${
+                                review.overall_rating >= 4 ? 'text-green-600' :
+                                review.overall_rating >= 3 ? 'text-yellow-600' : 'text-red-600'
+                              }`}>
+                                {review.overall_rating.toFixed(1)}
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex justify-between">
-                            <span>Difficulty:</span>
-                            <span className="flex">{renderStars(review.difficulty_rating)}</span>
+
+                          {/* Difficulty */}
+                          <div className="flex items-center gap-3">
+                            <span className="text-gray-700 font-medium w-24">Difficulty:</span>
+                            <div className="flex-1 flex items-center gap-2">
+                              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-full rounded-full transition-all ${
+                                    review.difficulty_rating <= 2 ? 'bg-green-500' :
+                                    review.difficulty_rating <= 3 ? 'bg-yellow-500' : 'bg-red-500'
+                                  }`}
+                                  style={{ width: `${(review.difficulty_rating / 5) * 100}%` }}
+                                />
+                              </div>
+                              <span className={`font-semibold w-8 ${
+                                review.difficulty_rating <= 2 ? 'text-green-600' :
+                                review.difficulty_rating <= 3 ? 'text-yellow-600' : 'text-red-600'
+                              }`}>
+                                {review.difficulty_rating.toFixed(1)}
+                              </span>
+                            </div>
                           </div>
                         </div>
 
