@@ -157,6 +157,10 @@ export default function HomePage() {
     setLoading(true);
     setShowSuggestions(false);
     
+    // Clear both immediately to prevent race condition
+    setProfessors([]);
+    setColleges([]);
+    
     try {
       if (searchType === 'professors') {
         const response = await RateMyProfAPI.searchProfessors({ 
@@ -179,7 +183,6 @@ export default function HomePage() {
           });
         
         setProfessors(sortedProfessors);
-        setColleges([]);
       } else {
         const response = await RateMyProfAPI.searchColleges({ 
           q: searchQuery,
@@ -196,7 +199,6 @@ export default function HomePage() {
           });
         
         setColleges(sortedColleges);
-        setProfessors([]);
       }
     } catch (error) {
       console.error('Search failed:', error);
@@ -207,6 +209,9 @@ export default function HomePage() {
 
   const loadAllColleges = async () => {
     setLoading(true);
+    // Clear professors immediately to prevent showing wrong data
+    setProfessors([]);
+    
     try {
       const response = await RateMyProfAPI.searchColleges({ 
         q: '', 
@@ -223,7 +228,6 @@ export default function HomePage() {
         });
       
       setColleges(sortedColleges);
-      setProfessors([]);
     } catch (error) {
       console.error('Failed to load colleges:', error);
     } finally {
@@ -237,12 +241,15 @@ export default function HomePage() {
     setSuggestions([]);
     setShowSuggestions(false);
     
+    // Immediately clear both professors and colleges to prevent showing wrong data
+    setProfessors([]);
+    setColleges([]);
+    
+    // Only load colleges data when switching to colleges tab
     if (type === 'colleges') {
       loadAllColleges();
-    } else {
-      setColleges([]);
-      setProfessors([]);
     }
+    // When switching to professors tab, just clear everything (no auto-load)
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
