@@ -14,18 +14,38 @@ import { API_BASE_URL } from '../config/api'
 
 interface ReviewData {
   id: string
-  professorName: string
-  professorDepartment: string
+  type: 'professor' | 'college'
+  // Professor review fields
+  professorName?: string
+  professorDepartment?: string
+  professorId?: string
+  // College review fields
+  collegeName?: string
+  collegeCity?: string
+  collegeState?: string
+  collegeId?: string
+  ratings?: {
+    food?: number
+    internet?: number
+    clubs?: number
+    opportunities?: number
+    facilities?: number
+    teaching?: number
+    overall?: number
+  }
+  // Common fields
   courseName: string
-  semester: string
-  academicYear: string
+  semester?: string
+  academicYear?: string
+  yearOfStudy?: string
+  graduationYear?: number
   overallRating: number
-  difficultyRating: number
-  clarityRating: number
-  helpfulnessRating: number
+  difficultyRating?: number
+  clarityRating?: number
+  helpfulnessRating?: number
   reviewText: string
-  attendanceMandatory: boolean | null
-  assignmentLoad: string
+  attendanceMandatory?: boolean | null
+  assignmentLoad?: string
   createdAt: string
   status: 'pending' | 'approved' | 'rejected'
 }
@@ -45,19 +65,51 @@ export default function MyReviewsPage() {
 
     const fetchUserReviews = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/reviews/my-reviews`, {
-          headers: {
-            'Authorization': `Bearer ${session?.access_token}`,
-          },
-        });
+        // Fetch both professor and college reviews
+        const [profResponse, collegeResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/reviews/my-reviews`, {
+            headers: {
+              'Authorization': `Bearer ${session?.access_token}`,
+            },
+          }),
+          fetch(`${API_BASE_URL}/college-reviews/my-reviews`, {
+            headers: {
+              'Authorization': `Bearer ${session?.access_token}`,
+            },
+          })
+        ]);
         
-        if (response.ok) {
-          const data = await response.json();
-          setReviews(data.reviews || []);
+        const allReviews: ReviewData[] = [];
+        
+        // Process professor reviews
+        if (profResponse.ok) {
+          const profData = await profResponse.json();
+          const professorReviews = (profData.reviews || []).map((r: any) => ({
+            ...r,
+            type: 'professor' as const
+          }));
+          allReviews.push(...professorReviews);
         } else {
-          console.error('Failed to fetch reviews');
-          setReviews([]);
+          console.error('Failed to fetch professor reviews');
         }
+        
+        // Process college reviews
+        if (collegeResponse.ok) {
+          const collegeData = await collegeResponse.json();
+          const collegeReviews = (collegeData.reviews || []).map((r: any) => ({
+            ...r,
+            type: 'college' as const,
+            overallRating: r.ratings?.overall || 0
+          }));
+          allReviews.push(...collegeReviews);
+        } else {
+          console.error('Failed to fetch college reviews');
+        }
+        
+        // Sort by date (newest first)
+        allReviews.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        
+        setReviews(allReviews);
       } catch (error) {
         console.error('Error fetching reviews:', error);
         setReviews([]);
@@ -70,12 +122,16 @@ export default function MyReviewsPage() {
     }
   }, [user, session, authLoading, router])
 
-  const handleDeleteReview = async (reviewId: string) => {
+  const handleDeleteReview = async (reviewId: string, reviewType: 'professor' | 'college') => {
     showConfirm(
       'Are you sure you want to delete this review? This action cannot be undone.',
       async () => {
         try {
-          const response = await fetch(`${API_BASE_URL}/reviews/${reviewId}`, {
+          const endpoint = reviewType === 'professor' 
+            ? `${API_BASE_URL}/reviews/${reviewId}`
+            : `${API_BASE_URL}/college-reviews/${reviewId}`;
+            
+          const response = await fetch(endpoint, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${session?.access_token}`,
@@ -198,25 +254,34 @@ export default function MyReviewsPage() {
                     {/* Review Header */}
                     <div className="flex items-start justify-between mb-4">
                       <div>
+                        {/* Review Type Badge */}
+                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full mb-2 ${
+                          review.type === 'professor' 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : 'bg-purple-100 text-purple-800'
+                        }`}>
+                          {review.type === 'professor' ? '👨‍🏫 Professor Review' : '🏫 College Review'}
+                        </span>
+                        
                         <h3 className="text-lg font-semibold text-gray-900">
-                          {review.professorName}
+                          {review.type === 'professor' ? review.professorName : review.collegeName}
                         </h3>
-                        <p className="text-sm text-gray-600">{review.professorDepartment}</p>
+                        <p className="text-sm text-gray-600">
+                          {review.type === 'professor' 
+                            ? review.professorDepartment 
+                            : `${review.collegeCity}, ${review.collegeState}`}
+                        </p>
                         <p className="text-sm text-indigo-600 font-medium">
-                          {review.courseName} • {review.semester} {review.academicYear}
+                          {review.courseName} • {review.type === 'professor' 
+                            ? `${review.semester} ${review.academicYear}`
+                            : `${review.yearOfStudy} (${review.graduationYear})`}
                         </p>
                       </div>
                       <div className="flex items-center space-x-2">
                         {getStatusBadge(review.status)}
                         <div className="flex space-x-2">
                           <button
-                            className="p-1 text-gray-400 hover:text-indigo-600"
-                            title="Edit Review"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteReview(review.id)}
+                            onClick={() => handleDeleteReview(review.id, review.type)}
                             className="p-1 text-gray-400 hover:text-red-600"
                             title="Delete Review"
                           >
@@ -227,24 +292,59 @@ export default function MyReviewsPage() {
                     </div>
 
                     {/* Ratings Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Overall</p>
-                        {renderStars(review.overallRating)}
+                    {review.type === 'professor' ? (
+                      /* Professor Ratings */
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Overall</p>
+                          {renderStars(review.overallRating)}
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Difficulty</p>
+                          {renderStars(review.difficultyRating || 0)}
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Clarity</p>
+                          {renderStars(review.clarityRating || 0)}
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Helpfulness</p>
+                          {renderStars(review.helpfulnessRating || 0)}
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Difficulty</p>
-                        {renderStars(review.difficultyRating)}
+                    ) : (
+                      /* College Ratings */
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Overall</p>
+                          {renderStars(review.ratings?.overall || 0)}
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Food</p>
+                          {renderStars(review.ratings?.food || 0)}
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Internet</p>
+                          {renderStars(review.ratings?.internet || 0)}
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Clubs</p>
+                          {renderStars(review.ratings?.clubs || 0)}
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Opportunities</p>
+                          {renderStars(review.ratings?.opportunities || 0)}
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Facilities</p>
+                          {renderStars(review.ratings?.facilities || 0)}
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Teaching</p>
+                          {renderStars(review.ratings?.teaching || 0)}
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Clarity</p>
-                        {renderStars(review.clarityRating)}
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500 mb-1">Helpfulness</p>
-                        {renderStars(review.helpfulnessRating)}
-                      </div>
-                    </div>
+                    )}
 
                     {/* Review Text */}
                     {review.reviewText && (
@@ -255,15 +355,19 @@ export default function MyReviewsPage() {
 
                     {/* Additional Info */}
                     <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                      {review.attendanceMandatory !== null && (
-                        <span>
-                          Attendance: {review.attendanceMandatory ? 'Mandatory' : 'Optional'}
-                        </span>
-                      )}
-                      {review.assignmentLoad && (
-                        <span>
-                          Workload: {review.assignmentLoad.charAt(0).toUpperCase() + review.assignmentLoad.slice(1)}
-                        </span>
+                      {review.type === 'professor' && (
+                        <>
+                          {review.attendanceMandatory !== null && (
+                            <span>
+                              Attendance: {review.attendanceMandatory ? 'Mandatory' : 'Optional'}
+                            </span>
+                          )}
+                          {review.assignmentLoad && (
+                            <span>
+                              Workload: {review.assignmentLoad.charAt(0).toUpperCase() + review.assignmentLoad.slice(1)}
+                            </span>
+                          )}
+                        </>
                       )}
                       <span className="flex items-center">
                         <Calendar className="w-3 h-3 mr-1" />
