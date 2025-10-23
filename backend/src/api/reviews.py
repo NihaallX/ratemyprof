@@ -9,7 +9,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, field_validator
 from supabase import Client
 
-from src.lib.database import get_supabase, get_supabase_admin
+from src.lib.database import get_supabase
 from src.lib.auth import get_current_user, get_optional_current_user
 from src.services.auto_flagging import AutoFlaggingSystem
 
@@ -140,13 +140,8 @@ async def create_review(
                 detail="Authentication required to submit reviews"
             )
         
-        # Get admin client for mapping operations
-        supabase_admin = get_supabase_admin()
-        if not supabase_admin:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Admin operations not available"
-            )
+        # Note: Using authenticated supabase client (not admin)
+        # RLS policies will verify auth.uid() for all operations
         
         # Check if professor exists
         prof_check = supabase.table('professors').select('id').eq('id', request.professor_id).single().execute()
@@ -158,8 +153,9 @@ async def create_review(
         
         # Check for duplicate reviews using the mapping table
         # Get all review IDs for this user from the mapping table
+        # RLS policy: Users can read their own mappings via auth.uid()
         try:
-            user_mappings = supabase_admin.table('review_author_mappings').select(
+            user_mappings = supabase.table('review_author_mappings').select(
                 'review_id'
             ).eq('author_id', current_user['id']).execute()
             
@@ -202,8 +198,9 @@ async def create_review(
             'status': 'approved'  # Default, may be changed by auto-flagging
         }
         
-        # Use admin client to insert review (bypasses RLS)
-        result = supabase_admin.table('reviews').insert(review_data).execute()
+        # Insert review using authenticated client
+        # RLS policy: "Authenticated users create reviews" allows this
+        result = supabase.table('reviews').insert(review_data).execute()
         review_data = result.data[0]
         print(f"✅ REVIEW INSERTED INTO DATABASE: {review_data['id']}")
         print(f"   Review ID type: {type(review_data['id'])}")
@@ -222,9 +219,10 @@ async def create_review(
         print(f"🔑 CREATING MAPPING: review_id={review_data['id']}, author_id={current_user['id']}")
         print(f"   Mapping data: {mapping_data}")
         
-        # Insert mapping using admin client (service_role bypasses RLS)
+        # Insert mapping using authenticated client
+        # RLS policy: "Users create own mappings" allows user to map their own review
         try:
-            supabase_admin.table('review_author_mappings').insert(mapping_data).execute()
+            supabase.table('review_author_mappings').insert(mapping_data).execute()
             print(f"✅ MAPPING CREATED SUCCESSFULLY")
         except Exception as mapping_error:
             print(f"❌ MAPPING FAILED: {str(mapping_error)}")
@@ -443,16 +441,9 @@ async def get_my_reviews(
                 detail="Authentication required"
             )
         
-        # Get admin client to query the mapping table
-        supabase_admin = get_supabase_admin()
-        if not supabase_admin:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Unable to retrieve user reviews"
-            )
-        
         # Get user's review IDs from the mapping table
-        mappings = supabase_admin.table('review_author_mappings').select(
+        # RLS policy: Users can read their own mappings via auth.uid()
+        mappings = supabase.table('review_author_mappings').select(
             'review_id'
         ).eq('author_id', current_user['id']).execute()
         
@@ -536,16 +527,9 @@ async def delete_my_review(
                 detail="Authentication required"
             )
         
-        # Get admin client to check the mapping
-        supabase_admin = get_supabase_admin()
-        if not supabase_admin:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Unable to process request"
-            )
-        
         # Check if this review belongs to the current user
-        mapping = supabase_admin.table('review_author_mappings').select(
+        # RLS policy: Users can read their own mappings via auth.uid()
+        mapping = supabase.table('review_author_mappings').select(
             'review_id, author_id'
         ).eq('review_id', review_id).eq('author_id', current_user['id']).single().execute()
         
@@ -569,7 +553,8 @@ async def delete_my_review(
         professor_id = review.data['professor_id']
         
         # Delete the mapping first (foreign key will cascade delete if configured, but let's be explicit)
-        supabase_admin.table('review_author_mappings').delete().eq(
+        # RLS policy: Users can delete their own mappings via auth.uid()
+        supabase.table('review_author_mappings').delete().eq(
             'review_id', review_id
         ).execute()
         

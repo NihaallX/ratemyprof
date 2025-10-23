@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, field_validator
 from supabase import Client
 
-from src.lib.database import get_supabase, get_supabase_admin
+from src.lib.database import get_supabase
 from src.lib.auth import get_current_user
 
 router = APIRouter()
@@ -169,14 +169,16 @@ async def get_review_guidelines():
 async def create_college_review(
     request: CollegeReviewCreate,
     current_user: dict = Depends(get_current_user),
-    supabase: Client = Depends(get_supabase),
-    supabase_admin: Client = Depends(get_supabase_admin)
+    supabase: Client = Depends(get_supabase)
 ):
     """Submit a review for a college.
     
     All college reviews are anonymous to protect student privacy.
     Authentication is required to prevent spam, but user identity is not revealed.
     Uses mapping table to link reviews to authors without storing user_id in review.
+    
+    **RLS Policy**: Uses authenticated client. The "Authenticated users create college reviews" 
+    policy verifies auth.uid() IS NOT NULL before allowing insert.
     """
     try:
         print(f"\n{'='*80}")
@@ -196,7 +198,8 @@ async def create_college_review(
         print(f"✅ College found: {college_check.data[0]['name']}")
         
         # Check for duplicate reviews using mapping table
-        existing_mapping = supabase_admin.table('college_review_author_mappings').select(
+        # RLS policy: Users can read their own mappings via auth.uid()
+        existing_mapping = supabase.table('college_review_author_mappings').select(
             'id, review_id'
         ).eq('author_id', current_user['id']).execute()
         
@@ -237,8 +240,9 @@ async def create_college_review(
             'not_helpful_count': 0
         }
         
-        # Use admin client to insert review (bypasses RLS)
-        result = supabase_admin.table('college_reviews').insert(review_data).execute()
+        # Insert review using authenticated client
+        # RLS policy: "Authenticated users create college reviews" allows this
+        result = supabase.table('college_reviews').insert(review_data).execute()
         review_data = result.data[0]
         print(f"✅ COLLEGE REVIEW INSERTED: {review_data['id']}")
         print(f"   Review ID type: {type(review_data['id'])}")
@@ -253,13 +257,15 @@ async def create_college_review(
         
         print(f"🔑 CREATING MAPPING: review_id={review_data['id']}, author_id={current_user['id']}")
         
+        # Insert mapping using authenticated client
+        # RLS policy: "Users create own college review mappings" allows user to map their own review
         try:
-            supabase_admin.table('college_review_author_mappings').insert(mapping_data).execute()
+            supabase.table('college_review_author_mappings').insert(mapping_data).execute()
             print(f"✅ MAPPING CREATED SUCCESSFULLY")
         except Exception as mapping_error:
             print(f"❌ MAPPING FAILED: {str(mapping_error)}")
             # Rollback: delete the review if mapping fails
-            supabase_admin.table('college_reviews').delete().eq('id', review_data['id']).execute()
+            supabase.table('college_reviews').delete().eq('id', review_data['id']).execute()
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to create review mapping: {str(mapping_error)}"
@@ -400,13 +406,15 @@ async def update_college_review(
     review_id: str,
     request: CollegeReviewUpdate,
     current_user: dict = Depends(get_current_user),
-    supabase: Client = Depends(get_supabase),
-    supabase_admin: Client = Depends(get_supabase_admin)
+    supabase: Client = Depends(get_supabase)
 ):
     """Update an existing college review.
     
     Allows users to update their own college reviews.
     Uses mapping table to verify ownership.
+    
+    **RLS Policy**: "Users update own college reviews" enforces ownership check via
+    college_review_author_mappings table.
     """
     try:
         # Validate UUID format
@@ -427,7 +435,8 @@ async def update_college_review(
             )
         
         # Check ownership using mapping table
-        mapping = supabase_admin.table('college_review_author_mappings').select('author_id').eq(
+        # RLS policy: Users can read their own mappings via auth.uid()
+        mapping = supabase.table('college_review_author_mappings').select('author_id').eq(
             'review_id', review_id
         ).execute()
         
@@ -465,8 +474,9 @@ async def update_college_review(
                 detail="At least one field must be provided for update"
             )
         
-        # Update the review using admin client
-        result = supabase_admin.table('college_reviews').update(update_data).eq('id', review_id).execute()
+        # Update the review using authenticated client
+        # RLS policy: "Users update own college reviews" enforces ownership via mapping
+        result = supabase.table('college_reviews').update(update_data).eq('id', review_id).execute()
         updated_review = result.data[0]
         
         # Update college statistics
@@ -512,13 +522,15 @@ async def update_college_review(
 async def delete_college_review(
     review_id: str,
     current_user: dict = Depends(get_current_user),
-    supabase: Client = Depends(get_supabase),
-    supabase_admin: Client = Depends(get_supabase_admin)
+    supabase: Client = Depends(get_supabase)
 ):
     """Delete a college review.
     
     Allows users to delete their own college reviews.
     Uses mapping table to verify ownership.
+    
+    **RLS Policy**: "Users delete own college reviews" enforces ownership check via
+    college_review_author_mappings table.
     """
     try:
         # Validate UUID format
@@ -539,7 +551,8 @@ async def delete_college_review(
             )
         
         # Check ownership using mapping table
-        mapping = supabase_admin.table('college_review_author_mappings').select('author_id').eq(
+        # RLS policy: Users can read their own mappings via auth.uid()
+        mapping = supabase.table('college_review_author_mappings').select('author_id').eq(
             'review_id', review_id
         ).execute()
         
@@ -552,10 +565,12 @@ async def delete_college_review(
         college_id = existing.data[0]['college_id']
         
         # Delete the mapping first
-        supabase_admin.table('college_review_author_mappings').delete().eq('review_id', review_id).execute()
+        # RLS policy: Users can delete their own mappings via auth.uid()
+        supabase.table('college_review_author_mappings').delete().eq('review_id', review_id).execute()
         
         # Delete the review
-        supabase_admin.table('college_reviews').delete().eq('id', review_id).execute()
+        # RLS policy: "Users delete own college reviews" enforces ownership
+        supabase.table('college_reviews').delete().eq('id', review_id).execute()
         
         # Update college statistics
         await _update_college_stats(college_id, supabase)
