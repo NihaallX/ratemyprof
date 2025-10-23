@@ -7,6 +7,7 @@ from supabase import Client
 import uuid
 
 from src.lib.database import get_supabase
+from src.lib.auth import get_current_user
 
 router = APIRouter()
 
@@ -176,14 +177,23 @@ async def get_professor(
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_professor(
     request: ProfessorCreate,
+    current_user: Dict[str, Any] = Depends(get_current_user),
     supabase: Client = Depends(get_supabase)
 ):
     """Create a new professor profile.
     
     Users can submit new professor profiles that will go through
     verification before appearing in search results.
+    
+    **Authentication Required**: This endpoint requires a valid JWT token.
+    
+    **RLS Policy**: The "Authenticated users can submit professors" policy
+    will verify that auth.uid() is not null before allowing the insert.
     """
     try:
+        # Authentication is enforced by get_current_user() dependency
+        # RLS policy will verify auth.uid() IS NOT NULL before allowing insert
+        print(f"User {current_user['email']} (ID: {current_user['id']}) submitting professor")
         # Verify college exists
         college_result = supabase.table('colleges').select('id, name').eq(
             'id', request.college_id
