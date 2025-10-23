@@ -35,12 +35,14 @@ const FlagReviewButton: React.FC<FlagReviewButtonProps> = ({
       return;
     }
 
-    setIsSubmitting(true);
-
+    // Check authentication BEFORE setting submitting state
     if (!user || !session) {
       showToast('Please log in to flag reviews', 'error');
+      setIsOpen(false); // Close the dialog
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const response = await fetch(`${API_LEGACY_BASE}/reviews/${reviewId}/flag`, {
