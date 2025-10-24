@@ -340,10 +340,10 @@ async def get_similar_professors(
 
 @router.get("/more-professors")
 async def get_more_professors(
-    supabase: Client = Depends(get_supabase),
     college_id: str = None,
     exclude_id: str = None,
-    limit: int = 6
+    limit: int = 6,
+    supabase: Client = Depends(get_supabase)
 ):
     """Get more professors to explore.
     
