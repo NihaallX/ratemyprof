@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MessageSquare, Users, Clock, CheckCircle, Plus, TrendingUp, Award, Wifi, Coffee, Building, BookOpen, Users as UsersIcon } from 'lucide-react';
 import CollegeReviewForm from './CollegeReviewForm';
+import { API_BASE_URL } from '../config/api';
 
 interface CollegeRatings {
   food: number;
@@ -57,7 +58,7 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
 
   const fetchReviews = async () => {
     try {
-      const response = await fetch(`/api/college-reviews/college/${collegeId}`);
+      const response = await fetch(`${API_BASE_URL}/college-reviews/college/${collegeId}`);
       if (response.ok) {
         const data = await response.json();
         setReviews(data.reviews);
