@@ -332,6 +332,26 @@ async def moderate_review(
             'moderated_by': current_user['id']
         }).eq('id', review_id).execute()
         
+        # Recalculate professor ratings after moderation action
+        professor_id = review_check.data['professor_id']
+        approved_reviews = supabase.table('reviews').select('overall_rating').eq(
+            'professor_id', professor_id
+        ).eq('status', 'approved').execute()
+        
+        if approved_reviews.data and len(approved_reviews.data) > 0:
+            total_reviews = len(approved_reviews.data)
+            average_rating = sum(r['overall_rating'] for r in approved_reviews.data) / total_reviews
+            supabase.table('professors').update({
+                'average_rating': round(average_rating, 1),
+                'total_reviews': total_reviews
+            }).eq('id', professor_id).execute()
+        else:
+            # No approved reviews, reset to 0
+            supabase.table('professors').update({
+                'average_rating': 0.0,
+                'total_reviews': 0
+            }).eq('id', professor_id).execute()
+        
         # Log moderation action
         log_data = {
             'review_id': review_id,
