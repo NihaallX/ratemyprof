@@ -125,9 +125,13 @@ export default function ProfessorProfile() {
       if (response.ok) {
         const data = await response.json();
         setSimilarProfessors(data.professors || []);
+      } else {
+        console.warn(`Similar professors endpoint returned ${response.status} - feature may not be deployed yet`);
+        setSimilarProfessors([]);
       }
     } catch (err) {
       console.error('Failed to fetch similar professors:', err);
+      setSimilarProfessors([]);
     }
   };
 
@@ -137,9 +141,13 @@ export default function ProfessorProfile() {
       if (response.ok) {
         const data = await response.json();
         setMoreProfessors(data.professors || []);
+      } else {
+        console.warn(`More professors endpoint returned ${response.status} - feature may not be deployed yet`);
+        setMoreProfessors([]);
       }
     } catch (err) {
       console.error('Failed to fetch more professors:', err);
+      setMoreProfessors([]);
     }
   };
 
