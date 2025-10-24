@@ -266,3 +266,226 @@ async def create_professor(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create professor: {str(e)}"
         )
+
+
+@router.get("/similar/{professor_id}")
+async def get_similar_professors(
+    professor_id: str,
+    supabase: Client = Depends(get_supabase)
+):
+    """Get similar professors based on college and department.
+    
+    Returns up to 3 professors from the same college and department.
+    Excludes the current professor from results.
+    """
+    try:
+        # Get current professor details
+        prof_result = supabase.table('professors').select(
+            'college_id, department'
+        ).eq('id', professor_id).execute()
+        
+        if not prof_result.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Professor not found"
+            )
+        
+        current_prof = prof_result.data[0]
+        
+        # Get similar professors - same college and department
+        similar_result = supabase.table('professors').select(
+            'id, name, department, average_rating, total_reviews, subjects'
+        ).eq('college_id', current_prof['college_id']).eq(
+            'department', current_prof['department']
+        ).neq('id', professor_id).order(
+            'average_rating', desc=True
+        ).limit(3).execute()
+        
+        professors = []
+        for prof in similar_result.data:
+            # Handle subjects - can be list or comma-separated string
+            subjects = prof.get('subjects', [])
+            if isinstance(subjects, str):
+                subjects = [s.strip() for s in subjects.split(',') if s.strip()]
+            elif not isinstance(subjects, list):
+                subjects = []
+                
+            professors.append({
+                'id': prof['id'],
+                'name': prof['name'],
+                'department': prof['department'],
+                'average_rating': prof.get('average_rating') or 0.0,
+                'total_reviews': prof.get('total_reviews') or 0,
+                'subjects': subjects
+            })
+        
+        return {
+            'professors': professors,
+            'total': len(professors)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch similar professors: {str(e)}"
+        )
+
+
+@router.get("/more-professors")
+async def get_more_professors(
+    college_id: Optional[str] = None,
+    exclude_id: Optional[str] = None,
+    limit: int = Query(6, ge=1, le=20),
+    supabase: Client = Depends(get_supabase)
+):
+    """Get more professors to explore.
+    
+    Returns top-rated professors, optionally filtered by college.
+    Can exclude a specific professor (useful for showing on professor detail page).
+    """
+    try:
+        query = supabase.table('professors').select(
+            'id, name, department, average_rating, total_reviews, subjects, college_id'
+        )
+        
+        if college_id:
+            query = query.eq('college_id', college_id)
+        
+        if exclude_id:
+            query = query.neq('id', exclude_id)
+        
+        # Get top-rated professors with at least 1 review
+        result = query.gt('total_reviews', 0).order(
+            'average_rating', desc=True
+        ).order('total_reviews', desc=True).limit(limit).execute()
+        
+        professors = []
+        for prof in result.data:
+            # Handle subjects - can be list or comma-separated string
+            subjects = prof.get('subjects', [])
+            if isinstance(subjects, str):
+                subjects = [s.strip() for s in subjects.split(',') if s.strip()]
+            elif not isinstance(subjects, list):
+                subjects = []
+                
+            professors.append({
+                'id': prof['id'],
+                'name': prof['name'],
+                'department': prof['department'],
+                'average_rating': prof.get('average_rating') or 0.0,
+                'total_reviews': prof.get('total_reviews') or 0,
+                'subjects': subjects
+            })
+        
+        return {
+            'professors': professors,
+            'total': len(professors)
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch professors: {str(e)}"
+        )
+
+
+@router.get("/compare")
+async def compare_professors(
+    ids: str = Query(..., description="Comma-separated professor IDs to compare"),
+    supabase: Client = Depends(get_supabase)
+):
+    """Compare multiple professors side by side.
+    
+    Accepts up to 4 professor IDs separated by commas.
+    Returns detailed comparison data including ratings and review stats.
+    """
+    try:
+        # Parse professor IDs
+        professor_ids = [pid.strip() for pid in ids.split(',') if pid.strip()]
+        
+        if len(professor_ids) < 2:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="At least 2 professors are required for comparison"
+            )
+        
+        if len(professor_ids) > 4:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Maximum 4 professors can be compared at once"
+            )
+        
+        # Fetch professor details
+        professors_result = supabase.table('professors').select(
+            'id, name, department, average_rating, total_reviews, subjects, college_id, colleges(name)'
+        ).in_('id', professor_ids).execute()
+        
+        if len(professors_result.data) != len(professor_ids):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="One or more professors not found"
+            )
+        
+        # Get average ratings breakdown for each professor
+        comparison_data = []
+        for prof in professors_result.data:
+            # Calculate average ratings from reviews
+            reviews_result = supabase.table('reviews').select(
+                'overall_rating, difficulty_rating, clarity_rating, helpfulness_rating'
+            ).eq('professor_id', prof['id']).eq('status', 'approved').execute()
+            
+            avg_ratings = {
+                'overall': 0.0,
+                'difficulty': 0.0,
+                'clarity': 0.0,
+                'helpfulness': 0.0
+            }
+            
+            if reviews_result.data:
+                count = len(reviews_result.data)
+                avg_ratings['overall'] = sum(r['overall_rating'] for r in reviews_result.data) / count
+                avg_ratings['difficulty'] = sum(r['difficulty_rating'] for r in reviews_result.data) / count
+                avg_ratings['clarity'] = sum(r['clarity_rating'] for r in reviews_result.data) / count
+                avg_ratings['helpfulness'] = sum(r['helpfulness_rating'] for r in reviews_result.data) / count
+            
+            # Handle colleges data
+            college_name = 'Unknown'
+            if 'colleges' in prof:
+                colleges_data = prof['colleges']
+                if isinstance(colleges_data, dict):
+                    college_name = colleges_data.get('name', 'Unknown')
+                elif isinstance(colleges_data, list) and len(colleges_data) > 0:
+                    college_name = colleges_data[0].get('name', 'Unknown')
+            
+            # Handle subjects - can be list or comma-separated string
+            subjects = prof.get('subjects', [])
+            if isinstance(subjects, str):
+                subjects = [s.strip() for s in subjects.split(',') if s.strip()]
+            elif not isinstance(subjects, list):
+                subjects = []
+            
+            comparison_data.append({
+                'id': prof['id'],
+                'name': prof['name'],
+                'department': prof['department'],
+                'college_name': college_name,
+                'average_rating': prof.get('average_rating') or 0.0,
+                'total_reviews': prof.get('total_reviews') or 0,
+                'subjects': subjects,
+                'ratings_breakdown': avg_ratings
+            })
+        
+        return {
+            'professors': comparison_data,
+            'count': len(comparison_data)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to compare professors: {str(e)}"
+        )
