@@ -281,7 +281,7 @@ async def get_similar_professors(
     try:
         # Get current professor details
         prof_result = supabase.table('professors').select(
-            'college_id, department'
+            'college_id, department, name'
         ).eq('id', professor_id).execute()
         
         if not prof_result.data:
@@ -292,6 +292,9 @@ async def get_similar_professors(
         
         current_prof = prof_result.data[0]
         
+        print(f"🔍 Finding similar professors for: {current_prof['name']}")
+        print(f"   College: {current_prof['college_id']}, Department: {current_prof['department']}")
+        
         # Get similar professors - same college and department
         similar_result = supabase.table('professors').select(
             'id, name, department, average_rating, total_reviews, subjects'
@@ -300,6 +303,8 @@ async def get_similar_professors(
         ).neq('id', professor_id).order(
             'average_rating', desc=True
         ).limit(3).execute()
+        
+        print(f"   Found {len(similar_result.data)} similar professors")
         
         professors = []
         for prof in similar_result.data:
