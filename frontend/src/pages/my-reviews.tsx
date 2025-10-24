@@ -58,27 +58,51 @@ export default function MyReviewsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login')
-      return
+    // Debug logging
+    console.log('🔍 My Reviews useEffect triggered');
+    console.log('authLoading:', authLoading);
+    console.log('user:', user);
+    console.log('session:', session);
+    console.log('session?.access_token:', session?.access_token);
+    
+    // Don't run fetch if auth is still loading
+    if (authLoading) {
+      console.log('⏳ Auth still loading, waiting...');
+      setLoading(true);
+      return;
     }
 
+    // If no session or token, user is not logged in
+    if (!session?.access_token) {
+      console.log('❌ No access token found');
+      console.log('Session object:', JSON.stringify(session, null, 2));
+      setLoading(false);
+      return;
+    }
+
+    console.log('✅ Access token found, fetching reviews...');
+    
     const fetchUserReviews = async () => {
+      setLoading(true);
       try {
-        // Fetch both professor and college reviews
+        const headers = {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        };
+
         const [profResponse, collegeResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/reviews/my-reviews`, {
-            headers: {
-              'Authorization': `Bearer ${session?.access_token}`,
-            },
-          }),
-          fetch(`${API_BASE_URL}/college-reviews/my-reviews`, {
-            headers: {
-              'Authorization': `Bearer ${session?.access_token}`,
-            },
-          })
+          fetch(`${API_BASE_URL}/reviews/my-reviews`, { headers }),
+          fetch(`${API_BASE_URL}/college-reviews/my-reviews`, { headers }),
         ]);
-        
+
+        if (!profResponse.ok && profResponse.status !== 404) {
+          throw new Error('Failed to fetch professor reviews')
+        }
+
+        if (!collegeResponse.ok && collegeResponse.status !== 404) {
+          throw new Error('Failed to fetch college reviews')
+        }
+
         const allReviews: ReviewData[] = [];
         
         // Process professor reviews
@@ -89,9 +113,7 @@ export default function MyReviewsPage() {
             type: 'professor' as const
           }));
           allReviews.push(...professorReviews);
-        } else {
-          console.error('Failed to fetch professor reviews');
-        }
+        } 
         
         // Process college reviews
         if (collegeResponse.ok) {
@@ -102,9 +124,7 @@ export default function MyReviewsPage() {
             overallRating: r.ratings?.overall || 0
           }));
           allReviews.push(...collegeReviews);
-        } else {
-          console.error('Failed to fetch college reviews');
-        }
+        } 
         
         // Sort by date (newest first)
         allReviews.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -113,14 +133,13 @@ export default function MyReviewsPage() {
       } catch (error) {
         console.error('Error fetching reviews:', error);
         setReviews([]);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
-    if (user && session) {
-      fetchUserReviews();
-    }
-  }, [user, session, authLoading, router])
+    fetchUserReviews();
+  }, [user, session, authLoading, router]);
 
   const handleDeleteReview = async (reviewId: string, reviewType: 'professor' | 'college') => {
     showConfirm(
@@ -188,7 +207,7 @@ export default function MyReviewsPage() {
     )
   }
 
-  if (authLoading || loading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
