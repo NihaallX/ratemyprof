@@ -346,6 +346,8 @@ async def get_more_professors(
     Can exclude a specific professor (useful for showing on professor detail page).
     """
     try:
+        print(f"🔍 More professors request: college_id={college_id}, exclude_id={exclude_id}, limit={limit}")
+        
         # Validate limit
         if limit < 1 or limit > 20:
             limit = 6
@@ -364,6 +366,8 @@ async def get_more_professors(
         result = query.gt('total_reviews', 0).order(
             'average_rating', desc=True
         ).order('total_reviews', desc=True).limit(limit).execute()
+        
+        print(f"✅ Found {len(result.data) if result.data else 0} professors")
         
         professors = []
         for prof in result.data:
@@ -389,6 +393,9 @@ async def get_more_professors(
         }
         
     except Exception as e:
+        print(f"❌ Error in more-professors: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch professors: {str(e)}"
@@ -406,8 +413,12 @@ async def compare_professors(
     Returns detailed comparison data including ratings and review stats.
     """
     try:
+        print(f"🔍 Compare request: ids={ids}")
+        
         # Parse professor IDs
         professor_ids = [pid.strip() for pid in ids.split(',') if pid.strip()]
+        
+        print(f"📝 Parsed {len(professor_ids)} professor IDs: {professor_ids}")
         
         if len(professor_ids) < 2:
             raise HTTPException(
@@ -425,6 +436,8 @@ async def compare_professors(
         professors_result = supabase.table('professors').select(
             'id, name, department, average_rating, total_reviews, subjects, college_id, colleges(name)'
         ).in_('id', professor_ids).execute()
+        
+        print(f"✅ Found {len(professors_result.data) if professors_result.data else 0} professors")
         
         if len(professors_result.data) != len(professor_ids):
             raise HTTPException(
