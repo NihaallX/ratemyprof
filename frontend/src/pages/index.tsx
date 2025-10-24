@@ -49,6 +49,13 @@ export default function HomePage() {
     return ['Average', 'Improving'];
   };
 
+  // Helper function to get rating color based on value
+  const getRatingColor = (rating: number) => {
+    if (rating >= 4.0) return 'from-emerald-400 to-emerald-500'; // Green for 4.0+
+    if (rating >= 3.0) return 'from-yellow-400 to-yellow-500';   // Yellow for 3.0-3.9
+    return 'from-red-400 to-red-500';                             // Red for below 3.0
+  };
+
   // Load top-rated content on component mount
   useEffect(() => {
     loadTopRated();
@@ -660,7 +667,7 @@ export default function HomePage() {
                     >
                       <div className="flex h-full">
                         {/* Left Side - Quality Rating */}
-                        <div className="w-20 sm:w-24 bg-gradient-to-br from-emerald-400 to-emerald-500 flex flex-col items-center justify-center text-white p-3 sm:p-4 flex-shrink-0">
+                        <div className={`w-20 sm:w-24 bg-gradient-to-br ${getRatingColor(professor.average_rating)} flex flex-col items-center justify-center text-white p-3 sm:p-4 flex-shrink-0`}>
                           <div className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide mb-1">Quality</div>
                           <div className="text-2xl sm:text-3xl font-bold leading-none mb-1">
                             {professor.average_rating.toFixed(1)}
@@ -806,7 +813,7 @@ export default function HomePage() {
                   >
                     <div className="flex h-full">
                       {/* Left Side - Quality Rating */}
-                      <div className="w-20 sm:w-24 bg-gradient-to-br from-emerald-400 to-emerald-500 flex flex-col items-center justify-center text-white p-3 sm:p-4 relative flex-shrink-0">
+                      <div className={`w-20 sm:w-24 bg-gradient-to-br ${getRatingColor(professor.average_rating)} flex flex-col items-center justify-center text-white p-3 sm:p-4 relative flex-shrink-0`}>
                         {/* Top Rated Badge */}
                         {index < 3 && professor.average_rating >= 4.0 && (
                           <div className="absolute -top-1 -left-1 bg-yellow-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-br">
