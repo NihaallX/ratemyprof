@@ -50,8 +50,10 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
       if (response.ok) {
         const data = await response.json();
         console.log('Search results:', data); // Debug log
-        // Filter out already selected professors
-        const filtered = (data.professors || []).filter((p: any) => !selectedProfessors.includes(p.id));
+        // Filter out already selected professors and current professor
+        const filtered = (data.professors || []).filter((p: any) => 
+          p.id !== currentProfessorId && !selectedProfessors.includes(p.id)
+        );
         setSearchResults(filtered);
       } else {
         console.error('Search failed with status:', response.status);
@@ -74,13 +76,14 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
     return () => clearTimeout(timer);
   }, [searchQuery, selectedProfessors]);
 
-  // Add professor to comparison
+  // Add professor to comparison (only allow 2 total: current + 1)
   const addProfessor = (professorId: string) => {
-    if (selectedProfessors.length >= 4) {
-      alert('You can compare up to 4 professors at once');
+    if (selectedProfessors.length >= 2) {
+      alert('You can only compare with one other professor');
       return;
     }
     if (!selectedProfessors.includes(professorId)) {
+      console.log('Adding professor:', professorId);
       setSelectedProfessors([...selectedProfessors, professorId]);
       setSearchQuery('');
       setSearchResults([]);
@@ -132,7 +135,7 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
       {/* Search Section */}
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Add Professor to Compare (Up to 4 total)
+          Search for a Professor to Compare With
         </label>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -144,7 +147,7 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search for professors..."
             className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            disabled={selectedProfessors.length >= 4}
+            disabled={selectedProfessors.length >= 2}
           />
         </div>
 
@@ -157,10 +160,17 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
                 onClick={() => addProfessor(prof.id)}
                 className="w-full px-4 py-3 text-left hover:bg-indigo-50 border-b border-gray-100 last:border-b-0 transition-colors"
               >
-                <div className="font-semibold text-gray-900">{prof.name}</div>
-                <div className="text-sm text-gray-600">{prof.department}</div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold text-gray-900">{prof.name}</div>
+                    <div className="text-sm text-gray-600">{prof.department}</div>
+                  </div>
+                  <div className={`ml-4 px-3 py-1 rounded-full font-bold text-sm text-white ${getRatingBg(prof.average_rating || 0)}`}>
+                    {(prof.average_rating || 0).toFixed(1)}
+                  </div>
+                </div>
                 <div className="text-xs text-gray-500 mt-1">
-                  ⭐ {(prof.average_rating || 0).toFixed(1)} • {prof.total_reviews || 0} reviews
+                  {prof.total_reviews || 0} reviews
                 </div>
               </button>
             ))}
@@ -179,26 +189,28 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
       </div>
 
       {/* Selected Professors Tags */}
-      <div className="mb-6">
-        <div className="flex flex-wrap gap-2">
-          {comparisonData.map((prof) => (
-            <div
-              key={prof.id}
-              className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm"
-            >
-              <span>{prof.name}</span>
-              {prof.id !== currentProfessorId && (
-                <button
-                  onClick={() => removeProfessor(prof.id)}
-                  className="hover:text-indigo-900"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          ))}
+      {comparisonData.length > 0 && (
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
+            {comparisonData.map((prof) => (
+              <div
+                key={prof.id}
+                className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm"
+              >
+                <span>{prof.name}</span>
+                {prof.id !== currentProfessorId && (
+                  <button
+                    onClick={() => removeProfessor(prof.id)}
+                    className="hover:text-indigo-900"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Comparison Table */}
       {loading ? (
@@ -231,8 +243,8 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
                 <td className="px-4 py-3 font-medium text-gray-900">Overall Rating</td>
                 {comparisonData.map((prof) => (
                   <td key={prof.id} className="px-4 py-3 text-center">
-                    <div className={`inline-flex items-center px-3 py-1 rounded-full font-bold ${getRatingBg(prof.average_rating)} text-white`}>
-                      ★ {prof.average_rating.toFixed(1)}
+                    <div className={`inline-flex items-center px-4 py-2 rounded-full font-bold text-lg ${getRatingBg(prof.average_rating)} text-white`}>
+                      {prof.average_rating.toFixed(1)}
                     </div>
                   </td>
                 ))}
@@ -253,9 +265,9 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
                 <td className="px-4 py-3 font-medium text-gray-900">Clarity</td>
                 {comparisonData.map((prof) => (
                   <td key={prof.id} className="px-4 py-3 text-center">
-                    <span className={`font-semibold ${getRatingColor(prof.ratings_breakdown.clarity)}`}>
-                      {prof.ratings_breakdown.clarity.toFixed(1)} / 5.0
-                    </span>
+                    <div className={`inline-flex items-center px-3 py-1 rounded-full font-semibold text-white ${getRatingBg(prof.ratings_breakdown.clarity)}`}>
+                      {prof.ratings_breakdown.clarity.toFixed(1)}
+                    </div>
                   </td>
                 ))}
               </tr>
@@ -265,9 +277,9 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
                 <td className="px-4 py-3 font-medium text-gray-900">Helpfulness</td>
                 {comparisonData.map((prof) => (
                   <td key={prof.id} className="px-4 py-3 text-center">
-                    <span className={`font-semibold ${getRatingColor(prof.ratings_breakdown.helpfulness)}`}>
-                      {prof.ratings_breakdown.helpfulness.toFixed(1)} / 5.0
-                    </span>
+                    <div className={`inline-flex items-center px-3 py-1 rounded-full font-semibold text-white ${getRatingBg(prof.ratings_breakdown.helpfulness)}`}>
+                      {prof.ratings_breakdown.helpfulness.toFixed(1)}
+                    </div>
                   </td>
                 ))}
               </tr>
@@ -277,9 +289,9 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
                 <td className="px-4 py-3 font-medium text-gray-900">Difficulty</td>
                 {comparisonData.map((prof) => (
                   <td key={prof.id} className="px-4 py-3 text-center">
-                    <span className={`font-semibold ${getRatingColor(5 - prof.ratings_breakdown.difficulty)}`}>
-                      {prof.ratings_breakdown.difficulty.toFixed(1)} / 5.0
-                    </span>
+                    <div className={`inline-flex items-center px-3 py-1 rounded-full font-semibold text-white ${getRatingBg(5 - prof.ratings_breakdown.difficulty)}`}>
+                      {prof.ratings_breakdown.difficulty.toFixed(1)}
+                    </div>
                   </td>
                 ))}
               </tr>
@@ -309,7 +321,7 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
         </div>
       ) : (
         <div className="text-center py-8 text-gray-500">
-          <p>Add at least one more professor to start comparing</p>
+          <p>Search and select a professor to compare with <strong>{currentProfessorName}</strong></p>
         </div>
       )}
     </div>
