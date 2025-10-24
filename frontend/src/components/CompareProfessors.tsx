@@ -46,7 +46,7 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
 
     setIsSearching(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/professors/search?q=${encodeURIComponent(query)}&limit=10`);
+      const response = await fetch(`${API_BASE_URL}/professors?q=${encodeURIComponent(query)}&limit=10`);
       if (response.ok) {
         const data = await response.json();
         console.log('Search results:', data); // Debug log
