@@ -2,18 +2,20 @@
 
 Handles review creation, updates, and management endpoints for the platform.
 """
+import os
 from typing import Optional, Dict, Any
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Security, BackgroundTasks
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, field_validator
-from supabase import Client
+from supabase import Client, create_client
 
 from src.lib.database import get_supabase
 from src.lib.auth import get_current_user, get_optional_current_user
 from src.services.auto_flagging import AutoFlaggingSystem
 
 router = APIRouter()
+security = HTTPBearer()
 
 # Request/Response Models
 class Ratings(BaseModel):
@@ -435,6 +437,7 @@ async def flag_review(
 
 @router.get("/my-reviews")
 async def get_my_reviews(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
     current_user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase)
 ):
@@ -444,28 +447,53 @@ async def get_my_reviews(
     Uses the review_author_mappings table to find user's reviews while maintaining anonymity.
     """
     try:
-        if not current_user:
+        if not current_user or not credentials:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Authentication required"
             )
         
+        # Get the access token from the authorization header
+        access_token = credentials.credentials
+        
+        # Create a new Supabase client with the user's auth token
+        # This ensures RLS policies use auth.uid() correctly
+        SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+        SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+        
+        if not SUPABASE_URL or not SUPABASE_ANON_KEY:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Supabase configuration missing"
+            )
+            
+        auth_client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+        # Set the auth header for this client
+        auth_client.postgrest.auth(access_token)
+        
+        print(f"🔍 Fetching reviews for user: {current_user['id']}")
+        
         # Get user's review IDs from the mapping table
         # RLS policy: Users can read their own mappings via auth.uid()
-        mappings = supabase.table('review_author_mappings').select(
+        mappings = auth_client.table('review_author_mappings').select(
             'review_id'
-        ).eq('author_id', current_user['id']).execute()
+        ).execute()
+        
+        print(f"📊 Mappings found: {len(mappings.data) if mappings.data else 0}")
         
         if not mappings.data:
             return {"reviews": [], "total": 0}
         
         # Extract review IDs
         review_ids = [m['review_id'] for m in mappings.data]
+        print(f"📝 Review IDs: {review_ids}")
         
         # Fetch the actual reviews
-        reviews_result = supabase.table('reviews').select(
+        reviews_result = auth_client.table('reviews').select(
             '*, professors(id, name, department)'
         ).in_('id', review_ids).order('created_at', desc=True).execute()
+        
+        print(f"✅ Reviews fetched: {len(reviews_result.data) if reviews_result.data else 0}")
         
         if not reviews_result.data:
             return {"reviews": [], "total": 0}
