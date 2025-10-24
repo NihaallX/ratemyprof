@@ -281,3 +281,137 @@ async def get_college(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get college details: {str(e)}"
         )
+
+
+@router.get("/compare")
+async def compare_colleges(
+    ids: str = Query(..., description="Comma-separated college IDs to compare"),
+    supabase: Client = Depends(get_supabase)
+):
+    """Compare multiple colleges side by side.
+    
+    Accepts up to 4 college IDs separated by commas.
+    Returns detailed comparison data including ratings and review stats.
+    """
+    try:
+        print(f"🔍 Compare colleges request: ids={ids}")
+        
+        # Parse college IDs
+        college_ids = [cid.strip() for cid in ids.split(',') if cid.strip()]
+        
+        print(f"📝 Parsed {len(college_ids)} college IDs: {college_ids}")
+        
+        if len(college_ids) < 2:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="At least 2 colleges are required for comparison"
+            )
+        
+        if len(college_ids) > 4:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Maximum 4 colleges can be compared at once"
+            )
+        
+        # Fetch college details
+        colleges_result = supabase.table('colleges').select('*').in_('id', college_ids).execute()
+        
+        print(f"✅ Found {len(colleges_result.data) if colleges_result.data else 0} colleges")
+        
+        if len(colleges_result.data) != len(college_ids):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="One or more colleges not found"
+            )
+        
+        # Get college review ratings for each college
+        comparison_data = []
+        for college in colleges_result.data:
+            # Get average ratings from college_reviews table
+            try:
+                reviews_result = supabase.table('college_reviews').select(
+                    'ratings'
+                ).eq('college_id', college['id']).execute()
+                
+                avg_ratings = {
+                    'internet': 0.0,
+                    'safety': 0.0,
+                    'facilities': 0.0,
+                    'opportunities': 0.0,
+                    'location': 0.0,
+                    'clubs': 0.0,
+                    'social': 0.0,
+                    'food': 0.0,
+                    'overall': 0.0
+                }
+                
+                if reviews_result.data and len(reviews_result.data) > 0:
+                    count = len(reviews_result.data)
+                    # Extract ratings from JSON field
+                    total_internet = 0
+                    total_safety = 0
+                    total_facilities = 0
+                    total_opportunities = 0
+                    total_location = 0
+                    total_clubs = 0
+                    total_social = 0
+                    total_food = 0
+                    
+                    for r in reviews_result.data:
+                        if r.get('ratings'):
+                            ratings = r['ratings']
+                            total_internet += ratings.get('internet', 0)
+                            total_safety += ratings.get('safety', 0)
+                            total_facilities += ratings.get('facilities', 0)
+                            total_opportunities += ratings.get('opportunities', 0)
+                            total_location += ratings.get('location', 0)
+                            total_clubs += ratings.get('clubs', 0)
+                            total_social += ratings.get('social', 0)
+                            total_food += ratings.get('food', 0)
+                    
+                    if count > 0:
+                        avg_ratings['internet'] = total_internet / count
+                        avg_ratings['safety'] = total_safety / count
+                        avg_ratings['facilities'] = total_facilities / count
+                        avg_ratings['opportunities'] = total_opportunities / count
+                        avg_ratings['location'] = total_location / count
+                        avg_ratings['clubs'] = total_clubs / count
+                        avg_ratings['social'] = total_social / count
+                        avg_ratings['food'] = total_food / count
+                        avg_ratings['overall'] = (total_internet + total_safety + total_facilities + 
+                                                 total_opportunities + total_location + total_clubs + 
+                                                 total_social + total_food) / (count * 8)
+                    
+                    college_reviews_count = count
+                else:
+                    college_reviews_count = 0
+                    
+            except Exception as e:
+                print(f"Error fetching college reviews: {e}")
+                college_reviews_count = 0
+            
+            comparison_data.append({
+                'id': college['id'],
+                'name': college['name'],
+                'city': college['city'],
+                'state': college['state'],
+                'college_type': college.get('college_type', 'Unknown'),
+                'total_reviews': college_reviews_count,
+                'ratings_breakdown': avg_ratings
+            })
+        
+        return {
+            'colleges': comparison_data,
+            'count': len(comparison_data)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error comparing colleges: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to compare colleges: {str(e)}"
+        )
