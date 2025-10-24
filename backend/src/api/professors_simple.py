@@ -337,7 +337,7 @@ async def get_similar_professors(
 async def get_more_professors(
     college_id: Optional[str] = None,
     exclude_id: Optional[str] = None,
-    limit: int = Query(6, ge=1, le=20),
+    limit: int = 6,
     supabase: Client = Depends(get_supabase)
 ):
     """Get more professors to explore.
@@ -346,6 +346,10 @@ async def get_more_professors(
     Can exclude a specific professor (useful for showing on professor detail page).
     """
     try:
+        # Validate limit
+        if limit < 1 or limit > 20:
+            limit = 6
+            
         query = supabase.table('professors').select(
             'id, name, department, average_rating, total_reviews, subjects, college_id'
         )
@@ -393,7 +397,7 @@ async def get_more_professors(
 
 @router.get("/compare")
 async def compare_professors(
-    ids: str = Query(..., description="Comma-separated professor IDs to compare"),
+    ids: str,
     supabase: Client = Depends(get_supabase)
 ):
     """Compare multiple professors side by side.
