@@ -388,6 +388,8 @@ async def create_college_review(
         raise
     except Exception as e:
         print(f"❌ ERROR creating college review: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create college review: {str(e)}"
