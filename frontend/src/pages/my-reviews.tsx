@@ -58,8 +58,15 @@ export default function MyReviewsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Don't run fetch if auth is still loading or if we don't have a token yet.
-    if (authLoading || !session?.access_token) {
+    // Don't run fetch if auth is still loading
+    if (authLoading) {
+      setLoading(true);
+      return;
+    }
+
+    // If no session or token, user is not logged in
+    if (!session?.access_token) {
+      setLoading(false);
       return;
     }
 
