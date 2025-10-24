@@ -1,10 +1,10 @@
 /**
- * CompareProfessors Component - Redesigned to match Compare Schools UI
- * Clean side-by-side comparison with horizontal bar charts
+ * CompareProfessors Component
+ * Side-by-side professor comparison with rating bars matching detail page style
  */
 
 import { useState, useEffect } from 'react';
-import { Search, RefreshCw, Share2 } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { API_BASE_URL } from '../config/api';
 
 interface Professor {
@@ -82,6 +82,11 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
     }
   };
 
+  const removeProfessor = (professorId: string) => {
+    if (professorId === currentProfessorId) return;
+    setSelectedProfessors(selectedProfessors.filter(id => id !== professorId));
+  };
+
   useEffect(() => {
     if (selectedProfessors.length >= 2) {
       fetchComparisonData();
@@ -97,6 +102,8 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
       if (response.ok) {
         const data = await response.json();
         setComparisonData(data.professors);
+      } else {
+        console.error('Compare API error:', response.status);
       }
     } catch (err) {
       console.error('Failed to fetch comparison data:', err);
@@ -111,48 +118,17 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
     return 'bg-red-500';
   };
 
-  const handleReset = () => {
-    setSelectedProfessors([currentProfessorId]);
-    setSearchQuery('');
-    setSearchResults([]);
-    setComparisonData([]);
-  };
-
-  const handleShare = () => {
-    const url = `${window.location.origin}/compare?ids=${selectedProfessors.join(',')}`;
-    navigator.clipboard.writeText(url);
-    alert('Comparison link copied to clipboard!');
-  };
-
-  const getBarWidth = (rating: number) => {
-    return `${(rating / 5) * 100}%`;
+  const getRatingColor = (rating: number) => {
+    if (rating >= 4.0) return 'text-green-600';
+    if (rating >= 3.0) return 'text-yellow-600';
+    return 'text-red-600';
   };
 
   return (
-    <div className="min-h-[400px]">
-      <div className="flex items-center justify-between mb-6 pb-4 border-b">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">🎓</span>
-          <h2 className="text-2xl font-bold">Compare Professors</h2>
-        </div>
-        {comparisonData.length >= 2 && (
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleReset}
-              className="flex items-center gap-2 px-5 py-2.5 bg-black text-white rounded-full hover:bg-gray-800 transition-colors font-medium text-sm"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Reset
-            </button>
-            <button
-              onClick={handleShare}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-colors font-medium text-sm"
-            >
-              <Share2 className="w-4 h-4" />
-              Share Comparison
-            </button>
-          </div>
-        )}
+    <div className="max-h-[85vh] overflow-y-auto">
+      {/* Header */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">Compare Professors</h2>
       </div>
 
       {comparisonData.length < 2 && (
@@ -211,98 +187,153 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
         </div>
       )}
 
+      {/* Selected Professors Tags */}
+      {comparisonData.length > 0 && (
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
+            {comparisonData.map((prof) => (
+              <div
+                key={prof.id}
+                className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm"
+              >
+                <span>{prof.name}</span>
+                {prof.id !== currentProfessorId && (
+                  <button
+                    onClick={() => removeProfessor(prof.id)}
+                    className="hover:text-indigo-900"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Comparison Display */}
       {loading ? (
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading comparison...</p>
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading comparison...</p>
         </div>
       ) : comparisonData.length >= 2 ? (
         <div className="space-y-6">
+          {/* Professor Cards Side by Side */}
           <div className="grid grid-cols-2 gap-6">
             {comparisonData.map((prof) => (
-              <div key={prof.id} className="bg-gray-50 rounded-2xl p-6 text-center">
-                <div className="flex justify-center mb-4">
-                  {prof.average_rating > 0 ? (
-                    <div className={`inline-block px-8 py-6 rounded-2xl ${getRatingBg(prof.average_rating)} text-white`}>
-                      <div className="text-4xl font-bold">{prof.average_rating.toFixed(1)}</div>
-                      <div className="text-sm font-medium mt-1">OVERALL</div>
-                      <div className="text-xs mt-1">{prof.total_reviews} Rating{prof.total_reviews !== 1 ? 's' : ''}</div>
-                    </div>
-                  ) : (
-                    <div className="inline-block px-8 py-6 rounded-2xl bg-gray-300 text-gray-700">
-                      <div className="text-4xl font-bold">N/A</div>
-                      <div className="text-sm font-medium mt-1">OVERALL</div>
-                    </div>
-                  )}
+              <div key={prof.id} className="bg-gray-50 rounded-lg p-6 text-center">
+                {/* Overall Rating Badge matching detail page style */}
+                <div className={`inline-flex items-center px-6 py-3 rounded-full font-bold text-2xl mb-4 text-white ${getRatingBg(prof.average_rating)}`}>
+                  ★ {prof.average_rating.toFixed(1)}
                 </div>
-                
-                <div className="text-xl font-bold text-gray-900 mt-4">{prof.name}</div>
-                <div className="text-sm text-gray-600 mt-1">{prof.department}</div>
-                <div className="text-xs text-gray-500 mt-1">{prof.college_name}</div>
+                <h3 className="text-xl font-bold text-gray-900">{prof.name}</h3>
+                <p className="text-sm text-gray-600 mt-1">{prof.department}</p>
+                <p className="text-xs text-gray-500">{prof.college_name}</p>
+                <p className="text-xs text-gray-500 mt-2">Based on {prof.total_reviews} review{prof.total_reviews !== 1 ? 's' : ''}</p>
               </div>
             ))}
           </div>
 
-          <div className="space-y-4 bg-white p-6 rounded-lg">
-            {[ 
-              { key: 'clarity', label: 'Clarity', color: 'green' },
-              { key: 'helpfulness', label: 'Helpfulness', color: 'green' },
-              { key: 'difficulty', label: 'Difficulty', color: 'blue' },
-              { key: 'overall', label: 'Overall', color: 'auto' }
-            ].map((metric) => (
-              <div key={metric.key} className="flex items-center gap-4">
-                <div className="flex-1 flex items-center gap-3">
+          {/* Comparison Metrics - Matching the detail page style */}
+          <div className="bg-white rounded-lg p-6 space-y-4">
+            {/* Clarity */}
+            {comparisonData.map((prof, index) => (
+              <div key={`clarity-${prof.id}`}>
+                {index === 0 && (
+                  <div className="mb-2 text-sm font-semibold text-gray-700">Clarity:</div>
+                )}
+                <div className="flex items-center gap-3 mb-3">
                   <div className="flex-1 flex items-center gap-2">
-                    <div className="flex-1 h-10 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full ${metric.color === 'blue' ? 'bg-blue-500' : getRatingBg((comparisonData[0].ratings_breakdown as any)[metric.key])} flex items-center justify-end pr-3`}
-                        style={{ width: getBarWidth((comparisonData[0].ratings_breakdown as any)[metric.key]) }}
-                      >
-                        {(comparisonData[0].ratings_breakdown as any)[metric.key] > 0 && (
-                          <span className="text-white font-bold text-sm">
-                            {((comparisonData[0].ratings_breakdown as any)[metric.key]).toFixed(1)}
-                          </span>
-                        )}
-                      </div>
+                    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all ${getRatingBg(prof.ratings_breakdown.clarity)}`}
+                        style={{ width: `${(prof.ratings_breakdown.clarity / 5) * 100}%` }}
+                      />
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-green-400 flex items-center justify-center flex-shrink-0">
-                      <div className="w-4 h-4 rounded-full bg-white"></div>
-                    </div>
+                    <span className={`font-semibold w-12 ${getRatingColor(prof.ratings_breakdown.clarity)}`}>
+                      {prof.ratings_breakdown.clarity.toFixed(1)}
+                    </span>
                   </div>
+                  <span className="text-xs text-gray-500 w-32 text-right">{prof.name}</span>
                 </div>
-                
-                <div className="w-32 text-center flex-shrink-0">
-                  <span className="font-bold text-gray-900">{metric.label}</span>
-                </div>
-                
-                <div className="flex-1 flex items-center gap-3">
+              </div>
+            ))}
+
+            {/* Helpfulness */}
+            {comparisonData.map((prof, index) => (
+              <div key={`helpfulness-${prof.id}`}>
+                {index === 0 && (
+                  <div className="mb-2 text-sm font-semibold text-gray-700 mt-4">Helpfulness:</div>
+                )}
+                <div className="flex items-center gap-3 mb-3">
                   <div className="flex-1 flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0">
-                      <div className="w-4 h-4 rounded-full bg-white"></div>
+                    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all ${getRatingBg(prof.ratings_breakdown.helpfulness)}`}
+                        style={{ width: `${(prof.ratings_breakdown.helpfulness / 5) * 100}%` }}
+                      />
                     </div>
-                    <div className="flex-1 h-10 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full ${metric.color === 'blue' ? 'bg-blue-500' : getRatingBg((comparisonData[1].ratings_breakdown as any)[metric.key])} flex items-center justify-start pl-3`}
-                        style={{ width: getBarWidth((comparisonData[1].ratings_breakdown as any)[metric.key]) }}
-                      >
-                        {(comparisonData[1].ratings_breakdown as any)[metric.key] > 0 && (
-                          <span className="text-white font-bold text-sm">
-                            {((comparisonData[1].ratings_breakdown as any)[metric.key]).toFixed(1)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                    <span className={`font-semibold w-12 ${getRatingColor(prof.ratings_breakdown.helpfulness)}`}>
+                      {prof.ratings_breakdown.helpfulness.toFixed(1)}
+                    </span>
                   </div>
+                  <span className="text-xs text-gray-500 w-32 text-right">{prof.name}</span>
+                </div>
+              </div>
+            ))}
+
+            {/* Overall */}
+            {comparisonData.map((prof, index) => (
+              <div key={`overall-${prof.id}`}>
+                {index === 0 && (
+                  <div className="mb-2 text-sm font-semibold text-gray-700 mt-4">Overall:</div>
+                )}
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex-1 flex items-center gap-2">
+                    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all ${getRatingBg(prof.ratings_breakdown.overall)}`}
+                        style={{ width: `${(prof.ratings_breakdown.overall / 5) * 100}%` }}
+                      />
+                    </div>
+                    <span className={`font-semibold w-12 ${getRatingColor(prof.ratings_breakdown.overall)}`}>
+                      {prof.ratings_breakdown.overall.toFixed(1)}
+                    </span>
+                  </div>
+                  <span className="text-xs text-gray-500 w-32 text-right">{prof.name}</span>
+                </div>
+              </div>
+            ))}
+
+            {/* Difficulty */}
+            {comparisonData.map((prof, index) => (
+              <div key={`difficulty-${prof.id}`}>
+                {index === 0 && (
+                  <div className="mb-2 text-sm font-semibold text-gray-700 mt-4">Difficulty:</div>
+                )}
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex-1 flex items-center gap-2">
+                    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all ${getRatingBg(5 - prof.ratings_breakdown.difficulty)}`}
+                        style={{ width: `${(prof.ratings_breakdown.difficulty / 5) * 100}%` }}
+                      />
+                    </div>
+                    <span className={`font-semibold w-12 ${getRatingColor(5 - prof.ratings_breakdown.difficulty)}`}>
+                      {prof.ratings_breakdown.difficulty.toFixed(1)}
+                    </span>
+                  </div>
+                  <span className="text-xs text-gray-500 w-32 text-right">{prof.name}</span>
                 </div>
               </div>
             ))}
           </div>
         </div>
       ) : (
-        <div className="text-center py-16 text-gray-500 bg-gray-50 rounded-xl">
-          <Search className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-          <p className="text-lg font-medium">Search and select a professor to compare with</p>
-          <p className="text-sm mt-2"><strong>{currentProfessorName}</strong></p>
+        <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+          <Search className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+          <p>Search and select a professor to compare with <strong>{currentProfessorName}</strong></p>
         </div>
       )}
     </div>
