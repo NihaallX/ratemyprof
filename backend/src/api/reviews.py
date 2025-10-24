@@ -376,7 +376,7 @@ async def flag_review(
     """
     try:
         # Get admin client for database operations (bypasses RLS)
-        from lib.database import get_supabase_admin
+        from src.lib.database import get_supabase_admin
         supabase_admin = get_supabase_admin()
         if not supabase_admin:
             raise HTTPException(
@@ -689,7 +689,7 @@ async def vote_on_review(
     """
     try:
         # Get admin client for database operations (bypasses RLS)
-        from lib.database import get_supabase_admin
+        from src.lib.database import get_supabase_admin
         supabase_admin = get_supabase_admin()
         if not supabase_admin:
             raise HTTPException(
