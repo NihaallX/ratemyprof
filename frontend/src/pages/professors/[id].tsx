@@ -12,6 +12,7 @@ import { RateMyProfAPI, Professor } from '../../services/api';
 import ReviewSubmissionForm from '../../components/ReviewSubmissionForm';
 import FlagReviewButton from '../../components/FlagReviewButton';
 import ReviewVoting from '../../components/ReviewVoting';
+import CompareProfessors from '../../components/CompareProfessors';
 import { API_BASE_URL } from '../../config/api';
 import { 
   ArrowLeft, 
@@ -45,6 +46,24 @@ interface Review {
   user_vote?: 'helpful' | 'not_helpful' | null
 }
 
+interface SimilarProfessor {
+  id: string
+  name: string
+  department: string
+  average_rating: number
+  total_reviews: number
+  subjects: string[]
+}
+
+interface MoreProfessor {
+  id: string
+  name: string
+  department: string
+  average_rating: number
+  total_reviews: number
+  subjects: string[]
+}
+
 export default function ProfessorProfile() {
   const router = useRouter();
   const { id } = router.query;
@@ -52,16 +71,22 @@ export default function ProfessorProfile() {
   
   const [professor, setProfessor] = useState<Professor | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [similarProfessors, setSimilarProfessors] = useState<SimilarProfessor[]>([]);
+  const [moreProfessors, setMoreProfessors] = useState<MoreProfessor[]>([]);
   const [loading, setLoading] = useState(true);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [showCompareModal, setShowCompareModal] = useState(false);
+
 
   useEffect(() => {
     if (id && typeof id === 'string') {
       fetchProfessor(id);
       fetchReviews(id);
+      fetchSimilarProfessors(id);
+      fetchMoreProfessors(id);
     }
   }, [id]);
 
@@ -92,6 +117,36 @@ export default function ProfessorProfile() {
     } finally {
       setReviewsLoading(false);
     }
+  };
+
+  const fetchSimilarProfessors = async (professorId: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/professors/similar/${professorId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSimilarProfessors(data.professors || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch similar professors:', err);
+    }
+  };
+
+  const fetchMoreProfessors = async (professorId: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/professors/more-professors?exclude_id=${professorId}&limit=6`);
+      if (response.ok) {
+        const data = await response.json();
+        setMoreProfessors(data.professors || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch more professors:', err);
+    }
+  };
+
+  const getRatingColorClasses = (rating: number) => {
+    if (rating >= 4.0) return 'bg-green-500 text-white';
+    if (rating >= 3.0) return 'bg-yellow-500 text-white';
+    return 'bg-red-500 text-white';
   };
 
   const renderStars = (rating: number) => {
@@ -230,6 +285,48 @@ export default function ProfessorProfile() {
                       Based on {professor.total_reviews} review{professor.total_reviews !== 1 ? 's' : ''}
                     </p>
                   </div>
+                </div>
+
+                {/* Compare and Similar Professors Section */}
+                <div className="border-t border-gray-200 pt-6 mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Compare & Explore</h3>
+                    <button
+                      onClick={() => setShowCompareModal(true)}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                    >
+                      Compare Professors
+                    </button>
+                  </div>
+
+                  {/* Similar Professors */}
+                  {similarProfessors.length > 0 && (
+                    <div>
+                      <h4 className="text-md font-medium text-gray-700 mb-3">Similar Professors</h4>
+                      <div className="grid grid-cols-1 gap-3">
+                        {similarProfessors.map((prof) => (
+                          <Link
+                            key={prof.id}
+                            href={`/professors/${prof.id}`}
+                            className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <h5 className="font-semibold text-gray-900">{prof.name}</h5>
+                                <p className="text-sm text-gray-600">{prof.department}</p>
+                              </div>
+                              <div className="text-right ml-4">
+                                <div className={`inline-flex items-center px-3 py-1 rounded-full font-bold text-sm ${getRatingColorClasses(prof.average_rating)}`}>
+                                  ★ {prof.average_rating.toFixed(1)}
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">{prof.total_reviews} reviews</p>
+                              </div>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Subjects Taught */}
@@ -474,7 +571,77 @@ export default function ProfessorProfile() {
               </div>
             </div>
           </div>
+
+          {/* More Professors Section - Full Width Below Everything */}
+          {moreProfessors.length > 0 && (
+            <div className="mt-8">
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-6">More Professors You Might Like</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {moreProfessors.map((prof) => (
+                    <Link
+                      key={prof.id}
+                      href={`/professors/${prof.id}`}
+                      className="p-4 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg hover:shadow-lg transition-all border border-indigo-100"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <h4 className="font-bold text-gray-900 text-lg">{prof.name}</h4>
+                          <p className="text-sm text-gray-600">{prof.department}</p>
+                        </div>
+                        <div className={`inline-flex items-center px-3 py-1 rounded-full font-bold text-sm ${getRatingColorClasses(prof.average_rating)}`}>
+                          ★ {prof.average_rating.toFixed(1)}
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-500">{prof.total_reviews} reviews</span>
+                        <span className="text-indigo-600 font-medium">View Profile →</span>
+                      </div>
+                      {prof.subjects.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-1">
+                          {prof.subjects.slice(0, 2).map((subject, idx) => (
+                            <span key={idx} className="px-2 py-1 bg-white text-xs text-gray-600 rounded-full border border-gray-200">
+                              {subject}
+                            </span>
+                          ))}
+                          {prof.subjects.length > 2 && (
+                            <span className="px-2 py-1 bg-white text-xs text-gray-600 rounded-full border border-gray-200">
+                              +{prof.subjects.length - 2} more
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* Compare Modal */}
+        {showCompareModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-auto">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-900">Compare Professors</h3>
+                <button
+                  onClick={() => setShowCompareModal(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="p-6">
+                <CompareProfessors 
+                  currentProfessorId={id as string} 
+                  currentProfessorName={professor?.name || ''}
+                  onClose={() => setShowCompareModal(false)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
