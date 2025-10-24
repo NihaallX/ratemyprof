@@ -246,10 +246,10 @@ async def create_review(
             )
         
         # Update professor's average rating and total reviews count
-        # Get all reviews for this professor to calculate new average
+        # Get all APPROVED reviews for this professor to calculate new average
         all_reviews = supabase.table('reviews').select('overall_rating').eq(
             'professor_id', request.professor_id
-        ).execute()
+        ).eq('status', 'approved').execute()
         
         if all_reviews.data:
             total_reviews = len(all_reviews.data)
@@ -600,10 +600,10 @@ async def delete_my_review(
         
         print(f"✅ DELETED REVIEW: {review_id}")
         
-        # Update professor's stats
+        # Update professor's stats - only count APPROVED reviews
         all_reviews = supabase.table('reviews').select('overall_rating').eq(
             'professor_id', professor_id
-        ).execute()
+        ).eq('status', 'approved').execute()
         
         if all_reviews.data and len(all_reviews.data) > 0:
             total_reviews = len(all_reviews.data)
@@ -614,7 +614,7 @@ async def delete_my_review(
                 'total_reviews': total_reviews
             }).eq('id', professor_id).execute()
         else:
-            # No reviews left, set to 0
+            # No approved reviews left, set to 0
             supabase.table('professors').update({
                 'average_rating': 0.0,
                 'total_reviews': 0
