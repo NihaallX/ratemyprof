@@ -590,3 +590,4 @@ async def compare_professors(
             detail=f"Failed to compare professors: {str(e)}"
         )
 
+
