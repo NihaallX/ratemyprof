@@ -86,9 +86,15 @@ export default function ProfessorProfile() {
       fetchProfessor(id);
       fetchReviews(id);
       fetchSimilarProfessors(id);
-      fetchMoreProfessors(id);
     }
   }, [id]);
+
+  // Fetch more professors after professor data is loaded
+  useEffect(() => {
+    if (professor && id && typeof id === 'string') {
+      fetchMoreProfessors(id);
+    }
+  }, [professor, id]);
 
   const fetchProfessor = async (professorId: string) => {
     try {
@@ -137,7 +143,9 @@ export default function ProfessorProfile() {
 
   const fetchMoreProfessors = async (professorId: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/professors/more-professors?exclude_id=${professorId}&limit=6`);
+      // Get college_id from professor data if available
+      const collegeParam = professor?.college_id ? `&college_id=${professor.college_id}` : '';
+      const response = await fetch(`${API_BASE_URL}/professors/more-professors?exclude_id=${professorId}${collegeParam}&limit=6`);
       if (response.ok) {
         const data = await response.json();
         setMoreProfessors(data.professors || []);
