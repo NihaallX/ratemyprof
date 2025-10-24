@@ -4,6 +4,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { ArrowLeft, Globe, MapPin, Calendar, Users, GraduationCap, Search } from 'lucide-react';
 import CollegeReviews from '../../components/CollegeReviews';
+import CompareColleges from '../../components/CompareColleges';
 
 interface College {
   id: string;
@@ -41,6 +42,7 @@ export default function CollegeDetail() {
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [departments, setDepartments] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [showCompareModal, setShowCompareModal] = useState(false);
 
   useEffect(() => {
     // Check if user is authenticated
@@ -205,6 +207,43 @@ export default function CollegeDetail() {
         </div>
 
         <div className="max-w-6xl mx-auto px-4 py-8">
+          {/* Compare & Explore Section */}
+          <div className="bg-white rounded-lg p-6 shadow-sm border mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Compare & Explore</h2>
+              <button
+                onClick={() => setShowCompareModal(true)}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+              >
+                Compare Colleges
+              </button>
+            </div>
+          </div>
+
+          {/* Compare Modal */}
+          {showCompareModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-gray-900">Compare Colleges</h2>
+                  <button
+                    onClick={() => setShowCompareModal(false)}
+                    className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className="p-6">
+                  <CompareColleges
+                    currentCollegeId={college.id}
+                    currentCollegeName={college.name}
+                    onClose={() => setShowCompareModal(false)}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* College Reviews Section - Moved to Top */}
           <div className="mb-8">
             <CollegeReviews
