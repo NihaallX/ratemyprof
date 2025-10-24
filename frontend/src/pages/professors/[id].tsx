@@ -289,26 +289,28 @@ export default function ProfessorProfile() {
 
                 {/* Compare and Similar Professors Section */}
                 <div className="border-t border-gray-200 pt-6 mb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Compare & Explore</h3>
-                    <button
-                      onClick={() => setShowCompareModal(true)}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
-                    >
-                      Compare Professors
-                    </button>
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900">Compare & Explore</h3>
+                      <button
+                        onClick={() => setShowCompareModal(true)}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                      >
+                        Compare Professors
+                      </button>
+                    </div>
                   </div>
 
-                  {/* Similar Professors */}
+                  {/* Similar Professors - Below Compare Button */}
                   {similarProfessors.length > 0 && (
                     <div>
-                      <h4 className="text-md font-medium text-gray-700 mb-3">Similar Professors</h4>
+                      <h4 className="text-md font-medium text-gray-700 mb-3">Similar Professors from Same Department</h4>
                       <div className="grid grid-cols-1 gap-3">
                         {similarProfessors.map((prof) => (
                           <Link
                             key={prof.id}
                             href={`/professors/${prof.id}`}
-                            className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200"
+                            className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg hover:shadow-md transition-all border border-indigo-100"
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex-1">
