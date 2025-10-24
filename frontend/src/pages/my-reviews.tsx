@@ -58,18 +58,30 @@ export default function MyReviewsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Debug logging
+    console.log('🔍 My Reviews useEffect triggered');
+    console.log('authLoading:', authLoading);
+    console.log('user:', user);
+    console.log('session:', session);
+    console.log('session?.access_token:', session?.access_token);
+    
     // Don't run fetch if auth is still loading
     if (authLoading) {
+      console.log('⏳ Auth still loading, waiting...');
       setLoading(true);
       return;
     }
 
     // If no session or token, user is not logged in
     if (!session?.access_token) {
+      console.log('❌ No access token found');
+      console.log('Session object:', JSON.stringify(session, null, 2));
       setLoading(false);
       return;
     }
 
+    console.log('✅ Access token found, fetching reviews...');
+    
     const fetchUserReviews = async () => {
       setLoading(true);
       try {
