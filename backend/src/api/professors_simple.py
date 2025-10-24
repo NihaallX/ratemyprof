@@ -340,8 +340,8 @@ async def get_similar_professors(
 
 @router.get("/more-professors")
 async def get_more_professors(
-    college_id: Optional[str] = Query(None, description="Filter by college ID"),
-    exclude_id: Optional[str] = Query(None, description="Professor ID to exclude"),
+    college_id: str = Query(None, description="Filter by college ID"),
+    exclude_id: str = Query(None, description="Professor ID to exclude"),
     limit: int = Query(6, ge=1, le=20, description="Number of professors to return"),
     supabase: Client = Depends(get_supabase)
 ):
