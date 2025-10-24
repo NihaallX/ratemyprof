@@ -90,16 +90,26 @@ export default function MyReviewsPage() {
           'Content-Type': 'application/json',
         };
 
+        console.log('📡 Fetching from:', `${API_BASE_URL}/reviews/my-reviews`);
+        console.log('📡 Fetching from:', `${API_BASE_URL}/college-reviews/my-reviews`);
+        
         const [profResponse, collegeResponse] = await Promise.all([
           fetch(`${API_BASE_URL}/reviews/my-reviews`, { headers }),
           fetch(`${API_BASE_URL}/college-reviews/my-reviews`, { headers }),
         ]);
 
+        console.log('📥 Professor response status:', profResponse.status);
+        console.log('📥 College response status:', collegeResponse.status);
+
         if (!profResponse.ok && profResponse.status !== 404) {
+          const errorText = await profResponse.text();
+          console.error('❌ Professor reviews error:', errorText);
           throw new Error('Failed to fetch professor reviews')
         }
 
         if (!collegeResponse.ok && collegeResponse.status !== 404) {
+          const errorText = await collegeResponse.text();
+          console.error('❌ College reviews error:', errorText);
           throw new Error('Failed to fetch college reviews')
         }
 
@@ -108,30 +118,38 @@ export default function MyReviewsPage() {
         // Process professor reviews
         if (profResponse.ok) {
           const profData = await profResponse.json();
+          console.log('✅ Professor reviews data:', profData);
           const professorReviews = (profData.reviews || []).map((r: any) => ({
             ...r,
             type: 'professor' as const
           }));
+          console.log('✅ Processed professor reviews:', professorReviews.length);
           allReviews.push(...professorReviews);
         } 
         
         // Process college reviews
         if (collegeResponse.ok) {
           const collegeData = await collegeResponse.json();
+          console.log('✅ College reviews data:', collegeData);
           const collegeReviews = (collegeData.reviews || []).map((r: any) => ({
             ...r,
             type: 'college' as const,
             overallRating: r.ratings?.overall || 0
           }));
+          console.log('✅ Processed college reviews:', collegeReviews.length);
           allReviews.push(...collegeReviews);
-        } 
+        }
+        
+        console.log('📊 Total reviews combined:', allReviews.length);
         
         // Sort by date (newest first)
         allReviews.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         
+        console.log('💾 Setting reviews state...');
         setReviews(allReviews);
+        console.log('✅ Reviews state updated!');
       } catch (error) {
-        console.error('Error fetching reviews:', error);
+        console.error('❌ Error fetching reviews:', error);
         setReviews([]);
       } finally {
         setLoading(false);
