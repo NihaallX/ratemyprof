@@ -448,10 +448,11 @@ async def compare_professors(
         # Get average ratings breakdown for each professor
         comparison_data = []
         for prof in professors_result.data:
-            # Calculate average ratings from reviews
+            # Calculate average ratings from reviews using the ratings JSON field
+            # The reviews table has a 'ratings' JSONB field with clarity, helpfulness, workload, engagement
             reviews_result = supabase.table('reviews').select(
-                'overall_rating, difficulty_rating, clarity_rating, helpfulness_rating'
-            ).eq('professor_id', prof['id']).eq('status', 'approved').execute()
+                'ratings'
+            ).eq('professor_id', prof['id']).execute()
             
             avg_ratings = {
                 'overall': 0.0,
@@ -460,12 +461,27 @@ async def compare_professors(
                 'helpfulness': 0.0
             }
             
-            if reviews_result.data:
+            if reviews_result.data and len(reviews_result.data) > 0:
                 count = len(reviews_result.data)
-                avg_ratings['overall'] = sum(r['overall_rating'] for r in reviews_result.data) / count
-                avg_ratings['difficulty'] = sum(r['difficulty_rating'] for r in reviews_result.data) / count
-                avg_ratings['clarity'] = sum(r['clarity_rating'] for r in reviews_result.data) / count
-                avg_ratings['helpfulness'] = sum(r['helpfulness_rating'] for r in reviews_result.data) / count
+                # Extract ratings from JSON field
+                total_clarity = 0
+                total_helpfulness = 0
+                total_workload = 0
+                total_engagement = 0
+                
+                for r in reviews_result.data:
+                    if r.get('ratings'):
+                        ratings = r['ratings']
+                        total_clarity += ratings.get('clarity', 0)
+                        total_helpfulness += ratings.get('helpfulness', 0)
+                        total_workload += ratings.get('workload', 0)
+                        total_engagement += ratings.get('engagement', 0)
+                
+                if count > 0:
+                    avg_ratings['clarity'] = total_clarity / count
+                    avg_ratings['helpfulness'] = total_helpfulness / count
+                    avg_ratings['difficulty'] = total_workload / count  # Using workload as difficulty
+                    avg_ratings['overall'] = (total_clarity + total_helpfulness + total_engagement) / (count * 3)
             
             # Handle colleges data
             college_name = 'Unknown'
