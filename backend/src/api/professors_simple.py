@@ -304,7 +304,17 @@ async def get_similar_professors(
             'average_rating', desc=True
         ).limit(3).execute()
         
-        print(f"   Found {len(similar_result.data)} similar professors")
+        print(f"   Found {len(similar_result.data)} professors in same department")
+        
+        # If no professors in same department, get from same college (any department)
+        if not similar_result.data or len(similar_result.data) == 0:
+            print(f"   ↪️ Falling back to same college (any department)")
+            similar_result = supabase.table('professors').select(
+                'id, name, department, average_rating, total_reviews, subjects'
+            ).eq('college_id', current_prof['college_id']).neq(
+                'id', professor_id
+            ).order('average_rating', desc=True).limit(3).execute()
+            print(f"   Found {len(similar_result.data)} professors in same college")
         
         professors = []
         for prof in similar_result.data:
