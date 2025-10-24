@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Star, AlertCircle, CheckCircle, Info } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import ColorBarRating from './ColorBarRating';
+import { API_BASE_URL } from '../config/api';
 
 interface CollegeReviewFormProps {
   collegeId: string;
@@ -157,7 +158,7 @@ export default function CollegeReviewForm({ collegeId, collegeName, onClose, onS
         review_text: formData.review_text
       };
 
-      const response = await fetch('/api/college-reviews', {
+      const response = await fetch(`${API_BASE_URL}/college-reviews`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
