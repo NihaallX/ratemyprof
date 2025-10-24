@@ -319,36 +319,46 @@ export default function ProfessorProfile() {
                       </button>
                     </div>
                   </div>
-
-                  {/* Similar Professors - Below Compare Button */}
-                  {similarProfessors.length > 0 && (
-                    <div>
-                      <h4 className="text-md font-medium text-gray-700 mb-3">Similar Professors from Same Department</h4>
-                      <div className="grid grid-cols-1 gap-3">
-                        {similarProfessors.map((prof) => (
-                          <Link
-                            key={prof.id}
-                            href={`/professors/${prof.id}`}
-                            className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg hover:shadow-md transition-all border border-indigo-100"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1">
-                                <h5 className="font-semibold text-gray-900">{prof.name}</h5>
-                                <p className="text-sm text-gray-600">{prof.department}</p>
-                              </div>
-                              <div className="text-right ml-4">
-                                <div className={`inline-flex items-center px-3 py-1 rounded-full font-bold text-sm ${getRatingColorClasses(prof.average_rating)}`}>
-                                  ★ {prof.average_rating.toFixed(1)}
-                                </div>
-                                <p className="text-xs text-gray-500 mt-1">{prof.total_reviews} reviews</p>
-                              </div>
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
+
+                {/* Similar Professors Section */}
+                {similarProfessors.length > 0 && (
+                  <div className="border-t border-gray-200 pt-6 mb-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Similar Professors</h3>
+                    <p className="text-sm text-gray-600 mb-4">Professors from the same department at {professor.department}</p>
+                    <div className="grid grid-cols-1 gap-3">
+                      {similarProfessors.map((prof) => (
+                        <Link
+                          key={prof.id}
+                          href={`/professors/${prof.id}`}
+                          className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg hover:shadow-md transition-all border border-indigo-100"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <h5 className="font-semibold text-gray-900">{prof.name}</h5>
+                              <p className="text-sm text-gray-600">{prof.department}</p>
+                              {prof.subjects && prof.subjects.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {prof.subjects.slice(0, 3).map((subject, idx) => (
+                                    <span key={idx} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs">
+                                      {subject}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-right ml-4">
+                              <div className={`inline-flex items-center px-3 py-1 rounded-full font-bold text-sm ${getRatingColorClasses(prof.average_rating)}`}>
+                                ★ {prof.average_rating.toFixed(1)}
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">{prof.total_reviews} reviews</p>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Subjects Taught */}
                 {professor.subjects && professor.subjects.length > 0 && (

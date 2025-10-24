@@ -404,7 +404,7 @@ async def get_more_professors(
 
 @router.get("/compare")
 async def compare_professors(
-    ids: str,
+    ids: str = Query(..., description="Comma-separated professor IDs"),
     supabase: Client = Depends(get_supabase)
 ):
     """Compare multiple professors side by side.
