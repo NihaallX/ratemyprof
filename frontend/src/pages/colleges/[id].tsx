@@ -58,15 +58,19 @@ export default function CollegeDetail() {
         setIsLoading(true);
         
         // Fetch college details
-        const collegeResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1'}/colleges/${id}`);
+        const collegeUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1'}/colleges/${id}`;
+        console.log('🔍 Fetching college from:', collegeUrl);
+        const collegeResponse = await fetch(collegeUrl);
+        console.log('📡 College response status:', collegeResponse.status);
         
         if (!collegeResponse.ok) {
-          console.error('College not found');
+          console.error('❌ College not found - Status:', collegeResponse.status);
           setIsLoading(false);
           return;
         }
         
         const collegeData = await collegeResponse.json();
+        console.log('✅ College data:', collegeData);
         setCollege(collegeData);
         
         // Fetch ALL professors for this college (backend max limit is 200)

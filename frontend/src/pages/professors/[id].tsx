@@ -127,16 +127,19 @@ export default function ProfessorProfile() {
 
   const fetchSimilarProfessors = async (professorId: string) => {
     try {
+      console.log('🔍 Fetching similar professors for:', professorId);
       const response = await fetch(`${API_BASE_URL}/professors/similar/${professorId}`);
+      console.log('📡 Similar professors response status:', response.status);
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ Similar professors data:', data);
         setSimilarProfessors(data.professors || []);
       } else {
-        console.warn(`Similar professors endpoint returned ${response.status} - feature may not be deployed yet`);
+        console.warn(`⚠️ Similar professors endpoint returned ${response.status} - feature may not be deployed yet`);
         setSimilarProfessors([]);
       }
     } catch (err) {
-      console.error('Failed to fetch similar professors:', err);
+      console.error('❌ Failed to fetch similar professors:', err);
       setSimilarProfessors([]);
     }
   };
