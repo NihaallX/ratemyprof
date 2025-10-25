@@ -267,3 +267,71 @@ async def get_admin_college_moderation_stats(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch moderation stats: {str(e)}"
         )
+
+
+@router.get("/admin/all-reviews")
+async def get_all_college_reviews_for_admin(
+    current_user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase),
+    limit: int = 50,
+    offset: int = 0
+):
+    """Get all college reviews with author information for admin review.
+    
+    Returns all college reviews along with author details from the author_mappings table.
+    This endpoint is only accessible to admins.
+    """
+    try:
+        # Check admin privileges
+        if not is_admin_user(current_user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin privileges required for moderation endpoints"
+            )
+        
+        # Fetch all college reviews with college information
+        reviews_response = supabase.table("college_reviews") \
+            .select("*, colleges(name, city, state)") \
+            .order("created_at", desc=True) \
+            .range(offset, offset + limit - 1) \
+            .execute()
+        
+        reviews = reviews_response.data
+        
+        # For each review, fetch the author information from author_mappings
+        for review in reviews:
+            # Get author mapping
+            mapping_response = supabase.table("college_review_author_mappings") \
+                .select("author_id, users(email, username)") \
+                .eq("college_review_id", review['id']) \
+                .single() \
+                .execute()
+            
+            if mapping_response.data:
+                review['author'] = mapping_response.data.get('users', {})
+                review['author_id'] = mapping_response.data.get('author_id')
+            else:
+                review['author'] = None
+                review['author_id'] = None
+        
+        # Get total count
+        count_response = supabase.table("college_reviews") \
+            .select("id", count="exact") \
+            .execute()
+        
+        total_count = count_response.count if hasattr(count_response, 'count') else len(reviews)
+        
+        return {
+            "reviews": reviews,
+            "total": total_count,
+            "limit": limit,
+            "offset": offset
+        }
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch college reviews: {str(e)}"
+        )
