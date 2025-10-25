@@ -317,16 +317,22 @@ async def get_all_college_reviews_for_admin(
                     author_id = mapping_response.data[0].get('author_id')
                     review['author_id'] = author_id
                     
-                    # Fetch user details separately
+                    # Fetch user details from auth.users schema
                     if author_id:
-                        user_response = admin_client.table("users") \
-                            .select("email, username") \
-                            .eq("id", author_id) \
-                            .execute()
-                        
-                        if user_response.data and len(user_response.data) > 0:
-                            review['author'] = user_response.data[0]
-                        else:
+                        try:
+                            # Query auth.users directly using admin client
+                            user_response = admin_client.auth.admin.get_user_by_id(author_id)
+                            
+                            if user_response and user_response.user:
+                                user = user_response.user
+                                review['author'] = {
+                                    'email': user.email or 'No email',
+                                    'username': user.user_metadata.get('username') or user.email or 'Unknown'
+                                }
+                            else:
+                                review['author'] = {'email': 'Unknown', 'username': 'Unknown'}
+                        except Exception as user_error:
+                            print(f"Error fetching user {author_id}: {user_error}")
                             review['author'] = {'email': 'Unknown', 'username': 'Unknown'}
                     else:
                         review['author'] = {'email': 'Anonymous', 'username': 'Anonymous'}
