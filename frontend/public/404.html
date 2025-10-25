@@ -2,41 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>RateMyProf India</title>
+  <title>Redirecting... - RateMyProf India</title>
   <script>
-    // Single Page Apps for GitHub Pages
-    // https://github.com/rafgraph/spa-github-pages
-    // This script takes the current url and converts the path and query
-    // string into just a query string, and then redirects the browser
-    // to the new url with only a query string and hash fragment,
-    // e.g. https://www.foo.tld/one/two?a=b&c=d#qwe, becomes
-    // https://www.foo.tld/?/one/two&a=b~and~c=d#qwe
-    // Note: this 404.html file must be at least 512 bytes for it to work
-    // with Internet Explorer (it is currently > 512 bytes)
-
-    // If you're creating a Project Pages site and NOT using a custom domain,
-    // then set pathSegmentsToKeep to 1 (enterprise users may need to set it to > 1).
-    // This way the code will only replace the route part of the path, and not
-    // the real directory in which the app resides, for example:
-    // https://username.github.io/repo-name/one/two?a=b&c=d#qwe becomes
-    // https://username.github.io/repo-name/?/one/two&a=b~and~c=d#qwe
-    // Otherwise, leave pathSegmentsToKeep as 0.
-    var pathSegmentsToKeep = 0;
-
-    var l = window.location;
-    var newLocation = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-      l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
-      l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
-      (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-      l.hash;
+    // GitHub Pages SPA redirect for static export
+    // When a user navigates to a route like /professor/123, GitHub Pages
+    // serves this 404.html. We redirect to the homepage with the path stored
+    // in sessionStorage, which Next.js will then handle.
     
-    // Use location.replace instead of l.replace to ensure proper redirect
-    window.location.replace(newLocation);
+    (function() {
+      var l = window.location;
+      var path = l.pathname;
+      
+      // Don't redirect if we're already at the homepage
+      if (path === '/' || path === '') {
+        return;
+      }
+      
+      // Remove trailing slash if present
+      if (path.endsWith('/')) {
+        path = path.slice(0, -1);
+      }
+      
+      // Store the intended destination in sessionStorage
+      var redirect = path + l.search + l.hash;
+      sessionStorage.setItem('redirect', redirect);
+      
+      // Redirect to the homepage
+      // Next.js will pick up the redirect from sessionStorage
+      window.location.replace('/');
+    })();
   </script>
 </head>
 <body>
-  <!-- Padding to ensure file is > 512 bytes for IE compatibility -->
-  <!-- This padding is required for the 404.html trick to work on GitHub Pages -->
+  <div style="font-family: system-ui, -apple-system, sans-serif; text-align: center; padding: 50px;">
+    <h1>Redirecting...</h1>
+    <p>Taking you to the right page...</p>
+  </div>
+  <!-- Padding to ensure file is > 512 bytes for GitHub Pages -->
+  <!-- ................................................................ -->
   <!-- ................................................................ -->
   <!-- ................................................................ -->
   <!-- ................................................................ -->

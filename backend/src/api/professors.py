@@ -390,9 +390,18 @@ async def create_professor(
     except HTTPException:
         raise
     except Exception as e:
+        import traceback
+        traceback.print_exc()
+        # Check if it's an RLS policy error
+        error_str = str(e)
+        if '42501' in error_str or 'policy' in error_str.lower():
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database insert failed: Permission denied. Please contact support if this persists."
+            )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create professor: {str(e)}"
+            detail=f"Database insert failed: {str(e)}"
         )
 
 
