@@ -5,7 +5,7 @@
 CREATE TABLE IF NOT EXISTS review_votes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     review_id UUID NOT NULL REFERENCES reviews(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     vote_type VARCHAR(20) NOT NULL CHECK (vote_type IN ('helpful', 'not_helpful')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     
@@ -21,8 +21,8 @@ ADD COLUMN IF NOT EXISTS not_helpful_count INTEGER DEFAULT 0;
 -- User moderation logs table
 CREATE TABLE IF NOT EXISTS user_moderation_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    moderator_id UUID NOT NULL REFERENCES users(id),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    moderator_id UUID NOT NULL REFERENCES auth.users(id),
     action VARCHAR(50) NOT NULL CHECK (action IN ('ban', 'unban', 'warn', 'delete_account')),
     reason TEXT NOT NULL,
     duration_days INTEGER,
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS user_moderation_logs (
 CREATE TABLE IF NOT EXISTS professor_verification_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     professor_id UUID NOT NULL REFERENCES professors(id) ON DELETE CASCADE,
-    moderator_id UUID NOT NULL REFERENCES users(id),
+    moderator_id UUID NOT NULL REFERENCES auth.users(id),
     action VARCHAR(50) NOT NULL CHECK (action IN ('verify', 'reject', 'request_more_info')),
     notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

@@ -5,7 +5,7 @@
 CREATE TABLE IF NOT EXISTS college_review_votes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     college_review_id UUID NOT NULL REFERENCES college_reviews(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     vote_type VARCHAR(20) NOT NULL CHECK (vote_type IN ('helpful', 'not_helpful')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     
