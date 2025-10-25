@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { API_LEGACY_BASE } from '../config/api';
+import { API_BASE_URL, API_LEGACY_BASE } from '../config/api';
 
 interface College {
   id: string;
@@ -147,7 +147,7 @@ const AddProfessorForm: React.FC = () => {
         message: `Professor ${formData.name} submitted by user ${user.email}`, // Add context for admin
       };
 
-      const response = await fetch(`${API_LEGACY_BASE}/professors/`, {
+      const response = await fetch(`${API_BASE_URL}/professors/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

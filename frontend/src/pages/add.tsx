@@ -9,7 +9,46 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
 import { ArrowLeft, User, Building, BookOpen, Plus, AlertCircle } from 'lucide-react';
-import { API_LEGACY_BASE } from '../config/api';
+import { API_BASE_URL } from '../config/api';
+
+// Helper function to calculate string similarity (Levenshtein distance based)
+const calculateSimilarity = (str1: string, str2: string): number => {
+  const longer = str1.length > str2.length ? str1 : str2;
+  const shorter = str1.length > str2.length ? str2 : str1;
+  
+  if (longer.length === 0) return 1.0;
+  
+  const editDistance = levenshteinDistance(longer, shorter);
+  return (longer.length - editDistance) / longer.length;
+};
+
+const levenshteinDistance = (str1: string, str2: string): number => {
+  const matrix: number[][] = [];
+  
+  for (let i = 0; i <= str2.length; i++) {
+    matrix[i] = [i];
+  }
+  
+  for (let j = 0; j <= str1.length; j++) {
+    matrix[0][j] = j;
+  }
+  
+  for (let i = 1; i <= str2.length; i++) {
+    for (let j = 1; j <= str1.length; j++) {
+      if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+  
+  return matrix[str2.length][str1.length];
+};
 
 interface CollegeOption {
   id: string;
@@ -40,7 +79,7 @@ export default function AddProfessor() {
 
   const fetchColleges = async () => {
     try {
-      const response = await fetch(`${API_LEGACY_BASE}/colleges`);
+      const response = await fetch(`${API_BASE_URL}/colleges`);
       if (response.ok) {
         const data = await response.json();
         setColleges(data);
@@ -89,10 +128,35 @@ export default function AddProfessor() {
       const token = session?.access_token;
       if (!token) {
         setNotification({ message: 'Authentication token not found. Please log in again.', type: 'error' });
+        setIsSubmitting(false);
         return;
       }
       
-      const response = await fetch(`${API_LEGACY_BASE}/professors`, {
+      // Check for duplicate professors (fuzzy matching)
+      const checkResponse = await fetch(`${API_BASE_URL}/professors/search?q=${encodeURIComponent(formData.name)}&college_id=${formData.college_id}`);
+      if (checkResponse.ok) {
+        const searchData = await checkResponse.json();
+        if (searchData.professors && searchData.professors.length > 0) {
+          // Check for close matches using simple similarity
+          const potentialDuplicates = searchData.professors.filter((prof: any) => {
+            const similarity = calculateSimilarity(formData.name.toLowerCase(), prof.name.toLowerCase());
+            return similarity > 0.8; // 80% similar
+          });
+          
+          if (potentialDuplicates.length > 0) {
+            const duplicateNames = potentialDuplicates.map((p: any) => p.name).join(', ');
+            const confirmSubmit = confirm(
+              `⚠️ Potential duplicate found!\n\nSimilar professors already exist:\n${duplicateNames}\n\nAre you sure you want to submit this as a new professor?`
+            );
+            if (!confirmSubmit) {
+              setIsSubmitting(false);
+              return;
+            }
+          }
+        }
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/professors`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

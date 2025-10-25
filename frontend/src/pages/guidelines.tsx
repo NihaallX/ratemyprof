@@ -14,7 +14,8 @@ import {
   Scale, 
   Lock,
   ChevronRight,
-  Home
+  Home,
+  Building
 } from 'lucide-react'
 import Footer from '../components/Footer'
 
@@ -186,14 +187,97 @@ export default function GuidelinesPage() {
               </h3>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <ul className="space-y-2 text-gray-700 text-sm">
-                  <li>• Reviews are anonymous by default to protect your identity.</li>
+                  <li>• <strong>College reviews are always anonymous</strong> - your identity is never revealed publicly.</li>
+                  <li>• <strong>Professor reviews</strong> can be anonymous or public (your choice).</li>
                   <li>• Your name will never be publicly displayed on anonymous reviews.</li>
                   <li>• Administrators can see review authors for moderation purposes only.</li>
-                  <li>• You can choose to post publicly under your account name if you prefer.</li>
+                  <li>• You can choose to post publicly under your account name if you prefer (professor reviews only).</li>
                   <li>• Anonymous reviews have the same weight as public reviews.</li>
+                  <li>• Your voting history (helpful/not helpful) is kept private.</li>
+                  <li>• Flag reports are confidential - only admins can see who flagged a review.</li>
                 </ul>
               </div>
             </div>
+
+            {/* Voting and Engagement */}
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+                <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                👍 Voting and Engagement
+              </h3>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <ul className="space-y-2 text-gray-700 text-sm">
+                  <li>• <strong>Vote honestly:</strong> Mark reviews as "helpful" if they provide useful, accurate information.</li>
+                  <li>• <strong>Vote "not helpful"</strong> if a review is vague, off-topic, or unhelpful.</li>
+                  <li>• <strong>Don't manipulate votes:</strong> Creating fake accounts or coordinating vote manipulation will result in a ban.</li>
+                  <li>• <strong>One vote per review:</strong> You can change your vote, but only have one active vote at a time.</li>
+                  <li>• <strong>Voting is anonymous:</strong> Others can't see how you voted.</li>
+                  <li>• <strong>Help surface quality content:</strong> Your votes help other students find the best reviews.</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Flagging Reviews */}
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+                <AlertTriangle className="w-5 h-5 text-red-600 mr-2" />
+                🚩 Flagging Inappropriate Reviews
+              </h3>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <ul className="space-y-2 text-gray-700 text-sm">
+                  <li>• <strong>Use the Flag button</strong> to report reviews that violate our guidelines.</li>
+                  <li>• <strong>Flag types:</strong> Spam, Fake Review, Offensive Content, Other.</li>
+                  <li>• <strong>Provide context:</strong> Explain why you're flagging the review (optional but helpful).</li>
+                  <li>• <strong>Don't abuse flagging:</strong> Only flag genuine violations. Frivolous flagging may result in restrictions.</li>
+                  <li>• <strong>Flagging is confidential:</strong> The review author won't know who flagged their review.</li>
+                  <li>• <strong>Moderation timeline:</strong> Flagged reviews are reviewed by admins within 24-48 hours.</li>
+                  <li>• <strong>Appeals:</strong> If your review is removed, you can appeal the decision.</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* College Reviews Guidelines */}
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
+                <Building className="w-5 h-5 text-purple-600 mr-2" />
+                🏫 College Reviews Guidelines
+              </h3>
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <ul className="space-y-2 text-gray-700 text-sm">
+                  <li>• <strong>Rate honestly across all categories:</strong> Food, Internet, Clubs, Opportunities, Facilities, Teaching, Overall.</li>
+                  <li>• <strong>Provide your context:</strong> Include your course, year of study, and graduation year.</li>
+                  <li>• <strong>Be comprehensive:</strong> Comment on multiple aspects of college life to help prospective students.</li>
+                  <li>• <strong>Update periodically:</strong> Colleges change over time - consider updating your review after graduation.</li>
+                  <li>• <strong>Focus on facts:</strong> Describe actual experiences, not rumors or hearsay.</li>
+                  <li>• <strong>One review per college:</strong> You can only submit one review per college (you can edit it later).</li>
+                  <li>• <strong>All college reviews are anonymous:</strong> Your identity is never revealed publicly for college reviews.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Rate Limiting and Anti-Abuse */}
+        <section className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="flex items-center mb-4">
+            <Shield className="w-6 h-6 text-indigo-600 mr-3" />
+            <h2 className="text-xl font-bold text-gray-900">Rate Limits and Anti-Abuse</h2>
+          </div>
+
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <p className="text-gray-700 mb-3">
+              To maintain platform quality and prevent abuse, we enforce the following limits:
+            </p>
+            <ul className="space-y-2 text-gray-700 text-sm">
+              <li>• <strong>Reviews:</strong> Maximum 5 professor reviews and 1 college review per 24 hours.</li>
+              <li>• <strong>Votes:</strong> No limit on voting, but suspicious patterns are monitored.</li>
+              <li>• <strong>Flags:</strong> Maximum 10 flags per 24 hours (to prevent flag abuse).</li>
+              <li>• <strong>Account creation:</strong> One account per person - multiple accounts may be banned.</li>
+              <li>• <strong>API access:</strong> Rate limited to prevent scraping and automated abuse.</li>
+            </ul>
+            <p className="text-gray-700 mt-3 text-sm">
+              If you legitimately hit these limits, please <Link href="/contact" className="text-indigo-600 hover:underline">contact support</Link>.
+            </p>
           </div>
         </section>
 

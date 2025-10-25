@@ -734,3 +734,222 @@ async def _update_college_stats(college_id: str, supabase: Client):
     except Exception:
         # Silently fail - stats update is not critical
         pass
+
+
+# Voting endpoints
+class CollegeReviewVote(BaseModel):
+    vote_type: str  # 'helpful' or 'not_helpful'
+    
+    @field_validator('vote_type')
+    @classmethod
+    def validate_vote_type(cls, v):
+        if v not in ['helpful', 'not_helpful']:
+            raise ValueError('Vote type must be "helpful" or "not_helpful"')
+        return v
+
+
+@router.post("/{review_id}/vote")
+async def vote_on_college_review(
+    review_id: str,
+    vote_data: CollegeReviewVote,
+    current_user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase)
+):
+    """Vote on a college review as helpful or not helpful.
+    
+    Users can only have one vote per review. If they vote again,
+    their previous vote is updated.
+    """
+    try:
+        user_id = current_user['id']
+        
+        # Check if review exists
+        review = supabase.table('college_reviews').select('id, helpful_count, not_helpful_count').eq('id', review_id).single().execute()
+        if not review.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="College review not found"
+            )
+        
+        # Check if user has already voted
+        existing_vote = supabase.table('college_review_votes').select('*').eq(
+            'college_review_id', review_id
+        ).eq('user_id', user_id).execute()
+        
+        if existing_vote.data:
+            # User has already voted - update their vote
+            old_vote = existing_vote.data[0]
+            old_vote_type = old_vote['vote_type']
+            
+            if old_vote_type == vote_data.vote_type:
+                # Same vote - no change needed
+                return {
+                    "message": "Vote already recorded",
+                    "vote_type": vote_data.vote_type
+                }
+            
+            # Update the vote
+            supabase.table('college_review_votes').update({
+                'vote_type': vote_data.vote_type
+            }).eq('id', old_vote['id']).execute()
+            
+            # Update review counts
+            current_helpful = review.data['helpful_count'] or 0
+            current_not_helpful = review.data['not_helpful_count'] or 0
+            
+            if old_vote_type == 'helpful':
+                current_helpful = max(0, current_helpful - 1)
+                current_not_helpful += 1
+            else:
+                current_not_helpful = max(0, current_not_helpful - 1)
+                current_helpful += 1
+            
+            supabase.table('college_reviews').update({
+                'helpful_count': current_helpful,
+                'not_helpful_count': current_not_helpful
+            }).eq('id', review_id).execute()
+            
+            return {
+                "message": "Vote updated successfully",
+                "vote_type": vote_data.vote_type,
+                "helpful_count": current_helpful,
+                "not_helpful_count": current_not_helpful
+            }
+        else:
+            # New vote
+            supabase.table('college_review_votes').insert({
+                'college_review_id': review_id,
+                'user_id': user_id,
+                'vote_type': vote_data.vote_type
+            }).execute()
+            
+            # Update review counts
+            current_helpful = review.data['helpful_count'] or 0
+            current_not_helpful = review.data['not_helpful_count'] or 0
+            
+            if vote_data.vote_type == 'helpful':
+                current_helpful += 1
+            else:
+                current_not_helpful += 1
+            
+            supabase.table('college_reviews').update({
+                'helpful_count': current_helpful,
+                'not_helpful_count': current_not_helpful
+            }).eq('id', review_id).execute()
+            
+            return {
+                "message": "Vote recorded successfully",
+                "vote_type": vote_data.vote_type,
+                "helpful_count": current_helpful,
+                "not_helpful_count": current_not_helpful
+            }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to record vote: {str(e)}"
+        )
+
+
+@router.delete("/{review_id}/vote")
+async def remove_vote_from_college_review(
+    review_id: str,
+    current_user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase)
+):
+    """Remove a user's vote from a college review."""
+    try:
+        user_id = current_user['id']
+        
+        # Check if review exists
+        review = supabase.table('college_reviews').select('id, helpful_count, not_helpful_count').eq('id', review_id).single().execute()
+        if not review.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="College review not found"
+            )
+        
+        # Find and delete the vote
+        existing_vote = supabase.table('college_review_votes').select('*').eq(
+            'college_review_id', review_id
+        ).eq('user_id', user_id).execute()
+        
+        if not existing_vote.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No vote found to remove"
+            )
+        
+        vote = existing_vote.data[0]
+        vote_type = vote['vote_type']
+        
+        # Delete the vote
+        supabase.table('college_review_votes').delete().eq('id', vote['id']).execute()
+        
+        # Update review counts
+        current_helpful = review.data['helpful_count'] or 0
+        current_not_helpful = review.data['not_helpful_count'] or 0
+        
+        if vote_type == 'helpful':
+            current_helpful = max(0, current_helpful - 1)
+        else:
+            current_not_helpful = max(0, current_not_helpful - 1)
+        
+        supabase.table('college_reviews').update({
+            'helpful_count': current_helpful,
+            'not_helpful_count': current_not_helpful
+        }).eq('id', review_id).execute()
+        
+        return {
+            "message": "Vote removed successfully",
+            "helpful_count": current_helpful,
+            "not_helpful_count": current_not_helpful
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to remove vote: {str(e)}"
+        )
+
+
+@router.get("/{review_id}/user-vote")
+async def get_user_vote_on_college_review(
+    review_id: str,
+    current_user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase)
+):
+    """Get the current user's vote on a college review."""
+    try:
+        user_id = current_user['id']
+        
+        vote = supabase.table('college_review_votes').select('vote_type').eq(
+            'college_review_id', review_id
+        ).eq('user_id', user_id).execute()
+        
+        if vote.data:
+            return {
+                "has_voted": True,
+                "vote_type": vote.data[0]['vote_type']
+            }
+        else:
+            return {
+                "has_voted": False,
+                "vote_type": None
+            }
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get user vote: {str(e)}"
+        )

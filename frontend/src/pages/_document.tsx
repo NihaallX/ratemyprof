@@ -8,8 +8,13 @@ export default function Document() {
         <script
           dangerouslySetInnerHTML={{
             __html: `
+              // Single Page Apps for GitHub Pages
+              // MIT License
+              // https://github.com/rafgraph/spa-github-pages
+              // This script checks if a redirect is present in the search query
+              // and redirects the browser to the correct location
               (function(l) {
-                if (l.search[1] === '/' ) {
+                if (l.search[1] === '/') {
                   var decoded = l.search.slice(1).split('&').map(function(s) { 
                     return s.replace(/~and~/g, '&')
                   }).join('?');

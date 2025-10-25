@@ -75,10 +75,14 @@ export default function PrivacyPage() {
 
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Review Data</h3>
               <ul className="list-disc pl-6 space-y-2 text-gray-700 mb-4">
-                <li>Professor reviews and ratings</li>
-                <li>Course information</li>
-                <li>Anonymous display names (if chosen)</li>
-                <li>Review votes and flags</li>
+                <li>Professor reviews and ratings (overall, clarity, helpfulness)</li>
+                <li>College reviews and ratings (food, internet, clubs, opportunities, facilities, teaching, overall)</li>
+                <li>Course information and year of study</li>
+                <li>Review text and comments</li>
+                <li>Anonymous display preferences</li>
+                <li>Review votes (helpful/not helpful)</li>
+                <li>Review flags and moderation reports</li>
+                <li>Voting history on reviews</li>
               </ul>
 
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Technical Data</h3>
@@ -93,12 +97,45 @@ export default function PrivacyPage() {
             <section>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">How We Use Your Data</h2>
               <ul className="list-disc pl-6 space-y-2 text-gray-700">
-                <li>Display reviews to help students make informed decisions</li>
+                <li>Display reviews to help students make informed decisions about professors and colleges</li>
                 <li>Moderate content for quality and appropriateness</li>
-                <li>Prevent spam and abuse</li>
-                <li>Improve platform functionality</li>
-                <li>Send important notifications</li>
-                <li>Analytics to understand usage patterns</li>
+                <li>Track voting patterns to surface helpful reviews</li>
+                <li>Process flags and reports to maintain community standards</li>
+                <li>Prevent spam, abuse, and fake reviews</li>
+                <li>Improve platform functionality and user experience</li>
+                <li>Send important notifications about your account and reviews</li>
+                <li>Analytics to understand usage patterns (anonymized)</li>
+                <li>Enforce rate limits to prevent abuse</li>
+              </ul>
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Anonymity and Privacy</h2>
+              
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Review Anonymity</h3>
+              <ul className="list-disc pl-6 space-y-2 text-gray-700 mb-4">
+                <li><strong>All college reviews are anonymous by default</strong> - Your name will never be publicly displayed</li>
+                <li><strong>Professor reviews</strong> can be posted anonymously or with your name (your choice)</li>
+                <li>We maintain a private mapping between reviews and authors for moderation purposes only</li>
+                <li>Only administrators can see review authorship, and only for moderation/security purposes</li>
+                <li>Your identity is protected from other users, professors, and colleges</li>
+              </ul>
+
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Voting Privacy</h3>
+              <ul className="list-disc pl-6 space-y-2 text-gray-700 mb-4">
+                <li>Your votes (helpful/not helpful) on reviews are stored privately</li>
+                <li>Other users cannot see who voted on a review</li>
+                <li>Only aggregated vote counts are displayed publicly</li>
+                <li>You can change or remove your vote at any time</li>
+                <li>Voting data is used to rank and surface quality reviews</li>
+              </ul>
+
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Flagging and Moderation</h3>
+              <ul className="list-disc pl-6 space-y-2 text-gray-700 mb-4">
+                <li>When you flag a review, your identity as the reporter is kept confidential</li>
+                <li>Flagging data is only visible to administrators</li>
+                <li>We track flagging patterns to identify abuse of the flagging system</li>
+                <li>Moderation decisions and notes are kept in secure logs</li>
               </ul>
             </section>
 
@@ -107,40 +144,97 @@ export default function PrivacyPage() {
               <p className="text-gray-700 mb-3">
                 <strong>We DO NOT sell your data.</strong> We only share data with:
               </p>
+              <ul className="list-disc pl-6 space-y-2 text-gray-700 mb-4">
+                <li><strong>Supabase</strong> - Database hosting provider (encrypted storage)</li>
+                <li><strong>Railway/Vercel</strong> - Application hosting providers</li>
+                <li><strong>Sentry</strong> - Error monitoring (anonymized error logs only)</li>
+              </ul>
+              
+              <p className="text-gray-700 mb-3">
+                <strong>What we NEVER share:</strong>
+              </p>
               <ul className="list-disc pl-6 space-y-2 text-gray-700">
-                <li>Supabase (database hosting provider)</li>
-                <li>Railway/Vercel (hosting providers)</li>
-                <li>Sentry (error monitoring, anonymized)</li>
+                <li>Your email or personal contact information with third parties</li>
+                <li>Review authorship information (kept private except for moderation)</li>
+                <li>Voting patterns or individual vote data</li>
+                <li>Any data with professors, colleges, or institutions</li>
+                <li>Marketing or advertising companies</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Your Rights (DPDP Act 2023)</h2>
-              <ul className="list-disc pl-6 space-y-2 text-gray-700">
-                <li>Right to access your data</li>
-                <li>Right to correction of inaccurate data</li>
-                <li>Right to erasure/deletion</li>
-                <li>Right to data portability</li>
-                <li>Right to grievance redressal</li>
-                <li>Right to appeal moderation decisions</li>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Admin Access and Moderation</h2>
+              <p className="text-gray-700 mb-3">
+                To maintain quality and safety, authorized administrators have access to:
+              </p>
+              <ul className="list-disc pl-6 space-y-2 text-gray-700 mb-4">
+                <li>Review authorship information (to prevent spam and enforce guidelines)</li>
+                <li>Voting patterns (to detect vote manipulation)</li>
+                <li>Flagging reports and reporter information (to process moderation requests)</li>
+                <li>User account details (to enforce terms of service)</li>
+                <li>IP addresses and technical logs (to prevent abuse and security threats)</li>
               </ul>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Anonymity</h2>
+              
               <p className="text-gray-700">
-                Reviews are anonymous by default. Your identity will never be publicly displayed on 
-                anonymous reviews. Administrators can see review authors for moderation purposes only.
+                <strong>Administrator Confidentiality:</strong> All administrators are bound by confidentiality 
+                agreements and are prohibited from sharing user information outside of moderation purposes.
               </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Data Retention</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Your Rights (DPDP Act 2023)</h2>
+              <p className="text-gray-700 mb-3">
+                Under India's Digital Personal Data Protection Act 2023, you have the following rights:
+              </p>
+              <ul className="list-disc pl-6 space-y-2 text-gray-700 mb-4">
+                <li><strong>Right to access:</strong> Request a copy of all your data we hold</li>
+                <li><strong>Right to correction:</strong> Correct inaccurate or incomplete data</li>
+                <li><strong>Right to erasure:</strong> Request deletion of your account and personal data</li>
+                <li><strong>Right to data portability:</strong> Receive your data in a portable format</li>
+                <li><strong>Right to grievance redressal:</strong> File complaints about data handling</li>
+                <li><strong>Right to appeal:</strong> Contest moderation decisions affecting your reviews</li>
+                <li><strong>Right to withdraw consent:</strong> Opt out of optional data processing</li>
+                <li><strong>Right to nominate:</strong> Designate someone to exercise your rights in case of death or incapacity</li>
+              </ul>
+              
+              <p className="text-gray-700 mb-3">
+                <strong>Special Notes on Data Deletion:</strong>
+              </p>
               <ul className="list-disc pl-6 space-y-2 text-gray-700">
-                <li>Active accounts: Data kept while account is active</li>
-                <li>Deleted accounts: Data anonymized within 30 days</li>
-                <li>Reviews: Kept (anonymized) even after account deletion</li>
-                <li>Logs: Kept for 90 days</li>
+                <li>When you delete your account, your personal information is removed within 30 days</li>
+                <li>Reviews you posted will remain visible (anonymously) to preserve the platform's integrity</li>
+                <li>Your votes and flags will be retained (anonymized) for platform quality</li>
+                <li>We cannot delete reviews if they are subject to ongoing moderation or legal proceedings</li>
+              </ul>
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Data Retention</h2>
+              <ul className="list-disc pl-6 space-y-2 text-gray-700 mb-4">
+                <li><strong>Active accounts:</strong> Data kept while account is active and for legal compliance</li>
+                <li><strong>Deleted accounts:</strong> Personal data anonymized within 30 days</li>
+                <li><strong>Reviews:</strong> Kept anonymously even after account deletion (for platform integrity)</li>
+                <li><strong>Votes:</strong> Anonymized and retained for review ranking quality</li>
+                <li><strong>Flags and reports:</strong> Retained for 1 year for moderation quality and appeals</li>
+                <li><strong>Security logs:</strong> IP addresses and access logs kept for 90 days</li>
+                <li><strong>Moderation decisions:</strong> Retained for 2 years for appeal purposes</li>
+              </ul>
+              
+              <p className="text-gray-700">
+                <strong>Why we retain anonymized reviews:</strong> Reviews form the core value of our platform. 
+                Deleting them would harm the community and students relying on authentic feedback. After account 
+                deletion, reviews remain but cannot be linked back to you.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Cookies and Tracking</h2>
+              <ul className="list-disc pl-6 space-y-2 text-gray-700">
+                <li><strong>Authentication tokens:</strong> Stored locally to keep you logged in</li>
+                <li><strong>Session cookies:</strong> Essential for platform functionality</li>
+                <li><strong>Analytics cookies:</strong> Used to understand usage patterns (can be disabled)</li>
+                <li><strong>No advertising cookies:</strong> We don't use cookies for ad tracking</li>
+                <li><strong>No cross-site tracking:</strong> We don't track you across other websites</li>
               </ul>
             </section>
 

@@ -1813,6 +1813,31 @@ const AdminPage: NextPage = () => {
                   </div>
                 )}
               </div>
+
+              {/* All College Reviews Section */}
+              <div className="bg-white rounded-lg shadow overflow-hidden mt-6">
+                <div className="px-6 py-4 bg-gray-50 border-b">
+                  <h3 className="text-lg font-semibold text-gray-900">All College Reviews</h3>
+                  <p className="text-sm text-gray-500 mt-1">View all submitted college reviews and their authors</p>
+                </div>
+                
+                <div className="p-6">
+                  <iframe
+                    src={`${API_BASE}/docs#/College%20Review%20Moderation/get_all_college_reviews_for_admin_v1_college_review_moderation_admin_all_reviews_get`}
+                    className="w-full h-96 border rounded"
+                    title="All College Reviews API"
+                  />
+                  <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      <strong>Note:</strong> Use the API endpoint above to view all college reviews with author information.
+                      The endpoint requires admin authentication and returns review details including the author's email.
+                    </p>
+                    <p className="text-sm text-blue-800 mt-2">
+                      Endpoint: <code className="bg-white px-2 py-1 rounded">GET {API_BASE}/v1/college-review-moderation/admin/all-reviews</code>
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
