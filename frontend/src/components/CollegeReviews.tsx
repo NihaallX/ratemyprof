@@ -112,18 +112,22 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
       });
 
       if (response.ok) {
-        alert('Review flagged successfully. Our moderators will review it.');
+        alert('✅ Review flagged successfully!\n\nOur moderators will review it shortly. Thank you for helping keep our community safe.');
         setShowFlagModal(false);
         setSelectedReviewId(null);
         setFlagType('spam');
         setFlagReason('');
+      } else if (response.status === 409) {
+        alert('⚠️ Already Flagged\n\nYou have already flagged this review. Our moderators are reviewing it.');
+        setShowFlagModal(false);
       } else {
         const error = await response.json();
-        alert(`Failed to flag review: ${error.detail || 'Unknown error'}`);
+        const errorMsg = error.detail || error.error || 'Unknown error';
+        alert(`❌ Failed to flag review\n\n${errorMsg}`);
       }
     } catch (err) {
       console.error('Failed to flag review:', err);
-      alert('Failed to flag review. Please try again.');
+      alert('❌ Network Error\n\nFailed to flag review. Please check your connection and try again.');
     } finally {
       setFlagSubmitting(false);
     }
@@ -166,13 +170,16 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
               : review
           )
         );
+      } else if (response.status === 500) {
+        alert('⚠️ Voting System Not Ready\n\nThe voting system is being set up. Please try again in a few moments.\n\n(Admin needs to run the database setup script)');
       } else {
         const error = await response.json();
-        alert(`Failed to vote: ${error.detail || 'Unknown error'}`);
+        const errorMsg = error.detail || error.error || 'Unknown error';
+        alert(`❌ Failed to vote\n\n${errorMsg}`);
       }
     } catch (err) {
       console.error('Failed to vote:', err);
-      alert('Failed to vote. Please try again.');
+      alert('❌ Network Error\n\nFailed to record your vote. Please check your connection and try again.');
     }
   };
 
