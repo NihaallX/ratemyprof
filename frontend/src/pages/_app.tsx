@@ -10,12 +10,19 @@ export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter()
 
   useEffect(() => {
-    // Handle GitHub Pages SPA redirect from 404.html
-    // This processes the special query string created by 404.html
+    // Handle GitHub Pages SPA redirect from 404 page
     const redirect = sessionStorage.getItem('redirect')
     if (redirect) {
       sessionStorage.removeItem('redirect')
       router.replace(redirect)
+      return
+    }
+
+    // Also handle redirect query parameter
+    const urlParams = new URLSearchParams(window.location.search)
+    const redirectParam = urlParams.get('redirect')
+    if (redirectParam) {
+      router.replace(redirectParam)
     }
   }, [router])
 

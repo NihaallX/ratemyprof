@@ -174,6 +174,9 @@ export default function AddProfessor() {
           type: 'success' 
         });
         
+        // Also show an alert for better visibility
+        alert('✅ Professor submitted successfully!\n\nYour submission will be reviewed by our team before being published. Thank you for contributing!');
+        
         // Reset form
         setFormData({
           name: '',
@@ -189,16 +192,29 @@ export default function AddProfessor() {
         }, 3000);
       } else {
         const errorData = await response.json();
+        const errorMessage = errorData.detail || errorData.error || 'Failed to submit professor. Please try again.';
+        
+        // Show error in notification
         setNotification({ 
-          message: errorData.detail || 'Failed to submit professor. Please try again.', 
+          message: errorMessage, 
           type: 'error' 
         });
+        
+        // Also show alert for 409 (duplicate) errors
+        if (response.status === 409) {
+          alert('⚠️ Professor Already Exists\n\nThis professor already exists in this college. Please search for them instead of creating a duplicate entry.');
+        } else if (response.status === 500) {
+          alert('❌ Server Error\n\n' + errorMessage + '\n\nPlease try again or contact support if the problem persists.');
+        }
       }
     } catch (error) {
+      console.error('Network error:', error);
+      const errorMessage = 'Network error. Please check your connection and try again.';
       setNotification({ 
-        message: 'Network error. Please check your connection and try again.', 
+        message: errorMessage, 
         type: 'error' 
       });
+      alert('❌ ' + errorMessage);
     } finally {
       setIsSubmitting(false);
     }
