@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
-import { Shield, Users, Flag, Check, ArrowLeft } from 'lucide-react';
+import { Shield, Users, Flag, Check, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import AdminLoginModal from '../components/AdminLoginModal';
 import { supabase } from '../lib/supabase';
@@ -52,6 +52,7 @@ const AdminPage: NextPage = () => {
 
   // College Reviews Moderation state
   const [flaggedCollegeReviews, setFlaggedCollegeReviews] = useState([]);
+  const [allCollegeReviews, setAllCollegeReviews] = useState([]);
   const [collegeReviewStats, setCollegeReviewStats] = useState({
     pending_college_review_flags: 0,
     total_college_review_flags: 0,
@@ -777,6 +778,45 @@ const AdminPage: NextPage = () => {
     }
   };
 
+  const loadAllCollegeReviews = async () => {
+    try {
+      const storedSession = localStorage.getItem('adminSession');
+      let adminToken = null;
+      
+      if (storedSession) {
+        const sessionData = JSON.parse(storedSession);
+        adminToken = sessionData.access_token;
+      } else if (session?.access_token) {
+        adminToken = session.access_token;
+      }
+
+      if (!adminToken) {
+        throw new Error('Failed to get admin token');
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${adminToken}`,
+        'Content-Type': 'application/json'
+      };
+
+      // Load all college reviews
+      const response = await fetch(
+        `${API_BASE}/v1/college-review-moderation/admin/all-reviews?limit=50`,
+        { headers }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setAllCollegeReviews(data.reviews || []);
+      } else {
+        console.error('Failed to load all reviews:', response.status);
+      }
+
+    } catch (error) {
+      console.error('Failed to load all college reviews:', error);
+    }
+  };
+
   const handleCollegeReviewFlagAction = async (flagId: string, action: 'approve_flag' | 'dismiss_flag') => {
     try {
       const storedSession = localStorage.getItem('adminSession');
@@ -839,6 +879,7 @@ const AdminPage: NextPage = () => {
   useEffect(() => {
     if (isAdmin && activeTab === 'college-reviews') {
       loadFlaggedCollegeReviews();
+      loadAllCollegeReviews();
     }
   }, [isAdmin, activeTab, collegeReviewStatusFilter]);
 
@@ -1821,22 +1862,102 @@ const AdminPage: NextPage = () => {
                   <p className="text-sm text-gray-500 mt-1">View all submitted college reviews and their authors</p>
                 </div>
                 
-                <div className="p-6">
-                  <iframe
-                    src={`${API_BASE}/docs#/College%20Review%20Moderation/get_all_college_reviews_for_admin_v1_college_review_moderation_admin_all_reviews_get`}
-                    className="w-full h-96 border rounded"
-                    title="All College Reviews API"
-                  />
-                  <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-blue-800">
-                      <strong>Note:</strong> Use the API endpoint above to view all college reviews with author information.
-                      The endpoint requires admin authentication and returns review details including the author's email.
-                    </p>
-                    <p className="text-sm text-blue-800 mt-2">
-                      Endpoint: <code className="bg-white px-2 py-1 rounded">GET {API_BASE}/v1/college-review-moderation/admin/all-reviews</code>
-                    </p>
+                {allCollegeReviews.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500">
+                    <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <p>No college reviews found</p>
                   </div>
-                </div>
+                ) : (
+                  <div className="divide-y divide-gray-200">
+                    {allCollegeReviews.map((review: any) => (
+                      <div key={review.id} className="p-6 hover:bg-gray-50">
+                        {/* Header with College Name and Author */}
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <h4 className="text-lg font-semibold text-gray-900">
+                              {review.colleges?.name || 'Unknown College'}
+                            </h4>
+                            <div className="text-sm text-gray-500 mt-1">
+                              {review.colleges?.city}, {review.colleges?.state}
+                            </div>
+                            <div className="text-sm text-indigo-600 mt-1 font-medium">
+                              Author: {review.author?.email || review.author?.username || 'Anonymous'}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-indigo-600">
+                              {review.ratings?.overall?.toFixed(1) || 'N/A'}
+                            </div>
+                            <div className="text-xs text-gray-500">Overall Rating</div>
+                          </div>
+                        </div>
+
+                        {/* Student Info */}
+                        <div className="flex items-center space-x-4 text-sm text-gray-600 mb-4">
+                          <span className="font-medium">{review.course_name}</span>
+                          <span>•</span>
+                          <span>{review.year_of_study}</span>
+                          {review.graduation_year && (
+                            <>
+                              <span>•</span>
+                              <span>Class of {review.graduation_year}</span>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Individual Ratings Grid */}
+                        <div className="grid grid-cols-3 md:grid-cols-6 gap-3 mb-4">
+                          {[
+                            { key: 'teaching', label: 'Teaching' },
+                            { key: 'facilities', label: 'Facilities' },
+                            { key: 'opportunities', label: 'Opportunities' },
+                            { key: 'clubs', label: 'Clubs' },
+                            { key: 'internet', label: 'Internet' },
+                            { key: 'food', label: 'Food' }
+                          ].map((category) => (
+                            <div key={category.key} className="text-center bg-gray-50 rounded-lg p-2">
+                              <div className="text-xs text-gray-600 mb-1">{category.label}</div>
+                              <div className="text-lg font-semibold text-gray-900">
+                                {review.ratings?.[category.key]?.toFixed(1) || 'N/A'}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Review Text */}
+                        {review.review_text && (
+                          <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                            <p className="text-gray-700 text-sm">{review.review_text}</p>
+                          </div>
+                        )}
+
+                        {/* Voting Stats and Metadata */}
+                        <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-gray-100">
+                          <div className="flex items-center space-x-4">
+                            <span className="flex items-center">
+                              <ThumbsUp className="w-4 h-4 mr-1 text-green-600" />
+                              {review.helpful_count || 0} helpful
+                            </span>
+                            <span className="flex items-center">
+                              <ThumbsDown className="w-4 h-4 mr-1 text-red-600" />
+                              {review.not_helpful_count || 0} not helpful
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-4">
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              review.status === 'approved' ? 'bg-green-100 text-green-800' :
+                              review.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {review.status}
+                            </span>
+                            <span>{new Date(review.created_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
