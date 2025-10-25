@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MessageSquare, Users, Clock, CheckCircle, Plus, TrendingUp, Award, Wifi, Coffee, Building, BookOpen, Users as UsersIcon, Flag, ThumbsUp, ThumbsDown } from 'lucide-react';
 import CollegeReviewForm from './CollegeReviewForm';
 import { API_BASE_URL } from '../config/api';
+import { useAuth } from '../contexts/AuthContext';
 
 interface CollegeRatings {
   food: number;
@@ -47,6 +48,7 @@ const RATING_CATEGORIES = [
 ];
 
 export default function CollegeReviews({ collegeId, collegeName, canReview, onReviewSubmitted }: CollegeReviewsProps) {
+  const { session, user } = useAuth();
   const [reviews, setReviews] = useState<CollegeReview[]>([]);
   const [averageRatings, setAverageRatings] = useState<CollegeRatings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,14 +90,19 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
   const handleFlagReview = async () => {
     if (!selectedReviewId) return;
     
+    if (!session?.access_token) {
+      alert('Please log in to flag reviews');
+      setShowFlagModal(false);
+      return;
+    }
+    
     setFlagSubmitting(true);
     try {
-      const token = localStorage.getItem('access_token');
       const response = await fetch(`${API_BASE_URL}/college-review-moderation/flag`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
           college_review_id: selectedReviewId,
@@ -129,8 +136,7 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
 
   const handleVote = async (reviewId: string, voteType: 'helpful' | 'not_helpful') => {
     try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
+      if (!session?.access_token) {
         alert('Please log in to vote on reviews');
         return;
       }
@@ -139,7 +145,7 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({ vote_type: voteType })
       });
@@ -172,15 +178,14 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
 
   const removeVote = async (reviewId: string) => {
     try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
+      if (!session?.access_token) {
         return;
       }
 
       const response = await fetch(`${API_BASE_URL}/college-reviews/${reviewId}/vote`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${session.access_token}`
         }
       });
 
@@ -222,13 +227,12 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
   // Fetch user votes for all reviews
   useEffect(() => {
     const fetchUserVotes = async () => {
-      const token = localStorage.getItem('access_token');
-      if (!token || reviews.length === 0) return;
+      if (!session?.access_token || reviews.length === 0) return;
 
       try {
         const votesPromises = reviews.map(review =>
           fetch(`${API_BASE_URL}/college-reviews/${review.id}/user-vote`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: { 'Authorization': `Bearer ${session.access_token}` }
           })
             .then(res => res.ok ? res.json() : null)
             .then(data => ({ reviewId: review.id, vote: data?.vote_type || null }))
@@ -249,7 +253,7 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
     };
 
     fetchUserVotes();
-  }, [reviews.length]);
+  }, [reviews.length, session?.access_token]);
 
   const getRatingColor = (rating: number) => {
     if (rating >= 4.0) return 'bg-green-100 text-green-800 border-green-300';
