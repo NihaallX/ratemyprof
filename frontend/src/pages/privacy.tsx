@@ -46,14 +46,6 @@ export default function PrivacyPage() {
           </div>
 
           <div className="prose prose-gray max-w-none space-y-6">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-              <p className="text-sm text-blue-900 font-medium">
-                📝 <strong>Important Notice:</strong> Privacy Policy is currently being finalized. 
-                Use the ChatGPT prompt provided in <code>CHATGPT_LEGAL_PROMPTS.md</code> to generate 
-                complete Privacy Policy according to DPDP Act 2023 and Indian law.
-              </p>
-            </div>
-
             <section>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Overview</h2>
               <p className="text-gray-700">

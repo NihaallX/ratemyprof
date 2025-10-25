@@ -75,32 +75,8 @@ def get_flagged_college_reviews(
     Returns:
         List of flagged college reviews with flag details
     """
-    # Build query
-    query = supabase.table('college_review_flags').select('''
-        id,
-        college_review_id,
-        reporter_id,
-        flag_type,
-        reason,
-        status,
-        reviewed_by,
-        admin_notes,
-        reviewed_at,
-        created_at,
-        updated_at,
-        college_reviews!inner (
-            id,
-            overall_rating,
-            comment,
-            created_at,
-            colleges!inner (
-                id,
-                name,
-                city,
-                state
-            )
-        )
-    ''')
+    # Build query - simplified to avoid nested join issues
+    query = supabase.table('college_review_flags').select('*')
     
     if status:
         query = query.eq('status', status)
@@ -108,7 +84,35 @@ def get_flagged_college_reviews(
     query = query.order('created_at', desc=True).range(offset, offset + limit - 1)
     
     result = query.execute()
-    return result.data if result.data else []
+    flags = result.data if result.data else []
+    
+    # For each flag, fetch the college review and college details separately
+    for flag in flags:
+        try:
+            # Get college review
+            review_response = supabase.table('college_reviews').select('*').eq('id', flag['college_review_id']).execute()
+            if review_response.data and len(review_response.data) > 0:
+                flag['college_review'] = review_response.data[0]
+                
+                # Get college details
+                college_id = flag['college_review'].get('college_id')
+                if college_id:
+                    college_response = supabase.table('colleges').select('id, name, city, state').eq('id', college_id).execute()
+                    if college_response.data and len(college_response.data) > 0:
+                        flag['college'] = college_response.data[0]
+                    else:
+                        flag['college'] = {'name': 'Unknown', 'city': 'Unknown', 'state': 'Unknown'}
+                else:
+                    flag['college'] = {'name': 'Unknown', 'city': 'Unknown', 'state': 'Unknown'}
+            else:
+                flag['college_review'] = None
+                flag['college'] = None
+        except Exception as e:
+            print(f"Error fetching details for flag {flag['id']}: {e}")
+            flag['college_review'] = None
+            flag['college'] = None
+    
+    return flags
 
 
 def review_college_review_flag(

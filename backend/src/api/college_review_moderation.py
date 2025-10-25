@@ -289,33 +289,58 @@ async def get_all_college_reviews_for_admin(
                 detail="Admin privileges required for moderation endpoints"
             )
         
+        # Use admin client to bypass RLS
+        from src.lib.database import get_supabase_admin
+        admin_client = get_supabase_admin()
+        if not admin_client:
+            admin_client = supabase
+        
         # Fetch all college reviews with college information
-        reviews_response = supabase.table("college_reviews") \
+        reviews_response = admin_client.table("college_reviews") \
             .select("*, colleges(name, city, state)") \
             .order("created_at", desc=True) \
             .range(offset, offset + limit - 1) \
             .execute()
         
-        reviews = reviews_response.data
+        reviews = reviews_response.data if reviews_response.data else []
         
-        # For each review, fetch the author information from author_mappings
+        # For each review, fetch the author information manually
         for review in reviews:
-            # Get author mapping
-            mapping_response = supabase.table("college_review_author_mappings") \
-                .select("author_id, users(email, username)") \
-                .eq("college_review_id", review['id']) \
-                .single() \
-                .execute()
-            
-            if mapping_response.data:
-                review['author'] = mapping_response.data.get('users', {})
-                review['author_id'] = mapping_response.data.get('author_id')
-            else:
-                review['author'] = None
+            try:
+                # Get author mapping (just the author_id)
+                mapping_response = admin_client.table("college_review_author_mappings") \
+                    .select("author_id") \
+                    .eq("college_review_id", review['id']) \
+                    .execute()
+                
+                if mapping_response.data and len(mapping_response.data) > 0:
+                    author_id = mapping_response.data[0].get('author_id')
+                    review['author_id'] = author_id
+                    
+                    # Fetch user details separately
+                    if author_id:
+                        user_response = admin_client.table("users") \
+                            .select("email, username") \
+                            .eq("id", author_id) \
+                            .execute()
+                        
+                        if user_response.data and len(user_response.data) > 0:
+                            review['author'] = user_response.data[0]
+                        else:
+                            review['author'] = {'email': 'Unknown', 'username': 'Unknown'}
+                    else:
+                        review['author'] = {'email': 'Anonymous', 'username': 'Anonymous'}
+                else:
+                    review['author'] = {'email': 'Anonymous', 'username': 'Anonymous'}
+                    review['author_id'] = None
+            except Exception as mapping_error:
+                # If there's an error fetching author, set as anonymous
+                print(f"Error fetching author for review {review['id']}: {mapping_error}")
+                review['author'] = {'email': 'Anonymous', 'username': 'Anonymous'}
                 review['author_id'] = None
         
         # Get total count
-        count_response = supabase.table("college_reviews") \
+        count_response = admin_client.table("college_reviews") \
             .select("id", count="exact") \
             .execute()
         
