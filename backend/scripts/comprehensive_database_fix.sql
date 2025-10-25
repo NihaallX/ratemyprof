@@ -13,64 +13,127 @@
 -- ============================================================================
 -- All user_id columns should reference auth.users(id), not public.users(id)
 
--- Fix review_votes table
-ALTER TABLE review_votes 
-DROP CONSTRAINT IF EXISTS review_votes_user_id_fkey;
+-- Fix review_votes table (if it exists)
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'review_votes') THEN
+        ALTER TABLE review_votes 
+        DROP CONSTRAINT IF EXISTS review_votes_user_id_fkey;
 
-ALTER TABLE review_votes
-ADD CONSTRAINT review_votes_user_id_fkey 
-FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+        ALTER TABLE review_votes
+        ADD CONSTRAINT review_votes_user_id_fkey 
+        FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+        
+        RAISE NOTICE '✅ Fixed review_votes foreign key';
+    ELSE
+        RAISE NOTICE '⏭️  Skipping review_votes (table does not exist)';
+    END IF;
+END $$;
 
--- Fix college_review_votes table
-ALTER TABLE college_review_votes 
-DROP CONSTRAINT IF EXISTS college_review_votes_user_id_fkey;
+-- Fix college_review_votes table (if it exists)
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'college_review_votes') THEN
+        ALTER TABLE college_review_votes 
+        DROP CONSTRAINT IF EXISTS college_review_votes_user_id_fkey;
 
-ALTER TABLE college_review_votes
-ADD CONSTRAINT college_review_votes_user_id_fkey 
-FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+        ALTER TABLE college_review_votes
+        ADD CONSTRAINT college_review_votes_user_id_fkey 
+        FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+        
+        RAISE NOTICE '✅ Fixed college_review_votes foreign key';
+    ELSE
+        RAISE NOTICE '⏭️  Skipping college_review_votes (table does not exist)';
+    END IF;
+END $$;
 
--- Fix user_moderation_logs table
-ALTER TABLE user_moderation_logs 
-DROP CONSTRAINT IF EXISTS user_moderation_logs_user_id_fkey,
-DROP CONSTRAINT IF EXISTS user_moderation_logs_moderator_id_fkey;
+-- Fix user_moderation_logs table (if it exists)
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'user_moderation_logs') THEN
+        ALTER TABLE user_moderation_logs 
+        DROP CONSTRAINT IF EXISTS user_moderation_logs_user_id_fkey,
+        DROP CONSTRAINT IF EXISTS user_moderation_logs_moderator_id_fkey;
 
-ALTER TABLE user_moderation_logs
-ADD CONSTRAINT user_moderation_logs_user_id_fkey 
-FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE,
-ADD CONSTRAINT user_moderation_logs_moderator_id_fkey 
-FOREIGN KEY (moderator_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+        ALTER TABLE user_moderation_logs
+        ADD CONSTRAINT user_moderation_logs_user_id_fkey 
+        FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE,
+        ADD CONSTRAINT user_moderation_logs_moderator_id_fkey 
+        FOREIGN KEY (moderator_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+        
+        RAISE NOTICE '✅ Fixed user_moderation_logs foreign keys';
+    ELSE
+        RAISE NOTICE '⏭️  Skipping user_moderation_logs (table does not exist)';
+    END IF;
+END $$;
 
--- Fix professor_verification_logs table
-ALTER TABLE professor_verification_logs 
-DROP CONSTRAINT IF EXISTS professor_verification_logs_moderator_id_fkey;
+-- Fix professor_verification_logs table (if it exists)
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'professor_verification_logs') THEN
+        ALTER TABLE professor_verification_logs 
+        DROP CONSTRAINT IF EXISTS professor_verification_logs_moderator_id_fkey;
 
-ALTER TABLE professor_verification_logs
-ADD CONSTRAINT professor_verification_logs_moderator_id_fkey 
-FOREIGN KEY (moderator_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+        ALTER TABLE professor_verification_logs
+        ADD CONSTRAINT professor_verification_logs_moderator_id_fkey 
+        FOREIGN KEY (moderator_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+        
+        RAISE NOTICE '✅ Fixed professor_verification_logs foreign keys';
+    ELSE
+        RAISE NOTICE '⏭️  Skipping professor_verification_logs (table does not exist)';
+    END IF;
+END $$;
 
--- Fix college_review_flags table (reviewed_by should reference auth.users)
-ALTER TABLE college_review_flags 
-DROP CONSTRAINT IF EXISTS college_review_flags_reviewed_by_fkey;
+-- Fix college_review_flags table (reviewed_by should reference auth.users) (if it exists)
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'college_review_flags') THEN
+        ALTER TABLE college_review_flags 
+        DROP CONSTRAINT IF EXISTS college_review_flags_reviewed_by_fkey;
 
-ALTER TABLE college_review_flags
-ADD CONSTRAINT college_review_flags_reviewed_by_fkey 
-FOREIGN KEY (reviewed_by) REFERENCES auth.users(id) ON DELETE SET NULL;
+        ALTER TABLE college_review_flags
+        ADD CONSTRAINT college_review_flags_reviewed_by_fkey 
+        FOREIGN KEY (reviewed_by) REFERENCES auth.users(id) ON DELETE SET NULL;
+        
+        RAISE NOTICE '✅ Fixed college_review_flags foreign key';
+    ELSE
+        RAISE NOTICE '⏭️  Skipping college_review_flags (table does not exist)';
+    END IF;
+END $$;
 
--- Fix college_review_author_mappings table
-ALTER TABLE college_review_author_mappings 
-DROP CONSTRAINT IF EXISTS college_review_author_mappings_author_id_fkey;
+-- Fix college_review_author_mappings table (if it exists)
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'college_review_author_mappings') THEN
+        ALTER TABLE college_review_author_mappings 
+        DROP CONSTRAINT IF EXISTS college_review_author_mappings_author_id_fkey;
 
-ALTER TABLE college_review_author_mappings
-ADD CONSTRAINT college_review_author_mappings_author_id_fkey 
-FOREIGN KEY (author_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+        ALTER TABLE college_review_author_mappings
+        ADD CONSTRAINT college_review_author_mappings_author_id_fkey 
+        FOREIGN KEY (author_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+        
+        RAISE NOTICE '✅ Fixed college_review_author_mappings foreign key';
+    ELSE
+        RAISE NOTICE '⏭️  Skipping college_review_author_mappings (table does not exist)';
+    END IF;
+END $$;
 
--- Fix review_author_mappings table
-ALTER TABLE review_author_mappings 
-DROP CONSTRAINT IF EXISTS review_author_mappings_author_id_fkey;
+-- Fix review_author_mappings table (if it exists)
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'review_author_mappings') THEN
+        ALTER TABLE review_author_mappings 
+        DROP CONSTRAINT IF EXISTS review_author_mappings_author_id_fkey;
 
-ALTER TABLE review_author_mappings
-ADD CONSTRAINT review_author_mappings_author_id_fkey 
-FOREIGN KEY (author_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+        ALTER TABLE review_author_mappings
+        ADD CONSTRAINT review_author_mappings_author_id_fkey 
+        FOREIGN KEY (author_id) REFERENCES auth.users(id) ON DELETE CASCADE;
+        
+        RAISE NOTICE '✅ Fixed review_author_mappings foreign key';
+    ELSE
+        RAISE NOTICE '⏭️  Skipping review_author_mappings (table does not exist)';
+    END IF;
+END $$;
 
 -- ============================================================================
 -- ISSUE #2: FIX PROFESSORS TABLE RLS POLICIES
@@ -78,141 +141,142 @@ FOREIGN KEY (author_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 -- Allow authenticated users to INSERT professors (for "Add Professor" form)
 -- Keep UPDATE/DELETE restricted to service_role (admins)
 
-ALTER TABLE professors ENABLE ROW LEVEL SECURITY;
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'professors') THEN
+        ALTER TABLE professors ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies
-DROP POLICY IF EXISTS "professors_public_read" ON professors;
-DROP POLICY IF EXISTS "professors_authenticated_insert" ON professors;
-DROP POLICY IF EXISTS "professors_service_role_all" ON professors;
-DROP POLICY IF EXISTS "professors_authenticated_read" ON professors;
+        -- Drop existing policies
+        DROP POLICY IF EXISTS "professors_public_read" ON professors;
+        DROP POLICY IF EXISTS "professors_authenticated_insert" ON professors;
+        DROP POLICY IF EXISTS "professors_service_role_all" ON professors;
+        DROP POLICY IF EXISTS "professors_authenticated_read" ON professors;
 
--- Everyone can read professors
-CREATE POLICY "professors_public_read"
-ON professors FOR SELECT
-TO PUBLIC
-USING (true);
+        -- Everyone can read professors
+        EXECUTE 'CREATE POLICY "professors_public_read" ON professors FOR SELECT TO PUBLIC USING (true)';
 
--- Authenticated users can insert professors
-CREATE POLICY "professors_authenticated_insert"
-ON professors FOR INSERT
-TO authenticated
-WITH CHECK (true);
+        -- Authenticated users can insert professors
+        EXECUTE 'CREATE POLICY "professors_authenticated_insert" ON professors FOR INSERT TO authenticated WITH CHECK (true)';
 
--- Service role can do everything (for admin operations)
-CREATE POLICY "professors_service_role_all"
-ON professors FOR ALL
-TO service_role
-USING (true)
-WITH CHECK (true);
+        -- Service role can do everything (for admin operations)
+        EXECUTE 'CREATE POLICY "professors_service_role_all" ON professors FOR ALL TO service_role USING (true) WITH CHECK (true)';
+        
+        RAISE NOTICE '✅ Fixed professors table RLS policies';
+    ELSE
+        RAISE NOTICE '⏭️  Skipping professors RLS (table does not exist)';
+    END IF;
+END $$;
 
 -- ============================================================================
 -- ISSUE #3: FIX COLLEGE_REVIEW_VOTES RLS POLICIES
 -- ============================================================================
 -- Allow authenticated users to vote on college reviews
 
-ALTER TABLE college_review_votes ENABLE ROW LEVEL SECURITY;
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'college_review_votes') THEN
+        ALTER TABLE college_review_votes ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies
-DROP POLICY IF EXISTS "college_review_votes_public_read" ON college_review_votes;
-DROP POLICY IF EXISTS "college_review_votes_authenticated_insert" ON college_review_votes;
-DROP POLICY IF EXISTS "college_review_votes_authenticated_update_own" ON college_review_votes;
-DROP POLICY IF EXISTS "college_review_votes_service_role_all" ON college_review_votes;
+        -- Drop existing policies
+        DROP POLICY IF EXISTS "college_review_votes_public_read" ON college_review_votes;
+        DROP POLICY IF EXISTS "college_review_votes_authenticated_insert" ON college_review_votes;
+        DROP POLICY IF EXISTS "college_review_votes_authenticated_update_own" ON college_review_votes;
+        DROP POLICY IF EXISTS "college_review_votes_service_role_all" ON college_review_votes;
 
--- Public can read votes
-CREATE POLICY "college_review_votes_public_read"
-ON college_review_votes FOR SELECT
-TO PUBLIC
-USING (true);
+        -- Public can read votes
+        EXECUTE 'CREATE POLICY "college_review_votes_public_read" ON college_review_votes FOR SELECT TO PUBLIC USING (true)';
 
--- Authenticated users can insert votes
-CREATE POLICY "college_review_votes_authenticated_insert"
-ON college_review_votes FOR INSERT
-TO authenticated
-WITH CHECK (user_id = auth.uid());
+        -- Authenticated users can insert votes
+        EXECUTE 'CREATE POLICY "college_review_votes_authenticated_insert" ON college_review_votes FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid())';
 
--- Authenticated users can update their own votes
-CREATE POLICY "college_review_votes_authenticated_update_own"
-ON college_review_votes FOR UPDATE
-TO authenticated
-USING (user_id = auth.uid())
-WITH CHECK (user_id = auth.uid());
+        -- Authenticated users can update their own votes
+        EXECUTE 'CREATE POLICY "college_review_votes_authenticated_update_own" ON college_review_votes FOR UPDATE TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid())';
 
--- Service role has full access
-CREATE POLICY "college_review_votes_service_role_all"
-ON college_review_votes FOR ALL
-TO service_role
-USING (true)
-WITH CHECK (true);
+        -- Service role has full access
+        EXECUTE 'CREATE POLICY "college_review_votes_service_role_all" ON college_review_votes FOR ALL TO service_role USING (true) WITH CHECK (true)';
+        
+        RAISE NOTICE '✅ Fixed college_review_votes RLS policies';
+    ELSE
+        RAISE NOTICE '⏭️  Skipping college_review_votes RLS (table does not exist)';
+    END IF;
+END $$;
 
 -- ============================================================================
 -- ISSUE #4: FIX COLLEGE_REVIEW_FLAGS RLS POLICIES
 -- ============================================================================
 -- Ensure admins can update flags for moderation
 
-ALTER TABLE college_review_flags ENABLE ROW LEVEL SECURITY;
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'college_review_flags') THEN
+        ALTER TABLE college_review_flags ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies
-DROP POLICY IF EXISTS "college_review_flags_authenticated_read" ON college_review_flags;
-DROP POLICY IF EXISTS "college_review_flags_authenticated_insert" ON college_review_flags;
-DROP POLICY IF EXISTS "college_review_flags_service_role_all" ON college_review_flags;
+        -- Drop existing policies
+        DROP POLICY IF EXISTS "college_review_flags_authenticated_read" ON college_review_flags;
+        DROP POLICY IF EXISTS "college_review_flags_authenticated_insert" ON college_review_flags;
+        DROP POLICY IF EXISTS "college_review_flags_service_role_all" ON college_review_flags;
 
--- Authenticated users can read all flags
-CREATE POLICY "college_review_flags_authenticated_read"
-ON college_review_flags FOR SELECT
-TO authenticated
-USING (true);
+        -- Authenticated users can read all flags
+        EXECUTE 'CREATE POLICY "college_review_flags_authenticated_read" ON college_review_flags FOR SELECT TO authenticated USING (true)';
 
--- Authenticated users can insert flags (report reviews)
-CREATE POLICY "college_review_flags_authenticated_insert"
-ON college_review_flags FOR INSERT
-TO authenticated
-WITH CHECK (reporter_id = auth.uid());
+        -- Authenticated users can insert flags (report reviews)
+        EXECUTE 'CREATE POLICY "college_review_flags_authenticated_insert" ON college_review_flags FOR INSERT TO authenticated WITH CHECK (reporter_id = auth.uid())';
 
--- Service role can do everything (admin moderation actions)
-CREATE POLICY "college_review_flags_service_role_all"
-ON college_review_flags FOR ALL
-TO service_role
-USING (true)
-WITH CHECK (true);
+        -- Service role can do everything (admin moderation actions)
+        EXECUTE 'CREATE POLICY "college_review_flags_service_role_all" ON college_review_flags FOR ALL TO service_role USING (true) WITH CHECK (true)';
+        
+        RAISE NOTICE '✅ Fixed college_review_flags RLS policies';
+    ELSE
+        RAISE NOTICE '⏭️  Skipping college_review_flags RLS (table does not exist)';
+    END IF;
+END $$;
 
 -- ============================================================================
 -- ISSUE #5: FIX COLLEGE_REVIEWS RLS POLICIES
 -- ============================================================================
 -- Ensure service role can update reviews for moderation
 
-ALTER TABLE college_reviews ENABLE ROW LEVEL SECURITY;
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'college_reviews') THEN
+        ALTER TABLE college_reviews ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies
-DROP POLICY IF EXISTS "college_reviews_public_read" ON college_reviews;
-DROP POLICY IF EXISTS "college_reviews_authenticated_insert" ON college_reviews;
-DROP POLICY IF EXISTS "college_reviews_service_role_all" ON college_reviews;
+        -- Drop existing policies
+        DROP POLICY IF EXISTS "college_reviews_public_read" ON college_reviews;
+        DROP POLICY IF EXISTS "college_reviews_authenticated_insert" ON college_reviews;
+        DROP POLICY IF EXISTS "college_reviews_service_role_all" ON college_reviews;
 
--- Public can read approved college reviews
-CREATE POLICY "college_reviews_public_read"
-ON college_reviews FOR SELECT
-TO PUBLIC
-USING (status = 'approved' OR status IS NULL);
+        -- Public can read approved college reviews
+        EXECUTE 'CREATE POLICY "college_reviews_public_read" ON college_reviews FOR SELECT TO PUBLIC USING (status = ''approved'' OR status IS NULL)';
 
--- Authenticated users can insert college reviews
-CREATE POLICY "college_reviews_authenticated_insert"
-ON college_reviews FOR INSERT
-TO authenticated
-WITH CHECK (true);
+        -- Authenticated users can insert college reviews
+        EXECUTE 'CREATE POLICY "college_reviews_authenticated_insert" ON college_reviews FOR INSERT TO authenticated WITH CHECK (true)';
 
--- Service role has full access (for moderation)
-CREATE POLICY "college_reviews_service_role_all"
-ON college_reviews FOR ALL
-TO service_role
-USING (true)
-WITH CHECK (true);
+        -- Service role has full access (for moderation)
+        EXECUTE 'CREATE POLICY "college_reviews_service_role_all" ON college_reviews FOR ALL TO service_role USING (true) WITH CHECK (true)';
+        
+        RAISE NOTICE '✅ Fixed college_reviews RLS policies';
+    ELSE
+        RAISE NOTICE '⏭️  Skipping college_reviews RLS (table does not exist)';
+    END IF;
+END $$;
 
 -- ============================================================================
 -- ISSUE #6: ENSURE is_flagged COLUMN EXISTS ON college_reviews
 -- ============================================================================
 
 -- Add is_flagged column if it doesn't exist
-ALTER TABLE college_reviews 
-ADD COLUMN IF NOT EXISTS is_flagged BOOLEAN DEFAULT FALSE;
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'college_reviews') THEN
+        ALTER TABLE college_reviews 
+        ADD COLUMN IF NOT EXISTS is_flagged BOOLEAN DEFAULT FALSE;
+        
+        RAISE NOTICE '✅ Ensured is_flagged column exists on college_reviews';
+    ELSE
+        RAISE NOTICE '⏭️  Skipping is_flagged column (college_reviews table does not exist)';
+    END IF;
+END $$;
 
 -- ============================================================================
 -- VERIFICATION QUERIES
