@@ -18,9 +18,13 @@ export default function Document() {
                   var decoded = l.search.slice(1).split('&').map(function(s) { 
                     return s.replace(/~and~/g, '&')
                   }).join('?');
-                  window.history.replaceState(null, null,
-                      l.pathname.slice(0, -1) + decoded + l.hash
-                  );
+                  var redirectPath = l.pathname.slice(0, -1) + decoded + l.hash;
+                  
+                  // Store in sessionStorage for _app.tsx to handle
+                  sessionStorage.setItem('redirect', redirectPath);
+                  
+                  // Also update the URL immediately
+                  window.history.replaceState(null, null, redirectPath);
                 }
               }(window.location))
             `,
