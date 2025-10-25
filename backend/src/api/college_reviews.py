@@ -763,8 +763,15 @@ async def vote_on_college_review(
     try:
         user_id = current_user['id']
         
+        # Use admin client to bypass RLS for vote operations
+        from src.lib.database import get_supabase_admin
+        admin_client = get_supabase_admin()
+        if not admin_client:
+            # Fallback to regular client if admin not available
+            admin_client = supabase
+        
         # Check if review exists
-        review = supabase.table('college_reviews').select('id, helpful_count, not_helpful_count').eq('id', review_id).single().execute()
+        review = admin_client.table('college_reviews').select('id, helpful_count, not_helpful_count').eq('id', review_id).single().execute()
         if not review.data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -772,7 +779,7 @@ async def vote_on_college_review(
             )
         
         # Check if user has already voted
-        existing_vote = supabase.table('college_review_votes').select('*').eq(
+        existing_vote = admin_client.table('college_review_votes').select('*').eq(
             'college_review_id', review_id
         ).eq('user_id', user_id).execute()
         
@@ -788,8 +795,8 @@ async def vote_on_college_review(
                     "vote_type": vote_data.vote_type
                 }
             
-            # Update the vote
-            supabase.table('college_review_votes').update({
+            # Update the vote using admin client
+            admin_client.table('college_review_votes').update({
                 'vote_type': vote_data.vote_type
             }).eq('id', old_vote['id']).execute()
             
@@ -804,7 +811,7 @@ async def vote_on_college_review(
                 current_not_helpful = max(0, current_not_helpful - 1)
                 current_helpful += 1
             
-            supabase.table('college_reviews').update({
+            admin_client.table('college_reviews').update({
                 'helpful_count': current_helpful,
                 'not_helpful_count': current_not_helpful
             }).eq('id', review_id).execute()
@@ -816,8 +823,8 @@ async def vote_on_college_review(
                 "not_helpful_count": current_not_helpful
             }
         else:
-            # New vote
-            supabase.table('college_review_votes').insert({
+            # New vote - use admin client to bypass RLS
+            admin_client.table('college_review_votes').insert({
                 'college_review_id': review_id,
                 'user_id': user_id,
                 'vote_type': vote_data.vote_type
@@ -832,7 +839,7 @@ async def vote_on_college_review(
             else:
                 current_not_helpful += 1
             
-            supabase.table('college_reviews').update({
+            admin_client.table('college_reviews').update({
                 'helpful_count': current_helpful,
                 'not_helpful_count': current_not_helpful
             }).eq('id', review_id).execute()
@@ -865,8 +872,14 @@ async def remove_vote_from_college_review(
     try:
         user_id = current_user['id']
         
+        # Use admin client to bypass RLS
+        from src.lib.database import get_supabase_admin
+        admin_client = get_supabase_admin()
+        if not admin_client:
+            admin_client = supabase
+        
         # Check if review exists
-        review = supabase.table('college_reviews').select('id, helpful_count, not_helpful_count').eq('id', review_id).single().execute()
+        review = admin_client.table('college_reviews').select('id, helpful_count, not_helpful_count').eq('id', review_id).single().execute()
         if not review.data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -874,7 +887,7 @@ async def remove_vote_from_college_review(
             )
         
         # Find and delete the vote
-        existing_vote = supabase.table('college_review_votes').select('*').eq(
+        existing_vote = admin_client.table('college_review_votes').select('*').eq(
             'college_review_id', review_id
         ).eq('user_id', user_id).execute()
         
@@ -887,8 +900,8 @@ async def remove_vote_from_college_review(
         vote = existing_vote.data[0]
         vote_type = vote['vote_type']
         
-        # Delete the vote
-        supabase.table('college_review_votes').delete().eq('id', vote['id']).execute()
+        # Delete the vote using admin client
+        admin_client.table('college_review_votes').delete().eq('id', vote['id']).execute()
         
         # Update review counts
         current_helpful = review.data['helpful_count'] or 0
@@ -899,7 +912,7 @@ async def remove_vote_from_college_review(
         else:
             current_not_helpful = max(0, current_not_helpful - 1)
         
-        supabase.table('college_reviews').update({
+        admin_client.table('college_reviews').update({
             'helpful_count': current_helpful,
             'not_helpful_count': current_not_helpful
         }).eq('id', review_id).execute()

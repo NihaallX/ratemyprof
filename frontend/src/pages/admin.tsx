@@ -791,7 +791,8 @@ const AdminPage: NextPage = () => {
       }
 
       if (!adminToken) {
-        throw new Error('Failed to get admin token');
+        console.warn('No admin token available for loading college reviews');
+        return;
       }
 
       const headers = {
@@ -799,6 +800,8 @@ const AdminPage: NextPage = () => {
         'Content-Type': 'application/json'
       };
 
+      console.log('Loading all college reviews...');
+      
       // Load all college reviews
       const response = await fetch(
         `${API_BASE}/v1/college-review-moderation/admin/all-reviews?limit=50`,
@@ -807,13 +810,17 @@ const AdminPage: NextPage = () => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('College reviews loaded:', data.reviews?.length || 0);
         setAllCollegeReviews(data.reviews || []);
       } else {
-        console.error('Failed to load all reviews:', response.status);
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        console.error('Failed to load all reviews:', response.status, errorData);
+        showToast(`Failed to load college reviews: ${errorData.detail || response.statusText}`, 'error');
       }
 
     } catch (error) {
       console.error('Failed to load all college reviews:', error);
+      showToast('Network error loading college reviews', 'error');
     }
   };
 
