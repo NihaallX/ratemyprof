@@ -762,9 +762,12 @@ async def vote_on_college_review(
     """
     try:
         user_id = current_user['id']
+        print(f"[VOTE DEBUG] User ID: {user_id}, Review ID: {review_id}, Vote Type: {vote_data.vote_type}")
         
         # Check if review exists
         review = supabase.table('college_reviews').select('id, helpful_count, not_helpful_count').eq('id', review_id).single().execute()
+        print(f"[VOTE DEBUG] Review query response: {review}")
+        
         if not review.data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -775,6 +778,7 @@ async def vote_on_college_review(
         existing_vote = supabase.table('college_review_votes').select('*').eq(
             'college_review_id', review_id
         ).eq('user_id', user_id).execute()
+        print(f"[VOTE DEBUG] Existing vote query response: {existing_vote}")
         
         if existing_vote.data:
             # User has already voted - update their vote
@@ -817,11 +821,14 @@ async def vote_on_college_review(
             }
         else:
             # New vote - use regular client
-            supabase.table('college_review_votes').insert({
+            print(f"[VOTE DEBUG] Inserting new vote: college_review_id={review_id}, user_id={user_id}, vote_type={vote_data.vote_type}")
+            
+            insert_response = supabase.table('college_review_votes').insert({
                 'college_review_id': review_id,
                 'user_id': user_id,
                 'vote_type': vote_data.vote_type
             }).execute()
+            print(f"[VOTE DEBUG] Insert response: {insert_response}")
             
             # Update review counts
             current_helpful = review.data['helpful_count'] or 0
