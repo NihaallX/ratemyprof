@@ -428,26 +428,26 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
                     <div className="flex items-center space-x-3">
                       <button
                         onClick={() => toggleVote(review.id, 'helpful')}
-                        className={`flex items-center space-x-1 transition-colors ${
+                        className={`flex items-center space-x-1 transition-all duration-200 transform hover:scale-110 ${
                           review.user_vote === 'helpful'
-                            ? 'text-green-600 font-medium'
+                            ? 'text-green-600 font-medium scale-110'
                             : 'text-gray-400 hover:text-green-600'
                         }`}
                         title="Mark as helpful"
                       >
-                        <ThumbsUp className="w-4 h-4" />
+                        <ThumbsUp className={`w-4 h-4 transition-transform ${review.user_vote === 'helpful' ? 'animate-bounce' : ''}`} />
                         <span>{review.helpful_count}</span>
                       </button>
                       <button
                         onClick={() => toggleVote(review.id, 'not_helpful')}
-                        className={`flex items-center space-x-1 transition-colors ${
+                        className={`flex items-center space-x-1 transition-all duration-200 transform hover:scale-110 ${
                           review.user_vote === 'not_helpful'
-                            ? 'text-red-600 font-medium'
+                            ? 'text-red-600 font-medium scale-110'
                             : 'text-gray-400 hover:text-red-600'
                         }`}
                         title="Mark as not helpful"
                       >
-                        <ThumbsDown className="w-4 h-4" />
+                        <ThumbsDown className={`w-4 h-4 transition-transform ${review.user_vote === 'not_helpful' ? 'animate-bounce' : ''}`} />
                         <span>{review.not_helpful_count}</span>
                       </button>
                     </div>
