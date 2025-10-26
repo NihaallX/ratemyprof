@@ -921,6 +921,14 @@ async def verify_professor(
                 detail="Admin privileges required"
             )
         
+        # Get admin client for bypassing RLS
+        admin_supabase = get_admin_supabase()
+        if not admin_supabase:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Admin client not available"
+            )
+        
         # Validate professor ID
         try:
             UUID(professor_id)
@@ -943,9 +951,9 @@ async def verify_professor(
         
         prof_data = prof_check.data
         
-        # Perform verification action
+        # Perform verification action using admin client
         if request.action == 'verify':
-            supabase.table('professors').update({
+            admin_supabase.table('professors').update({
                 'is_verified': True,
                 'updated_at': 'now()'
             }).eq('id', professor_id).execute()
@@ -954,7 +962,7 @@ async def verify_professor(
             
         elif request.action == 'reject':
             # For rejected professors, we can either delete them or mark them as rejected
-            supabase.table('professors').delete().eq('id', professor_id).execute()
+            admin_supabase.table('professors').delete().eq('id', professor_id).execute()
             
             message = f"Professor {prof_data['name']} submission has been rejected and removed"
         
