@@ -410,3 +410,199 @@ async def get_all_college_reviews_for_admin(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch college reviews: {str(e)}"
         )
+
+
+# Moderation Action Models
+class CollegeReviewModerationAction(BaseModel):
+    action: str  # 'approve', 'reject', 'warn', 'delete'
+    reason: Optional[str] = None
+    
+    @field_validator('action')
+    def validate_action(cls, v):
+        valid_actions = ['approve', 'reject', 'warn', 'delete']
+        if v not in valid_actions:
+            raise ValueError(f'Action must be one of: {", ".join(valid_actions)}')
+        return v
+
+
+@router.post("/admin/reviews/{review_id}/moderate")
+async def moderate_college_review(
+    review_id: str,
+    action_data: CollegeReviewModerationAction,
+    current_user: dict = Depends(get_current_user)
+):
+    """Admin moderation actions on college reviews.
+    
+    Actions:
+    - approve: Approve review (make it visible to public)
+    - reject: Reject review (hide from public, notify author)
+    - warn: Warn author about review content (keeps review, increments warning count)
+    - delete: Permanently delete review
+    """
+    try:
+        # Check admin privileges
+        if not is_admin_user(current_user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin privileges required for moderation"
+            )
+        
+        # Use service_role client to bypass RLS
+        from src.lib.database import get_supabase_admin
+        admin_client = get_supabase_admin()
+        if not admin_client:
+            admin_client = get_supabase()
+        
+        # Get review
+        review_response = admin_client.table('college_reviews').select('*').eq('id', review_id).single().execute()
+        
+        if not review_response.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="College review not found"
+            )
+        
+        review = review_response.data
+        admin_id = current_user['id']
+        now = admin_client.postgrest.auth.now() if hasattr(admin_client.postgrest.auth, 'now') else None
+        
+        # Perform action
+        if action_data.action == 'approve':
+            # Approve review - make visible to public
+            admin_client.table('college_reviews').update({
+                'status': 'approved',
+                'moderated_by': admin_id,
+                'moderated_at': now,
+                'moderation_reason': action_data.reason or 'Approved by moderator',
+                'is_flagged': False
+            }).eq('id', review_id).execute()
+            
+            return {
+                "message": "Review approved successfully",
+                "action": "approve",
+                "review_id": review_id
+            }
+        
+        elif action_data.action == 'reject':
+            # Reject review - hide from public
+            admin_client.table('college_reviews').update({
+                'status': 'rejected',
+                'moderated_by': admin_id,
+                'moderated_at': now,
+                'moderation_reason': action_data.reason or 'Rejected by moderator',
+                'is_flagged': True
+            }).eq('id', review_id).execute()
+            
+            return {
+                "message": "Review rejected successfully",
+                "action": "reject",
+                "review_id": review_id,
+                "reason": action_data.reason
+            }
+        
+        elif action_data.action == 'warn':
+            # Warn author - increment warning count, keep review visible if approved
+            current_warnings = review.get('warning_count', 0) or 0
+            new_warning_count = current_warnings + 1
+            
+            admin_client.table('college_reviews').update({
+                'warning_count': new_warning_count,
+                'last_warned_at': now,
+                'moderation_reason': action_data.reason or 'Warning issued by moderator'
+            }).eq('id', review_id).execute()
+            
+            return {
+                "message": f"Warning issued successfully (Total warnings: {new_warning_count})",
+                "action": "warn",
+                "review_id": review_id,
+                "warning_count": new_warning_count,
+                "reason": action_data.reason
+            }
+        
+        elif action_data.action == 'delete':
+            # Permanently delete review and associated data
+            # Delete votes first (foreign key constraint)
+            admin_client.table('college_review_votes').delete().eq('college_review_id', review_id).execute()
+            
+            # Delete flags
+            admin_client.table('college_review_flags').delete().eq('college_review_id', review_id).execute()
+            
+            # Delete author mapping if exists
+            try:
+                admin_client.table('college_review_author_mappings').delete().eq('college_review_id', review_id).execute()
+            except:
+                pass  # Mapping might not exist
+            
+            # Delete review
+            admin_client.table('college_reviews').delete().eq('id', review_id).execute()
+            
+            return {
+                "message": "Review deleted successfully",
+                "action": "delete",
+                "review_id": review_id
+            }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to moderate review: {str(e)}"
+        )
+
+
+@router.get("/admin/pending-reviews")
+async def get_pending_college_reviews(
+    limit: int = 50,
+    offset: int = 0,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all pending college reviews awaiting moderation approval."""
+    try:
+        # Check admin privileges
+        if not is_admin_user(current_user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin privileges required"
+            )
+        
+        # Use service_role client
+        from src.lib.database import get_supabase_admin
+        admin_client = get_supabase_admin()
+        if not admin_client:
+            admin_client = get_supabase()
+        
+        # Fetch pending reviews
+        reviews_response = admin_client.table("college_reviews") \
+            .select("*, colleges(name, city, state)") \
+            .eq("status", "pending") \
+            .order("created_at", desc=False) \
+            .range(offset, offset + limit - 1) \
+            .execute()
+        
+        reviews = reviews_response.data if reviews_response.data else []
+        
+        # Get count
+        count_response = admin_client.table("college_reviews") \
+            .select("id", count="exact") \
+            .eq("status", "pending") \
+            .execute()
+        
+        total_count = count_response.count if hasattr(count_response, 'count') else len(reviews)
+        
+        return {
+            "reviews": reviews,
+            "total": total_count,
+            "limit": limit,
+            "offset": offset
+        }
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch pending reviews: {str(e)}"
+        )
