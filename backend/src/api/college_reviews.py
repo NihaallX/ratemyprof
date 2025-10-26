@@ -820,7 +820,8 @@ async def vote_on_college_review(
                 "message": "Vote updated successfully",
                 "vote_type": vote_data.vote_type,
                 "helpful_count": current_helpful,
-                "not_helpful_count": current_not_helpful
+                "not_helpful_count": current_not_helpful,
+                "user_vote": vote_data.vote_type  # Add this so frontend knows current vote
             }
         else:
             # New vote - use regular client
@@ -851,7 +852,8 @@ async def vote_on_college_review(
                 "message": "Vote recorded successfully",
                 "vote_type": vote_data.vote_type,
                 "helpful_count": current_helpful,
-                "not_helpful_count": current_not_helpful
+                "not_helpful_count": current_not_helpful,
+                "user_vote": vote_data.vote_type  # Add this so frontend knows current vote
             }
         
     except HTTPException:
