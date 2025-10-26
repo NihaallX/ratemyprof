@@ -315,7 +315,7 @@ async def create_college_review(
             'graduation_year': request.graduation_year,
             'review_text': request.review_text,
             'anonymous': True,  # Always anonymous for college reviews
-            'status': 'approved',  # Auto-approve for now
+            'status': 'pending',  # Requires admin approval before visible
             'helpful_count': 0,
             'not_helpful_count': 0
         }
