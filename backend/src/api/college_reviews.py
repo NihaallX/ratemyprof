@@ -793,7 +793,10 @@ async def vote_on_college_review(
             
             if old_vote_type == vote_data.vote_type:
                 # TOGGLE OFF: Clicking same button removes vote (YouTube style)
-                supabase.table('college_review_votes').delete().eq('id', old_vote['id']).execute()
+                # Delete using college_review_id and user_id to ensure RLS allows it
+                delete_result = supabase.table('college_review_votes').delete().eq(
+                    'college_review_id', review_id
+                ).eq('user_id', user_id).execute()
                 
                 # Decrement count
                 if old_vote_type == 'helpful':
@@ -817,7 +820,7 @@ async def vote_on_college_review(
                 # SWITCH: Clicking opposite button changes vote
                 supabase.table('college_review_votes').update({
                     'vote_type': vote_data.vote_type
-                }).eq('id', old_vote['id']).execute()
+                }).eq('college_review_id', review_id).eq('user_id', user_id).execute()
                 
                 # Decrement old, increment new
                 if old_vote_type == 'helpful':

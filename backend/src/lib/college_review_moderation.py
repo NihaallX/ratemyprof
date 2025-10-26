@@ -169,16 +169,20 @@ def review_college_review_flag(
             'updated_at': now
         }).eq('id', flag['college_review_id']).execute()
         
-        # Log moderation action
-        log_moderation_action(
-            supabase,
-            admin_id,
-            'college_review_flagged',
-            'college_review',
-            flag['college_review_id'],
-            f"Approved flag: {flag['flag_type']}",
-            admin_notes or f"College review flagged for: {flag['flag_type']}"
-        )
+        # Try to log moderation action (optional - don't fail if it errors)
+        try:
+            log_moderation_action(
+                supabase,
+                admin_id,
+                'college_review_flagged',
+                'college_review',
+                flag['college_review_id'],
+                f"Approved flag: {flag['flag_type']}",
+                admin_notes or f"College review flagged for: {flag['flag_type']}"
+            )
+        except Exception as log_error:
+            # Log error but don't fail the whole operation
+            print(f"Warning: Failed to log moderation action: {log_error}")
     
     return updated_flag.data[0] if updated_flag.data else flag
 
