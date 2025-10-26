@@ -350,9 +350,9 @@ async def get_similar_professors(
 
 @router.get("/more-professors")
 async def get_more_professors(
-    college_id: str = None,
-    exclude_id: str = None,
-    limit: int = 6,
+    college_id: Optional[str] = None,
+    exclude_id: Optional[str] = None,
+    limit: int = Query(6, ge=1, le=20),
     supabase: Client = Depends(get_supabase)
 ):
     """Get more professors to explore.
@@ -363,10 +363,6 @@ async def get_more_professors(
     try:
         print(f"🔍 More professors request: college_id={college_id}, exclude_id={exclude_id}, limit={limit}")
         
-        # Validate limit
-        if limit < 1 or limit > 20:
-            limit = 6
-            
         query = supabase.table('professors').select(
             'id, name, department, average_rating, total_reviews, subjects, college_id'
         )
