@@ -143,73 +143,76 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
   const handleVote = async (reviewId: string, voteType: 'helpful' | 'not_helpful') => {
     // Prevent concurrent voting on the same review
     if (votingInProgress.has(reviewId)) {
-      console.log('Vote already in progress for this review');
       return;
     }
 
-    try {
-      if (!session?.access_token) {
-        alert('Please log in to vote on reviews');
-        return;
-      }
+    if (!session?.access_token) {
+      alert('Please log in to vote on reviews');
+      return;
+    }
 
-      const review = reviews.find(r => r.id === reviewId);
-      if (!review) return;
+    const review = reviews.find(r => r.id === reviewId);
+    if (!review) return;
 
-      // Lock this review from further votes
-      setVotingInProgress(prev => new Set(prev).add(reviewId));
+    // Lock this review from further votes
+    setVotingInProgress(prev => new Set(prev).add(reviewId));
 
-      const previousVote = review.user_vote;
-      const previousHelpful = review.helpful_count || 0;
-      const previousNotHelpful = review.not_helpful_count || 0;
+    // Trigger animation immediately
+    setAnimatingVote({ reviewId, type: voteType });
+    setTimeout(() => setAnimatingVote(null), 500);
 
-      // Calculate new values based on vote logic
-      let newHelpful = previousHelpful;
-      let newNotHelpful = previousNotHelpful;
-      let newUserVote: 'helpful' | 'not_helpful' | null = null;
+    const previousVote = review.user_vote;
+    const previousHelpful = review.helpful_count ?? 0;
+    const previousNotHelpful = review.not_helpful_count ?? 0;
 
-      if (previousVote === voteType) {
-        // User is removing their vote (clicking same button)
-        newUserVote = null;
-        if (voteType === 'helpful') {
-          newHelpful = Math.max(0, previousHelpful - 1);
-        } else {
-          newNotHelpful = Math.max(0, previousNotHelpful - 1);
-        }
-      } else if (previousVote === null) {
-        // User is adding a new vote
-        newUserVote = voteType;
-        if (voteType === 'helpful') {
-          newHelpful = previousHelpful + 1;
-        } else {
-          newNotHelpful = previousNotHelpful + 1;
-        }
+    // Calculate new values based on vote logic
+    let newHelpful = previousHelpful;
+    let newNotHelpful = previousNotHelpful;
+    let newUserVote: 'helpful' | 'not_helpful' | null = null;
+
+    if (previousVote === voteType) {
+      // User is removing their vote (clicking same button)
+      newUserVote = null;
+      if (voteType === 'helpful') {
+        newHelpful = Math.max(0, previousHelpful - 1);
       } else {
-        // User is switching their vote
-        newUserVote = voteType;
-        if (previousVote === 'helpful' && voteType === 'not_helpful') {
-          newHelpful = Math.max(0, previousHelpful - 1);
-          newNotHelpful = previousNotHelpful + 1;
-        } else if (previousVote === 'not_helpful' && voteType === 'helpful') {
-          newNotHelpful = Math.max(0, previousNotHelpful - 1);
-          newHelpful = previousHelpful + 1;
-        }
+        newNotHelpful = Math.max(0, previousNotHelpful - 1);
       }
+    } else if (previousVote === null) {
+      // User is adding a new vote
+      newUserVote = voteType;
+      if (voteType === 'helpful') {
+        newHelpful = previousHelpful + 1;
+      } else {
+        newNotHelpful = previousNotHelpful + 1;
+      }
+    } else {
+      // User is switching their vote
+      newUserVote = voteType;
+      if (previousVote === 'helpful' && voteType === 'not_helpful') {
+        newHelpful = Math.max(0, previousHelpful - 1);
+        newNotHelpful = previousNotHelpful + 1;
+      } else if (previousVote === 'not_helpful' && voteType === 'helpful') {
+        newNotHelpful = Math.max(0, previousNotHelpful - 1);
+        newHelpful = previousHelpful + 1;
+      }
+    }
 
-      // Update UI instantly (optimistic update)
-      setReviews(prevReviews =>
-        prevReviews.map(r =>
-          r.id === reviewId
-            ? {
-                ...r,
-                helpful_count: newHelpful,
-                not_helpful_count: newNotHelpful,
-                user_vote: newUserVote
-              }
-            : r
-        )
-      );
+    // Update UI instantly (optimistic update)
+    setReviews(prevReviews =>
+      prevReviews.map(r =>
+        r.id === reviewId
+          ? {
+              ...r,
+              helpful_count: newHelpful,
+              not_helpful_count: newNotHelpful,
+              user_vote: newUserVote
+            }
+          : r
+      )
+    );
 
+    try {
       // Send to server
       const response = await fetch(`${API_BASE_URL}/college-reviews/${reviewId}/vote`, {
         method: 'POST',
@@ -253,22 +256,23 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
 
         const error = await response.json().catch(() => ({}));
         const errorMsg = error.detail || error.error || 'Failed to vote';
-        alert(`❌ ${errorMsg}`);
+        console.error('Vote error:', errorMsg);
       }
     } catch (err) {
       console.error('Failed to vote:', err);
       // Revert on network error
-      const review = reviews.find(r => r.id === reviewId);
-      if (review) {
-        setReviews(prevReviews =>
-          prevReviews.map(r =>
-            r.id === reviewId
-              ? review
-              : r
-          )
-        );
-      }
-      alert('❌ Network Error\n\nFailed to record your vote. Please check your connection.');
+      setReviews(prevReviews =>
+        prevReviews.map(r =>
+          r.id === reviewId
+            ? {
+                ...r,
+                helpful_count: previousHelpful,
+                not_helpful_count: previousNotHelpful,
+                user_vote: previousVote
+              }
+            : r
+        )
+      );
     } finally {
       // Unlock after a small delay to prevent rapid re-clicking
       setTimeout(() => {
@@ -277,59 +281,7 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
           newSet.delete(reviewId);
           return newSet;
         });
-      }, 300);
-    }
-  };
-
-  const removeVote = async (reviewId: string) => {
-    try {
-      if (!session?.access_token) {
-        return;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/college-reviews/${reviewId}/vote`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Update the review in the state
-        setReviews(prevReviews =>
-          prevReviews.map(review =>
-            review.id === reviewId
-              ? {
-                  ...review,
-                  helpful_count: data.helpful_count,
-                  not_helpful_count: data.not_helpful_count,
-                  user_vote: null
-                }
-              : review
-          )
-        );
-      }
-    } catch (err) {
-      console.error('Failed to remove vote:', err);
-    }
-  };
-
-  const toggleVote = async (reviewId: string, voteType: 'helpful' | 'not_helpful') => {
-    const review = reviews.find(r => r.id === reviewId);
-    if (!review) return;
-
-    // Trigger animation
-    setAnimatingVote({ reviewId, type: voteType });
-    setTimeout(() => setAnimatingVote(null), 500);
-
-    if (review.user_vote === voteType) {
-      // Same vote - remove it
-      await removeVote(reviewId);
-    } else {
-      // Different vote or no vote - add/update it
-      await handleVote(reviewId, voteType);
+      }, 200);
     }
   };
 
@@ -498,7 +450,7 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
                     {/* Helpful/Not Helpful Voting */}
                     <div className="flex items-center space-x-3">
                       <button
-                        onClick={() => toggleVote(review.id, 'helpful')}
+                        onClick={() => handleVote(review.id, 'helpful')}
                         className={`flex items-center space-x-1 transition-all duration-200 transform hover:scale-110 ${
                           review.user_vote === 'helpful'
                             ? 'text-green-600 font-medium'
@@ -516,7 +468,7 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
                         <span>{review.helpful_count}</span>
                       </button>
                       <button
-                        onClick={() => toggleVote(review.id, 'not_helpful')}
+                        onClick={() => handleVote(review.id, 'not_helpful')}
                         className={`flex items-center space-x-1 transition-all duration-200 transform hover:scale-110 ${
                           review.user_vote === 'not_helpful'
                             ? 'text-red-600 font-medium'
