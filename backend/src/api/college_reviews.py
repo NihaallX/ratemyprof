@@ -755,21 +755,22 @@ async def vote_on_college_review(
     current_user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_authenticated_supabase)
 ):
-    """Vote on a college review as helpful or not helpful.
+    """YouTube/Instagram-style voting on college reviews.
     
-    Users can only have one vote per review. If they vote again,
-    their previous vote is updated.
+    - Click same button = Remove vote (toggle off)
+    - Click different button = Switch vote
+    - No vote exists = Add new vote
     
-    NOTE: This endpoint uses an authenticated Supabase client so that
-    RLS policies can correctly identify the user via auth.uid().
+    NOTE: Uses authenticated Supabase client for RLS.
     """
     try:
         user_id = current_user['id']
-        print(f"[VOTE DEBUG] User ID: {user_id}, Review ID: {review_id}, Vote Type: {vote_data.vote_type}")
         
-        # Check if review exists
-        review = supabase.table('college_reviews').select('id, helpful_count, not_helpful_count').eq('id', review_id).single().execute()
-        print(f"[VOTE DEBUG] Review query response: {review}")
+        # Get review using service role to ensure reliable read
+        admin_supabase = get_supabase()
+        review = admin_supabase.table('college_reviews').select(
+            'id, helpful_count, not_helpful_count'
+        ).eq('id', review_id).single().execute()
         
         if not review.data:
             raise HTTPException(
@@ -777,83 +778,92 @@ async def vote_on_college_review(
                 detail="College review not found"
             )
         
-        # Check if user has already voted
+        # Check for existing vote
         existing_vote = supabase.table('college_review_votes').select('*').eq(
             'college_review_id', review_id
         ).eq('user_id', user_id).execute()
-        print(f"[VOTE DEBUG] Existing vote query response: {existing_vote}")
+        
+        current_helpful = review.data['helpful_count'] or 0
+        current_not_helpful = review.data['not_helpful_count'] or 0
         
         if existing_vote.data:
-            # User has already voted - update their vote
+            # User has already voted
             old_vote = existing_vote.data[0]
             old_vote_type = old_vote['vote_type']
             
             if old_vote_type == vote_data.vote_type:
-                # Same vote - no change needed
+                # TOGGLE OFF: Clicking same button removes vote (YouTube style)
+                supabase.table('college_review_votes').delete().eq('id', old_vote['id']).execute()
+                
+                # Decrement count
+                if old_vote_type == 'helpful':
+                    current_helpful = max(0, current_helpful - 1)
+                else:
+                    current_not_helpful = max(0, current_not_helpful - 1)
+                
+                admin_supabase.table('college_reviews').update({
+                    'helpful_count': current_helpful,
+                    'not_helpful_count': current_not_helpful
+                }).eq('id', review_id).execute()
+                
                 return {
-                    "message": "Vote already recorded",
-                    "vote_type": vote_data.vote_type
+                    "message": "Vote removed",
+                    "vote_type": None,
+                    "helpful_count": current_helpful,
+                    "not_helpful_count": current_not_helpful,
+                    "user_vote": None
                 }
-            
-            # Update the vote using regular client
-            supabase.table('college_review_votes').update({
-                'vote_type': vote_data.vote_type
-            }).eq('id', old_vote['id']).execute()
-            
-            # Update review counts
-            current_helpful = review.data['helpful_count'] or 0
-            current_not_helpful = review.data['not_helpful_count'] or 0
-            
-            if old_vote_type == 'helpful':
-                current_helpful = max(0, current_helpful - 1)
-                current_not_helpful += 1
             else:
-                current_not_helpful = max(0, current_not_helpful - 1)
-                current_helpful += 1
-            
-            supabase.table('college_reviews').update({
-                'helpful_count': current_helpful,
-                'not_helpful_count': current_not_helpful
-            }).eq('id', review_id).execute()
-            
-            return {
-                "message": "Vote updated successfully",
-                "vote_type": vote_data.vote_type,
-                "helpful_count": current_helpful,
-                "not_helpful_count": current_not_helpful,
-                "user_vote": vote_data.vote_type  # Add this so frontend knows current vote
-            }
+                # SWITCH: Clicking opposite button changes vote
+                supabase.table('college_review_votes').update({
+                    'vote_type': vote_data.vote_type
+                }).eq('id', old_vote['id']).execute()
+                
+                # Decrement old, increment new
+                if old_vote_type == 'helpful':
+                    current_helpful = max(0, current_helpful - 1)
+                    current_not_helpful += 1
+                else:
+                    current_not_helpful = max(0, current_not_helpful - 1)
+                    current_helpful += 1
+                
+                admin_supabase.table('college_reviews').update({
+                    'helpful_count': current_helpful,
+                    'not_helpful_count': current_not_helpful
+                }).eq('id', review_id).execute()
+                
+                return {
+                    "message": "Vote switched",
+                    "vote_type": vote_data.vote_type,
+                    "helpful_count": current_helpful,
+                    "not_helpful_count": current_not_helpful,
+                    "user_vote": vote_data.vote_type
+                }
         else:
-            # New vote - use regular client
-            print(f"[VOTE DEBUG] Inserting new vote: college_review_id={review_id}, user_id={user_id}, vote_type={vote_data.vote_type}")
-            
-            insert_response = supabase.table('college_review_votes').insert({
+            # NEW VOTE: First time voting
+            supabase.table('college_review_votes').insert({
                 'college_review_id': review_id,
                 'user_id': user_id,
                 'vote_type': vote_data.vote_type
             }).execute()
-            print(f"[VOTE DEBUG] Insert response: {insert_response}")
             
-            # Update review counts
-            current_helpful = review.data['helpful_count'] or 0
-            current_not_helpful = review.data['not_helpful_count'] or 0
-            
+            # Increment count
             if vote_data.vote_type == 'helpful':
                 current_helpful += 1
             else:
                 current_not_helpful += 1
             
-            supabase.table('college_reviews').update({
+            admin_supabase.table('college_reviews').update({
                 'helpful_count': current_helpful,
                 'not_helpful_count': current_not_helpful
             }).eq('id', review_id).execute()
             
             return {
-                "message": "Vote recorded successfully",
+                "message": "Vote added",
                 "vote_type": vote_data.vote_type,
                 "helpful_count": current_helpful,
                 "not_helpful_count": current_not_helpful,
-                "user_vote": vote_data.vote_type  # Add this so frontend knows current vote
+                "user_vote": vote_data.vote_type
             }
         
     except HTTPException:
