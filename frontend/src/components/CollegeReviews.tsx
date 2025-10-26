@@ -59,6 +59,7 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
   const [flagType, setFlagType] = useState('spam');
   const [flagReason, setFlagReason] = useState('');
   const [flagSubmitting, setFlagSubmitting] = useState(false);
+  const [animatingVote, setAnimatingVote] = useState<{reviewId: string, type: 'helpful' | 'not_helpful'} | null>(null);
 
   useEffect(() => {
     fetchReviews();
@@ -145,6 +146,57 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
         return;
       }
 
+      // Optimistic UI update - instant feedback
+      const review = reviews.find(r => r.id === reviewId);
+      if (!review) return;
+
+      const previousVote = review.user_vote;
+      const previousHelpful = review.helpful_count;
+      const previousNotHelpful = review.not_helpful_count;
+
+      // Update UI instantly
+      setReviews(prevReviews =>
+        prevReviews.map(r => {
+          if (r.id !== reviewId) return r;
+          
+          let newHelpful = r.helpful_count;
+          let newNotHelpful = r.not_helpful_count;
+          let newUserVote: 'helpful' | 'not_helpful' | null = voteType;
+
+          if (previousVote === voteType) {
+            // Remove vote
+            newUserVote = null;
+            if (voteType === 'helpful') {
+              newHelpful = Math.max(0, newHelpful - 1);
+            } else {
+              newNotHelpful = Math.max(0, newNotHelpful - 1);
+            }
+          } else {
+            // Add or change vote
+            if (previousVote === 'helpful') {
+              newHelpful = Math.max(0, newHelpful - 1);
+              newNotHelpful = newNotHelpful + 1;
+            } else if (previousVote === 'not_helpful') {
+              newNotHelpful = Math.max(0, newNotHelpful - 1);
+              newHelpful = newHelpful + 1;
+            } else {
+              if (voteType === 'helpful') {
+                newHelpful = newHelpful + 1;
+              } else {
+                newNotHelpful = newNotHelpful + 1;
+              }
+            }
+          }
+
+          return {
+            ...r,
+            helpful_count: newHelpful,
+            not_helpful_count: newNotHelpful,
+            user_vote: newUserVote
+          };
+        })
+      );
+
       const response = await fetch(`${API_BASE_URL}/college-reviews/${reviewId}/vote`, {
         method: 'POST',
         headers: {
@@ -157,7 +209,7 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
       if (response.ok) {
         const data = await response.json();
         
-        // Update the review in the state
+        // Sync with server response
         setReviews(prevReviews =>
           prevReviews.map(review =>
             review.id === reviewId
@@ -165,20 +217,43 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
                   ...review,
                   helpful_count: data.helpful_count,
                   not_helpful_count: data.not_helpful_count,
-                  user_vote: voteType
+                  user_vote: data.user_vote
                 }
               : review
           )
         );
-      } else if (response.status === 500) {
-        alert('⚠️ Voting System Not Ready\n\nThe voting system is being set up. Please try again in a few moments.\n\n(Admin needs to run the database setup script)');
       } else {
-        const error = await response.json();
-        const errorMsg = error.detail || error.error || 'Unknown error';
-        alert(`❌ Failed to vote\n\n${errorMsg}`);
+        // Revert on error
+        setReviews(prevReviews =>
+          prevReviews.map(r =>
+            r.id === reviewId
+              ? {
+                  ...r,
+                  helpful_count: previousHelpful,
+                  not_helpful_count: previousNotHelpful,
+                  user_vote: previousVote
+                }
+              : r
+          )
+        );
+
+        if (response.status === 500) {
+          alert('⚠️ Voting System Not Ready\n\nThe voting system is being set up. Please try again in a few moments.\n\n(Admin needs to run the database setup script)');
+        } else {
+          const error = await response.json();
+          const errorMsg = error.detail || error.error || 'Unknown error';
+          alert(`❌ Failed to vote\n\n${errorMsg}`);
+        }
       }
     } catch (err) {
       console.error('Failed to vote:', err);
+      // Revert on network error
+      const review = reviews.find(r => r.id === reviewId);
+      if (review) {
+        setReviews(prevReviews =>
+          prevReviews.map(r => r.id === reviewId ? review : r)
+        );
+      }
       alert('❌ Network Error\n\nFailed to record your vote. Please check your connection and try again.');
     }
   };
@@ -221,6 +296,10 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
   const toggleVote = async (reviewId: string, voteType: 'helpful' | 'not_helpful') => {
     const review = reviews.find(r => r.id === reviewId);
     if (!review) return;
+
+    // Trigger animation
+    setAnimatingVote({ reviewId, type: voteType });
+    setTimeout(() => setAnimatingVote(null), 500);
 
     if (review.user_vote === voteType) {
       // Same vote - remove it
@@ -430,24 +509,36 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
                         onClick={() => toggleVote(review.id, 'helpful')}
                         className={`flex items-center space-x-1 transition-all duration-200 transform hover:scale-110 ${
                           review.user_vote === 'helpful'
-                            ? 'text-green-600 font-medium scale-110'
+                            ? 'text-green-600 font-medium'
                             : 'text-gray-400 hover:text-green-600'
                         }`}
                         title="Mark as helpful"
                       >
-                        <ThumbsUp className={`w-4 h-4 transition-transform ${review.user_vote === 'helpful' ? 'animate-bounce' : ''}`} />
+                        <ThumbsUp 
+                          className={`w-4 h-4 transition-transform ${
+                            animatingVote?.reviewId === review.id && animatingVote?.type === 'helpful'
+                              ? 'animate-upvote-pop'
+                              : ''
+                          }`}
+                        />
                         <span>{review.helpful_count}</span>
                       </button>
                       <button
                         onClick={() => toggleVote(review.id, 'not_helpful')}
                         className={`flex items-center space-x-1 transition-all duration-200 transform hover:scale-110 ${
                           review.user_vote === 'not_helpful'
-                            ? 'text-red-600 font-medium scale-110'
+                            ? 'text-red-600 font-medium'
                             : 'text-gray-400 hover:text-red-600'
                         }`}
                         title="Mark as not helpful"
                       >
-                        <ThumbsDown className={`w-4 h-4 transition-transform ${review.user_vote === 'not_helpful' ? 'animate-bounce' : ''}`} />
+                        <ThumbsDown 
+                          className={`w-4 h-4 transition-transform ${
+                            animatingVote?.reviewId === review.id && animatingVote?.type === 'not_helpful'
+                              ? 'animate-downvote-shake'
+                              : ''
+                          }`}
+                        />
                         <span>{review.not_helpful_count}</span>
                       </button>
                     </div>
@@ -562,6 +653,35 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
           </div>
         </div>
       )}
+
+      {/* CSS Animations */}
+      <style jsx>{`
+        @keyframes upvote-pop {
+          0% { transform: scale(1) translateY(0); filter: drop-shadow(0 0 0 rgba(34, 197, 94, 0)); }
+          25% { transform: scale(1.3) translateY(-4px); filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.8)); }
+          50% { transform: scale(1.4) translateY(-6px); filter: drop-shadow(0 2px 12px rgba(34, 197, 94, 1)); }
+          75% { transform: scale(1.1) translateY(-2px); filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.6)); }
+          100% { transform: scale(1) translateY(0); filter: drop-shadow(0 0 0 rgba(34, 197, 94, 0)); }
+        }
+
+        @keyframes downvote-shake {
+          0% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 0 rgba(239, 68, 68, 0)); }
+          15% { transform: scale(1.2) rotate(-5deg); filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.8)); }
+          30% { transform: scale(1.3) rotate(5deg); filter: drop-shadow(0 2px 10px rgba(239, 68, 68, 1)); }
+          45% { transform: scale(1.2) rotate(-3deg); filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.8)); }
+          60% { transform: scale(1.1) rotate(2deg); filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.6)); }
+          75% { transform: scale(1.05) rotate(-1deg); filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.4)); }
+          100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 0 rgba(239, 68, 68, 0)); }
+        }
+
+        .animate-upvote-pop {
+          animation: upvote-pop 0.5s ease-out;
+        }
+
+        .animate-downvote-shake {
+          animation: downvote-shake 0.5s ease-in-out;
+        }
+      `}</style>
     </div>
   );
 }
