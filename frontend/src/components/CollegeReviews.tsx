@@ -71,7 +71,14 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
       const response = await fetch(`${API_BASE_URL}/college-reviews/college/${collegeId}`);
       if (response.ok) {
         const data = await response.json();
-        setReviews(data.reviews);
+        // Ensure vote counts are initialized
+        const normalizedReviews = (data.reviews || []).map((review: CollegeReview) => ({
+          ...review,
+          helpful_count: review.helpful_count ?? 0,
+          not_helpful_count: review.not_helpful_count ?? 0,
+          user_vote: review.user_vote ?? null
+        }));
+        setReviews(normalizedReviews);
         setAverageRatings(data.average_ratings);
         setTotal(data.total);
       }
@@ -165,6 +172,14 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
     const previousHelpful = review.helpful_count ?? 0;
     const previousNotHelpful = review.not_helpful_count ?? 0;
 
+    console.log('[VOTE DEBUG] Before:', {
+      reviewId,
+      voteType,
+      previousVote,
+      previousHelpful,
+      previousNotHelpful
+    });
+
     // Calculate new values based on vote logic
     let newHelpful = previousHelpful;
     let newNotHelpful = previousNotHelpful;
@@ -198,6 +213,12 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
       }
     }
 
+    console.log('[VOTE DEBUG] Calculated:', {
+      newHelpful,
+      newNotHelpful,
+      newUserVote
+    });
+
     // Update UI instantly (optimistic update)
     setReviews(prevReviews =>
       prevReviews.map(r =>
@@ -225,6 +246,12 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
 
       if (response.ok) {
         const data = await response.json();
+        
+        console.log('[VOTE DEBUG] Server response:', {
+          helpful_count: data.helpful_count,
+          not_helpful_count: data.not_helpful_count,
+          user_vote: data.user_vote
+        });
         
         // Sync with authoritative server response
         setReviews(prevReviews =>
@@ -465,7 +492,7 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
                               : ''
                           }`}
                         />
-                        <span>{review.helpful_count}</span>
+                        <span>{review.helpful_count ?? 0}</span>
                       </button>
                       <button
                         onClick={() => handleVote(review.id, 'not_helpful')}
@@ -483,7 +510,7 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
                               : ''
                           }`}
                         />
-                        <span>{review.not_helpful_count}</span>
+                        <span>{review.not_helpful_count ?? 0}</span>
                       </button>
                     </div>
                     <button
