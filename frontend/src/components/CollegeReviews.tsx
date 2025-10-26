@@ -60,6 +60,7 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
   const [flagReason, setFlagReason] = useState('');
   const [flagSubmitting, setFlagSubmitting] = useState(false);
   const [animatingVote, setAnimatingVote] = useState<{reviewId: string, type: 'helpful' | 'not_helpful'} | null>(null);
+  const [votingInProgress, setVotingInProgress] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchReviews();
@@ -140,63 +141,76 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
   };
 
   const handleVote = async (reviewId: string, voteType: 'helpful' | 'not_helpful') => {
+    // Prevent concurrent voting on the same review
+    if (votingInProgress.has(reviewId)) {
+      console.log('Vote already in progress for this review');
+      return;
+    }
+
     try {
       if (!session?.access_token) {
         alert('Please log in to vote on reviews');
         return;
       }
 
-      // Optimistic UI update - instant feedback
       const review = reviews.find(r => r.id === reviewId);
       if (!review) return;
 
+      // Lock this review from further votes
+      setVotingInProgress(prev => new Set(prev).add(reviewId));
+
       const previousVote = review.user_vote;
-      const previousHelpful = review.helpful_count;
-      const previousNotHelpful = review.not_helpful_count;
+      const previousHelpful = review.helpful_count || 0;
+      const previousNotHelpful = review.not_helpful_count || 0;
 
-      // Update UI instantly
+      // Calculate new values based on vote logic
+      let newHelpful = previousHelpful;
+      let newNotHelpful = previousNotHelpful;
+      let newUserVote: 'helpful' | 'not_helpful' | null = null;
+
+      if (previousVote === voteType) {
+        // User is removing their vote (clicking same button)
+        newUserVote = null;
+        if (voteType === 'helpful') {
+          newHelpful = Math.max(0, previousHelpful - 1);
+        } else {
+          newNotHelpful = Math.max(0, previousNotHelpful - 1);
+        }
+      } else if (previousVote === null) {
+        // User is adding a new vote
+        newUserVote = voteType;
+        if (voteType === 'helpful') {
+          newHelpful = previousHelpful + 1;
+        } else {
+          newNotHelpful = previousNotHelpful + 1;
+        }
+      } else {
+        // User is switching their vote
+        newUserVote = voteType;
+        if (previousVote === 'helpful' && voteType === 'not_helpful') {
+          newHelpful = Math.max(0, previousHelpful - 1);
+          newNotHelpful = previousNotHelpful + 1;
+        } else if (previousVote === 'not_helpful' && voteType === 'helpful') {
+          newNotHelpful = Math.max(0, previousNotHelpful - 1);
+          newHelpful = previousHelpful + 1;
+        }
+      }
+
+      // Update UI instantly (optimistic update)
       setReviews(prevReviews =>
-        prevReviews.map(r => {
-          if (r.id !== reviewId) return r;
-          
-          let newHelpful = r.helpful_count;
-          let newNotHelpful = r.not_helpful_count;
-          let newUserVote: 'helpful' | 'not_helpful' | null = voteType;
-
-          if (previousVote === voteType) {
-            // Remove vote
-            newUserVote = null;
-            if (voteType === 'helpful') {
-              newHelpful = Math.max(0, newHelpful - 1);
-            } else {
-              newNotHelpful = Math.max(0, newNotHelpful - 1);
-            }
-          } else {
-            // Add or change vote
-            if (previousVote === 'helpful') {
-              newHelpful = Math.max(0, newHelpful - 1);
-              newNotHelpful = newNotHelpful + 1;
-            } else if (previousVote === 'not_helpful') {
-              newNotHelpful = Math.max(0, newNotHelpful - 1);
-              newHelpful = newHelpful + 1;
-            } else {
-              if (voteType === 'helpful') {
-                newHelpful = newHelpful + 1;
-              } else {
-                newNotHelpful = newNotHelpful + 1;
+        prevReviews.map(r =>
+          r.id === reviewId
+            ? {
+                ...r,
+                helpful_count: newHelpful,
+                not_helpful_count: newNotHelpful,
+                user_vote: newUserVote
               }
-            }
-          }
-
-          return {
-            ...r,
-            helpful_count: newHelpful,
-            not_helpful_count: newNotHelpful,
-            user_vote: newUserVote
-          };
-        })
+            : r
+        )
       );
 
+      // Send to server
       const response = await fetch(`${API_BASE_URL}/college-reviews/${reviewId}/vote`, {
         method: 'POST',
         headers: {
@@ -209,17 +223,17 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
       if (response.ok) {
         const data = await response.json();
         
-        // Sync with server response
+        // Sync with authoritative server response
         setReviews(prevReviews =>
-          prevReviews.map(review =>
-            review.id === reviewId
+          prevReviews.map(r =>
+            r.id === reviewId
               ? {
-                  ...review,
-                  helpful_count: data.helpful_count,
-                  not_helpful_count: data.not_helpful_count,
-                  user_vote: data.user_vote
+                  ...r,
+                  helpful_count: data.helpful_count ?? 0,
+                  not_helpful_count: data.not_helpful_count ?? 0,
+                  user_vote: data.user_vote ?? null
                 }
-              : review
+              : r
           )
         );
       } else {
@@ -237,13 +251,9 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
           )
         );
 
-        if (response.status === 500) {
-          alert('⚠️ Voting System Not Ready\n\nThe voting system is being set up. Please try again in a few moments.\n\n(Admin needs to run the database setup script)');
-        } else {
-          const error = await response.json();
-          const errorMsg = error.detail || error.error || 'Unknown error';
-          alert(`❌ Failed to vote\n\n${errorMsg}`);
-        }
+        const error = await response.json().catch(() => ({}));
+        const errorMsg = error.detail || error.error || 'Failed to vote';
+        alert(`❌ ${errorMsg}`);
       }
     } catch (err) {
       console.error('Failed to vote:', err);
@@ -251,10 +261,23 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
       const review = reviews.find(r => r.id === reviewId);
       if (review) {
         setReviews(prevReviews =>
-          prevReviews.map(r => r.id === reviewId ? review : r)
+          prevReviews.map(r =>
+            r.id === reviewId
+              ? review
+              : r
+          )
         );
       }
-      alert('❌ Network Error\n\nFailed to record your vote. Please check your connection and try again.');
+      alert('❌ Network Error\n\nFailed to record your vote. Please check your connection.');
+    } finally {
+      // Unlock after a small delay to prevent rapid re-clicking
+      setTimeout(() => {
+        setVotingInProgress(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(reviewId);
+          return newSet;
+        });
+      }, 300);
     }
   };
 
@@ -309,37 +332,6 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
       await handleVote(reviewId, voteType);
     }
   };
-
-  // Fetch user votes for all reviews
-  useEffect(() => {
-    const fetchUserVotes = async () => {
-      if (!session?.access_token || reviews.length === 0) return;
-
-      try {
-        const votesPromises = reviews.map(review =>
-          fetch(`${API_BASE_URL}/college-reviews/${review.id}/user-vote`, {
-            headers: { 'Authorization': `Bearer ${session.access_token}` }
-          })
-            .then(res => res.ok ? res.json() : null)
-            .then(data => ({ reviewId: review.id, vote: data?.vote_type || null }))
-            .catch(() => ({ reviewId: review.id, vote: null }))
-        );
-
-        const votes = await Promise.all(votesPromises);
-        
-        setReviews(prevReviews =>
-          prevReviews.map(review => {
-            const userVote = votes.find(v => v.reviewId === review.id);
-            return userVote ? { ...review, user_vote: userVote.vote } : review;
-          })
-        );
-      } catch (err) {
-        console.error('Failed to fetch user votes:', err);
-      }
-    };
-
-    fetchUserVotes();
-  }, [reviews.length, session?.access_token]);
 
   const getRatingColor = (rating: number) => {
     if (rating >= 4.0) return 'bg-green-100 text-green-800 border-green-300';
