@@ -54,12 +54,34 @@ Base = declarative_base()
 
 
 def get_supabase() -> Client:
-    """Get Supabase client instance.
+    """Get Supabase client instance (anon key - for public operations).
     
     Returns:
         Client: Supabase client for database and auth operations
     """
     return supabase
+
+
+def get_supabase_with_token(token: str) -> Client:
+    """Get Supabase client authenticated with user's JWT token.
+    
+    Args:
+        token: User's JWT access token
+        
+    Returns:
+        Client: Authenticated Supabase client for user-specific operations
+    """
+    if not SUPABASE_URL or not SUPABASE_ANON_KEY:
+        raise ValueError("Supabase configuration missing")
+    
+    # Create a new client with the user's token
+    client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+    
+    # Set the auth header directly on the client's headers
+    # This ensures all subsequent requests include the user's JWT
+    client.postgrest.auth(token)
+    
+    return client
 
 
 def get_supabase_admin() -> Optional[Client]:
