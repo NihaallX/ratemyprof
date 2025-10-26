@@ -125,7 +125,7 @@ def review_college_review_flag(
     """Admin review of a college review flag.
     
     Args:
-        supabase: Supabase client
+        supabase: Supabase client (should be service_role client for admin)
         flag_id: ID of flag to review
         admin_id: ID of admin reviewing the flag
         action: Action to take (approve_flag, dismiss_flag)
@@ -137,54 +137,72 @@ def review_college_review_flag(
     Raises:
         Exception: If review fails
     """
-    now = datetime.utcnow().isoformat()
-    
-    # Get flag details
-    flag_result = supabase.table('college_review_flags').select('*').eq('id', flag_id).single().execute()
-    
-    if not flag_result.data:
-        raise Exception("Flag not found")
-    
-    flag = flag_result.data
-    
-    if flag['status'] != 'pending':
-        raise Exception("Flag has already been reviewed")
-    
-    # Update flag status
-    update_data = {
-        'status': 'reviewed',
-        'reviewed_by': admin_id,
-        'admin_notes': admin_notes,
-        'reviewed_at': now,
-        'updated_at': now
-    }
-    
-    updated_flag = supabase.table('college_review_flags').update(update_data).eq('id', flag_id).execute()
-    
-    # If flag is approved, take action on the review
-    if action == 'approve_flag':
-        # Mark college review as flagged/hidden
-        supabase.table('college_reviews').update({
-            'is_flagged': True,
-            'updated_at': now
-        }).eq('id', flag['college_review_id']).execute()
+    try:
+        now = datetime.utcnow().isoformat()
         
-        # Try to log moderation action (optional - don't fail if it errors)
-        try:
-            log_moderation_action(
-                supabase,
-                admin_id,
-                'college_review_flagged',
-                'college_review',
-                flag['college_review_id'],
-                f"Approved flag: {flag['flag_type']}",
-                admin_notes or f"College review flagged for: {flag['flag_type']}"
-            )
-        except Exception as log_error:
-            # Log error but don't fail the whole operation
-            print(f"Warning: Failed to log moderation action: {log_error}")
-    
-    return updated_flag.data[0] if updated_flag.data else flag
+        print(f"[FLAG REVIEW] Starting review for flag_id={flag_id}, action={action}")
+        
+        # Get flag details
+        flag_result = supabase.table('college_review_flags').select('*').eq('id', flag_id).single().execute()
+        print(f"[FLAG REVIEW] Flag query result: {flag_result}")
+        
+        if not flag_result.data:
+            raise Exception("Flag not found")
+        
+        flag = flag_result.data
+        print(f"[FLAG REVIEW] Flag data: status={flag.get('status')}, college_review_id={flag.get('college_review_id')}")
+        
+        if flag.get('status') != 'pending':
+            raise Exception(f"Flag has already been reviewed (current status: {flag.get('status')})")
+        
+        # Update flag status
+        update_data = {
+            'status': 'reviewed',
+            'reviewed_by': admin_id,
+            'admin_notes': admin_notes,
+            'reviewed_at': now,
+            'updated_at': now
+        }
+        
+        print(f"[FLAG REVIEW] Updating flag with data: {update_data}")
+        updated_flag = supabase.table('college_review_flags').update(update_data).eq('id', flag_id).execute()
+        print(f"[FLAG REVIEW] Flag updated: {updated_flag}")
+        
+        # If flag is approved, take action on the review
+        if action == 'approve_flag':
+            print(f"[FLAG REVIEW] Approving flag - marking review as flagged")
+            # Mark college review as flagged/hidden
+            review_update = supabase.table('college_reviews').update({
+                'is_flagged': True,
+                'status': 'flagged',
+                'updated_at': now
+            }).eq('id', flag['college_review_id']).execute()
+            print(f"[FLAG REVIEW] Review updated: {review_update}")
+            
+            # Try to log moderation action (optional - don't fail if it errors)
+            try:
+                log_moderation_action(
+                    supabase,
+                    admin_id,
+                    'college_review_flagged',
+                    'college_review',
+                    flag['college_review_id'],
+                    f"Approved flag: {flag['flag_type']}",
+                    admin_notes or f"College review flagged for: {flag['flag_type']}"
+                )
+            except Exception as log_error:
+                # Log error but don't fail the whole operation
+                print(f"[FLAG REVIEW] Warning: Failed to log moderation action: {log_error}")
+        
+        result = updated_flag.data[0] if updated_flag.data else flag
+        print(f"[FLAG REVIEW] Completed successfully, returning: {result}")
+        return result
+        
+    except Exception as e:
+        print(f"[FLAG REVIEW] ERROR: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise
 
 
 def get_college_review_moderation_stats(supabase: Client) -> Dict[str, int]:
