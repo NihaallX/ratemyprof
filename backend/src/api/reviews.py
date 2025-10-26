@@ -11,7 +11,7 @@ from pydantic import BaseModel, field_validator
 from supabase import Client, create_client
 
 from src.lib.database import get_supabase
-from src.lib.auth import get_current_user, get_optional_current_user
+from src.lib.auth import get_current_user, get_optional_current_user, get_authenticated_supabase
 from src.services.auto_flagging import AutoFlaggingSystem
 
 router = APIRouter()
@@ -120,13 +120,15 @@ async def create_review(
     request: ReviewCreate,
     background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),  # Now required authentication
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_authenticated_supabase)
 ):
     """Submit a review for a professor.
     
     All reviews are anonymous by default. User authentication is required
     for moderation purposes, but user identity is never publicly displayed.
     Includes automated content filtering.
+    
+    NOTE: Uses authenticated Supabase client so RLS can verify auth.uid().
     """
     print(f"🔵 CREATE REVIEW STARTED - OUTER TRY CATCH")
     
