@@ -172,52 +172,41 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
     const previousHelpful = review.helpful_count ?? 0;
     const previousNotHelpful = review.not_helpful_count ?? 0;
 
-    console.log('[VOTE DEBUG] Before:', {
-      reviewId,
-      voteType,
-      previousVote,
-      previousHelpful,
-      previousNotHelpful
-    });
-
-    // Calculate new values based on vote logic
+    // YouTube/Instagram style logic: Click same button = remove, Click different = switch
     let newHelpful = previousHelpful;
     let newNotHelpful = previousNotHelpful;
     let newUserVote: 'helpful' | 'not_helpful' | null = null;
 
     if (previousVote === voteType) {
-      // User is removing their vote (clicking same button)
+      // Clicking same button = Remove vote (YouTube style)
       newUserVote = null;
       if (voteType === 'helpful') {
         newHelpful = Math.max(0, previousHelpful - 1);
       } else {
         newNotHelpful = Math.max(0, previousNotHelpful - 1);
       }
-    } else if (previousVote === null) {
-      // User is adding a new vote
-      newUserVote = voteType;
-      if (voteType === 'helpful') {
-        newHelpful = previousHelpful + 1;
-      } else {
-        newNotHelpful = previousNotHelpful + 1;
-      }
     } else {
-      // User is switching their vote
+      // Clicking different button or first vote
       newUserVote = voteType;
-      if (previousVote === 'helpful' && voteType === 'not_helpful') {
-        newHelpful = Math.max(0, previousHelpful - 1);
-        newNotHelpful = previousNotHelpful + 1;
-      } else if (previousVote === 'not_helpful' && voteType === 'helpful') {
-        newNotHelpful = Math.max(0, previousNotHelpful - 1);
-        newHelpful = previousHelpful + 1;
+      
+      if (previousVote === null) {
+        // First vote - just add
+        if (voteType === 'helpful') {
+          newHelpful = previousHelpful + 1;
+        } else {
+          newNotHelpful = previousNotHelpful + 1;
+        }
+      } else {
+        // Switching votes - remove old, add new
+        if (voteType === 'helpful') {
+          newNotHelpful = Math.max(0, previousNotHelpful - 1);
+          newHelpful = previousHelpful + 1;
+        } else {
+          newHelpful = Math.max(0, previousHelpful - 1);
+          newNotHelpful = previousNotHelpful + 1;
+        }
       }
     }
-
-    console.log('[VOTE DEBUG] Calculated:', {
-      newHelpful,
-      newNotHelpful,
-      newUserVote
-    });
 
     // Update UI instantly (optimistic update)
     setReviews(prevReviews =>
@@ -246,12 +235,6 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
 
       if (response.ok) {
         const data = await response.json();
-        
-        console.log('[VOTE DEBUG] Server response:', {
-          helpful_count: data.helpful_count,
-          not_helpful_count: data.not_helpful_count,
-          user_vote: data.user_vote
-        });
         
         // Sync with authoritative server response
         setReviews(prevReviews =>
@@ -301,7 +284,7 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
         )
       );
     } finally {
-      // Unlock after a small delay to prevent rapid re-clicking
+      // Unlock after a small delay
       setTimeout(() => {
         setVotingInProgress(prev => {
           const newSet = new Set(prev);
