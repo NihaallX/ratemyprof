@@ -164,12 +164,12 @@ async def get_admin_flagged_college_reviews(
     status_filter: Optional[str] = None,
     limit: int = 50,
     offset: int = 0,
-    current_user: dict = Depends(get_current_user),
-    supabase: Client = Depends(get_supabase)
+    current_user: dict = Depends(get_current_user)
 ):
     """Get flagged college reviews for admin review.
     
     Returns college reviews that have been flagged by users for moderation.
+    Admin uses service_role client to bypass RLS and see all flags.
     """
     try:
         # Check admin privileges
@@ -178,8 +178,16 @@ async def get_admin_flagged_college_reviews(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Admin privileges required for moderation endpoints"
             )
+        
+        # Use service_role client to bypass RLS for admin queries
+        from src.lib.database import get_supabase_admin
+        admin_client = get_supabase_admin()
+        if not admin_client:
+            # Fallback to regular client if admin client not available
+            admin_client = get_supabase()
+        
         flagged_reviews = get_flagged_college_reviews(
-            supabase, status_filter, limit, offset
+            admin_client, status_filter, limit, offset
         )
         
         return {
@@ -191,6 +199,8 @@ async def get_admin_flagged_college_reviews(
         }
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch flagged college reviews: {str(e)}"
@@ -250,10 +260,12 @@ async def admin_review_college_review_flag(
 
 @router.get("/admin/stats", response_model=CollegeModerationStatsResponse)
 async def get_admin_college_moderation_stats(
-    current_user: dict = Depends(get_current_user),
-    supabase: Client = Depends(get_supabase)
+    current_user: dict = Depends(get_current_user)
 ):
-    """Get college review moderation statistics for admin dashboard."""
+    """Get college review moderation statistics for admin dashboard.
+    
+    Uses service_role client to bypass RLS and get accurate counts.
+    """
     try:
         # Check admin privileges
         if not is_admin_user(current_user):
@@ -262,10 +274,18 @@ async def get_admin_college_moderation_stats(
                 detail="Admin privileges required for moderation endpoints"
             )
         
-        stats = get_college_review_moderation_stats(supabase)
+        # Use service_role client to bypass RLS
+        from src.lib.database import get_supabase_admin
+        admin_client = get_supabase_admin()
+        if not admin_client:
+            admin_client = get_supabase()
+        
+        stats = get_college_review_moderation_stats(admin_client)
         return CollegeModerationStatsResponse(**stats)
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch moderation stats: {str(e)}"
