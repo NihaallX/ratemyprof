@@ -212,12 +212,12 @@ async def admin_review_college_review_flag(
     flag_id: str,
     review_data: CollegeReviewFlagReview,
     request: Request,
-    current_user: dict = Depends(get_current_user),
-    supabase: Client = Depends(get_supabase)
+    current_user: dict = Depends(get_current_user)
 ):
     """Admin review of a college review flag.
     
     Allows admins to approve or dismiss flags on college reviews.
+    Uses service_role client to bypass RLS for admin operations.
     """
     try:
         # Check admin privileges
@@ -227,8 +227,14 @@ async def admin_review_college_review_flag(
                 detail="Admin privileges required for moderation endpoints"
             )
         
+        # Use service_role client to bypass RLS
+        from src.lib.database import get_supabase_admin
+        admin_client = get_supabase_admin()
+        if not admin_client:
+            admin_client = get_supabase()
+        
         updated_flag = review_college_review_flag(
-            supabase,
+            admin_client,
             flag_id,
             current_user['id'],
             review_data.action,
@@ -242,6 +248,8 @@ async def admin_review_college_review_flag(
         }
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         if "not found" in str(e):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
