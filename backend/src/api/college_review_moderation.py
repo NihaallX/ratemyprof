@@ -304,8 +304,21 @@ async def get_all_college_reviews_for_admin(
         
         reviews = reviews_response.data if reviews_response.data else []
         
-        # For each review, fetch the author information manually
+        # Transform each review to match expected frontend format
         for review in reviews:
+            # Transform ratings from individual columns to nested object
+            if 'food_rating' in review:
+                review['ratings'] = {
+                    'food': review.get('food_rating'),
+                    'internet': review.get('internet_rating'),
+                    'clubs': review.get('clubs_rating'),
+                    'opportunities': review.get('opportunities_rating'),
+                    'facilities': review.get('facilities_rating'),
+                    'teaching': review.get('teaching_rating'),
+                    'overall': review.get('overall_rating')
+                }
+            
+            # Fetch the author information manually
             try:
                 # Get author mapping (just the author_id)
                 mapping_response = admin_client.table("college_review_author_mappings") \
