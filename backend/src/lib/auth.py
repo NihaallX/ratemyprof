@@ -10,7 +10,7 @@ from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from supabase import Client
 
-from src.lib.database import get_supabase
+from src.lib.database import get_supabase, get_supabase_with_token
 
 # HTTP Bearer token scheme
 security = HTTPBearer(auto_error=False)
@@ -172,6 +172,38 @@ async def get_current_verified_user(
         raise AuthError("User email is not verified")
     
     return current_user
+
+
+async def get_authenticated_supabase(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
+) -> Client:
+    """Get Supabase client authenticated with the current user's JWT token.
+    
+    This is required for RLS policies to work correctly - the client needs
+    the user's JWT token so that auth.uid() returns the correct user ID.
+    
+    Args:
+        credentials: HTTP Bearer token credentials
+        
+    Returns:
+        Client: Authenticated Supabase client
+        
+    Raises:
+        AuthError: If token is missing or invalid
+    """
+    if not credentials:
+        raise AuthError("Authorization header missing")
+    
+    token = credentials.credentials
+    
+    # Verify token is valid by getting user first
+    anon_supabase = get_supabase()
+    user = get_user_from_token(anon_supabase, token)
+    if user is None:
+        raise AuthError("Invalid token or user not found")
+    
+    # Return authenticated client with JWT token
+    return get_supabase_with_token(token)
 
 
 def create_auth_response(auth_response) -> dict:

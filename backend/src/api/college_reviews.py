@@ -10,7 +10,7 @@ from pydantic import BaseModel, field_validator
 from supabase import Client
 
 from src.lib.database import get_supabase
-from src.lib.auth import get_current_user
+from src.lib.auth import get_current_user, get_authenticated_supabase
 
 router = APIRouter()
 
@@ -753,12 +753,15 @@ async def vote_on_college_review(
     review_id: str,
     vote_data: CollegeReviewVote,
     current_user: dict = Depends(get_current_user),
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_authenticated_supabase)
 ):
     """Vote on a college review as helpful or not helpful.
     
     Users can only have one vote per review. If they vote again,
     their previous vote is updated.
+    
+    NOTE: This endpoint uses an authenticated Supabase client so that
+    RLS policies can correctly identify the user via auth.uid().
     """
     try:
         user_id = current_user['id']

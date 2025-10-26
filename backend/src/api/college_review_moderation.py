@@ -8,7 +8,7 @@ from pydantic import BaseModel, field_validator
 from supabase import Client
 
 from src.lib.database import get_supabase
-from src.lib.auth import get_current_user
+from src.lib.auth import get_current_user, get_authenticated_supabase
 from src.lib.college_review_moderation import (
     flag_college_review,
     get_flagged_college_reviews,
@@ -98,11 +98,14 @@ async def create_college_review_flag(
     flag_data: CollegeReviewFlagCreate,
     request: Request,
     current_user: dict = Depends(get_current_user),
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_authenticated_supabase)
 ):
     """Flag a college review for moderation.
     
     Allows logged-in users to report college reviews that violate community guidelines.
+    
+    NOTE: This endpoint uses an authenticated Supabase client so that
+    RLS policies can correctly identify the user via auth.uid().
     """
     try:
         # Check if college review exists
