@@ -10,7 +10,7 @@ from pydantic import BaseModel, field_validator
 from supabase import Client
 
 from src.lib.database import get_supabase
-from src.lib.auth import get_current_user
+from src.lib.auth import get_current_user, get_authenticated_supabase
 from src.lib.rate_limiting_supabase import check_rate_limit, increment_action_count
 
 router = APIRouter()
@@ -309,7 +309,7 @@ async def create_professor(
     request: ProfessorCreate,
     fastapi_request: Request,
     current_user: dict = Depends(get_current_user),
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_authenticated_supabase)
 ):
     """Create a new professor profile.
     
@@ -317,6 +317,9 @@ async def create_professor(
     verification before appearing in search results.
     
     Rate limited to 3 professor creations per day per user.
+    
+    NOTE: Uses authenticated Supabase client so RLS policies can
+    identify the user via auth.uid().
     """
     try:
         # Check rate limit first (3 professors per day)

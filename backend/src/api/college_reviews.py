@@ -249,7 +249,7 @@ async def get_my_college_reviews(
 async def create_college_review(
     request: CollegeReviewCreate,
     current_user: dict = Depends(get_current_user),
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_authenticated_supabase)
 ):
     """Submit a review for a college.
     
@@ -257,8 +257,8 @@ async def create_college_review(
     Authentication is required to prevent spam, but user identity is not revealed.
     Uses mapping table to link reviews to authors without storing user_id in review.
     
-    **RLS Policy**: Uses authenticated client. The "Authenticated users create college reviews" 
-    policy verifies auth.uid() IS NOT NULL before allowing insert.
+    **RLS Policy**: Uses authenticated client so RLS can verify auth.uid() IS NOT NULL.
+    The authenticated client ensures the user's JWT is included in all requests.
     """
     try:
         print(f"\n{'='*80}")
