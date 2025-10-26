@@ -202,9 +202,7 @@ async def create_professor(
         auth_client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
         auth_client.postgrest.auth(access_token)
         
-        # Get current user info for logging
-        current_user = await get_current_user(credentials)
-        print(f"User {current_user['email']} (ID: {current_user['id']}) submitting professor")
+        print(f"Professor submission with authenticated token")
         
         # Verify college exists (using regular client is fine for reads)
         college_result = supabase.table('colleges').select('id, name').eq(
