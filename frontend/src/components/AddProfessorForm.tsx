@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL, API_LEGACY_BASE } from '../config/api';
 
@@ -18,12 +18,45 @@ interface AddProfessorFormData {
   subjects: string[];
 }
 
+// VU Departments list
+const VU_DEPARTMENTS = [
+  'Computer Science',
+  'Artificial Intelligence',
+  'Data Science',
+  'Mathematics and Statistics',
+  'Department of Science',
+  'Department of Science & Technology',
+  'Department of Pharmacy',
+  'Department of Pharmacognosy',
+  'Dept of Pharmaceutical Chemistry',
+  'Dept of Pharmaceutics',
+  'Dept of Artificial Intelligence',
+  'Electronics and Communication',
+  'Mechanical Engineering',
+  'Civil Engineering',
+  'Electrical Engineering',
+  'Chemical Engineering',
+  'Biotechnology',
+  'Business Administration',
+  'Management Studies',
+  'Commerce',
+  'Economics',
+  'Psychology',
+  'English',
+  'Leadership',
+  'Other (specify below)'
+].sort();
+
 const AddProfessorForm: React.FC = () => {
   const { user, session } = useAuth();
   const [colleges, setColleges] = useState<College[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newSubject, setNewSubject] = useState('');
   const [message, setMessage] = useState('');
+  const [showDepartmentDropdown, setShowDepartmentDropdown] = useState(false);
+  const [departmentSearch, setDepartmentSearch] = useState('');
+  const [showCustomDepartment, setShowCustomDepartment] = useState(false);
+  const departmentRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState<AddProfessorFormData>({
     name: '',
     email: '',
@@ -36,6 +69,18 @@ const AddProfessorForm: React.FC = () => {
   // Fetch colleges on component mount
   useEffect(() => {
     fetchColleges();
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (departmentRef.current && !departmentRef.current.contains(event.target as Node)) {
+        setShowDepartmentDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const fetchColleges = async () => {
@@ -57,6 +102,28 @@ const AddProfessorForm: React.FC = () => {
         { id: 'VU-PUNE-001', name: 'Vishwakarma University', city: 'Pune', state: 'Maharashtra' }
       ]);
     }
+  };
+
+  // Filter departments based on search
+  const getFilteredDepartments = () => {
+    if (!departmentSearch) return VU_DEPARTMENTS;
+    
+    const search = departmentSearch.toLowerCase();
+    return VU_DEPARTMENTS.filter(dept => 
+      dept.toLowerCase().includes(search)
+    );
+  };
+
+  const handleDepartmentSelect = (dept: string) => {
+    if (dept === 'Other (specify below)') {
+      setShowCustomDepartment(true);
+      setFormData(prev => ({ ...prev, department: '' }));
+    } else {
+      setShowCustomDepartment(false);
+      setFormData(prev => ({ ...prev, department: dept }));
+    }
+    setDepartmentSearch('');
+    setShowDepartmentDropdown(false);
   };
 
   const handleInputChange = (field: keyof AddProfessorFormData, value: string | number) => {
@@ -250,17 +317,66 @@ const AddProfessorForm: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+            <div className="relative" ref={departmentRef}>
               <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">Department *</label>
-              <input
-                id="department"
-                type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={formData.department}
-                onChange={(e) => handleInputChange('department', e.target.value)}
-                placeholder="e.g., Computer Science"
-                required
-              />
+              
+              {!showCustomDepartment ? (
+                <div className="relative">
+                  <input
+                    id="department"
+                    type="text"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={departmentSearch || formData.department}
+                    onChange={(e) => {
+                      setDepartmentSearch(e.target.value);
+                      setShowDepartmentDropdown(true);
+                    }}
+                    onFocus={() => setShowDepartmentDropdown(true)}
+                    placeholder="Search or select department..."
+                    required={!showCustomDepartment}
+                  />
+                  
+                  {showDepartmentDropdown && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      {getFilteredDepartments().map((dept, idx) => (
+                        <div
+                          key={idx}
+                          className="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm"
+                          onClick={() => handleDepartmentSelect(dept)}
+                        >
+                          {dept}
+                        </div>
+                      ))}
+                      {getFilteredDepartments().length === 0 && (
+                        <div className="px-3 py-2 text-sm text-gray-500">
+                          No matching departments. Try "Other" to specify custom.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={formData.department}
+                    onChange={(e) => handleInputChange('department', e.target.value)}
+                    placeholder="Enter custom department name"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCustomDepartment(false);
+                      setFormData(prev => ({ ...prev, department: '' }));
+                    }}
+                    className="text-xs text-blue-600 hover:text-blue-700 mt-1"
+                  >
+                    ← Back to department list
+                  </button>
+                </div>
+              )}
             </div>
             
             <div>
