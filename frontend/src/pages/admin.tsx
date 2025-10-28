@@ -617,7 +617,12 @@ const AdminPage: NextPage = () => {
           });
 
           if (response.ok) {
-            await loadRealTimeStats(); // Refresh data with proper count
+            // Remove professor from local state immediately
+            setAllProfessors(prev => prev.filter(p => p.id !== professorId));
+            setPendingApprovalProfessors(prev => prev.filter(p => p.id !== professorId));
+            
+            // Also refresh dashboard stats
+            await loadRealTimeStats();
             showToast('Professor deleted successfully', 'success');
           } else {
             const errorData = await response.json();
