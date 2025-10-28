@@ -1119,6 +1119,14 @@ async def delete_professor(
                 detail="Admin privileges required"
             )
         
+        # Get admin client for bypassing RLS
+        admin_supabase = get_admin_supabase()
+        if not admin_supabase:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Admin client not available"
+            )
+        
         # Check if professor exists
         existing_prof = supabase.table('professors').select('*').eq('id', professor_id).single().execute()
         
@@ -1130,11 +1138,11 @@ async def delete_professor(
         
         professor_name = existing_prof.data.get('name', 'Unknown')
         
-        # Delete associated reviews first (due to foreign key constraints)
-        supabase.table('reviews').delete().eq('professor_id', professor_id).execute()
+        # Delete associated reviews first (due to foreign key constraints) - use admin client
+        admin_supabase.table('reviews').delete().eq('professor_id', professor_id).execute()
         
-        # Delete the professor
-        result = supabase.table('professors').delete().eq('id', professor_id).execute()
+        # Delete the professor - use admin client
+        result = admin_supabase.table('professors').delete().eq('id', professor_id).execute()
         
         # Log moderation action
         try:
