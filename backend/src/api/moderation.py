@@ -198,7 +198,7 @@ async def get_flagged_reviews(
     review_status: str = Query('pending', pattern='^(pending|approved|removed)$'),
     limit: int = Query(20, ge=1, le=100),
     current_user: dict = Depends(get_current_user),
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase_service)
 ):
     """Get flagged reviews for moderation.
     
@@ -294,7 +294,7 @@ async def get_all_professor_reviews(
     limit: int = Query(100, ge=1, le=200),
     offset: int = Query(0, ge=0),
     current_user: dict = Depends(get_current_user),
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase_service)
 ):
     """Get all professor reviews with filtering by status.
     
@@ -427,7 +427,7 @@ async def get_all_professor_reviews(
 @router.get("/professor-reviews/stats")
 async def get_professor_review_stats(
     current_user: dict = Depends(get_current_user),
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase_service)
 ):
     """Get statistics for professor reviews moderation."""
     try:
@@ -633,7 +633,7 @@ async def moderate_review(
 async def delete_review(
     review_id: str,
     current_user: dict = Depends(get_current_user),
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase_service)
 ):
     """Permanently delete a review from the database.
     
