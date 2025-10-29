@@ -353,12 +353,18 @@ async def get_all_professor_reviews(
             
             has_flags = len(flags_result.data or []) > 0
             
-            # Get author info from mapping table
-            author_result = admin_client.table('review_author_mappings').select(
-                'author_id'
-            ).eq('review_id', review_data['id']).single().execute()
-            
-            author_id = author_result.data['author_id'] if author_result.data else None
+            # Get author info from mapping table (may not exist for old reviews)
+            author_id = None
+            try:
+                author_result = admin_client.table('review_author_mappings').select(
+                    'author_id'
+                ).eq('review_id', review_data['id']).execute()
+                
+                if author_result.data and len(author_result.data) > 0:
+                    author_id = author_result.data[0].get('author_id')
+            except Exception as e:
+                # Mapping doesn't exist, which is okay for old reviews
+                pass
             
             reviews.append({
                 'id': review_data['id'],
