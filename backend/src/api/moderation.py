@@ -288,10 +288,170 @@ async def get_flagged_reviews(
         )
 
 
+@router.get("/professor-reviews/all")
+async def get_all_professor_reviews(
+    status_filter: str = Query('all', pattern='^(all|pending|approved|removed|flagged)$'),
+    limit: int = Query(100, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    current_user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase)
+):
+    """Get all professor reviews with filtering by status.
+    
+    Returns ALL reviews (not just flagged) for comprehensive moderation.
+    Admin-only endpoint.
+    """
+    try:
+        # Check admin privileges
+        if not is_admin_user(current_user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin privileges required"
+            )
+        
+        # Use admin client to bypass RLS
+        admin_client = get_admin_supabase()
+        if not admin_client:
+            admin_client = supabase
+        
+        # Build query
+        query = admin_client.table('reviews').select(
+            '''
+            id,
+            professor_id,
+            overall_rating,
+            difficulty_rating,
+            would_take_again,
+            review_text,
+            course_name,
+            attendance_required,
+            created_at,
+            status,
+            professors!inner(id, name, college_id, colleges(name, city, state))
+            ''',
+            count='exact'
+        )
+        
+        # Apply status filter
+        if status_filter != 'all':
+            query = query.eq('status', status_filter)
+        
+        # Get paginated results
+        query = query.order('created_at', desc=True).range(offset, offset + limit - 1)
+        result = query.execute()
+        
+        # Transform results
+        reviews = []
+        for review_data in (result.data or []):
+            professor = review_data.pop('professors', {})
+            college = professor.get('colleges', {}) if professor else {}
+            
+            # Get flag info if exists
+            flags_result = admin_client.table('review_flags').select(
+                'id, flag_reason, flagged_by, created_at'
+            ).eq('review_id', review_data['id']).execute()
+            
+            has_flags = len(flags_result.data or []) > 0
+            
+            # Get author info from mapping table
+            author_result = admin_client.table('review_author_mappings').select(
+                'author_id'
+            ).eq('review_id', review_data['id']).single().execute()
+            
+            author_id = author_result.data['author_id'] if author_result.data else None
+            
+            reviews.append({
+                'id': review_data['id'],
+                'professor_id': review_data['professor_id'],
+                'professor_name': professor.get('name', 'Unknown') if professor else 'Unknown',
+                'college_name': college.get('name', 'Unknown') if college else 'Unknown',
+                'college_city': college.get('city', '') if college else '',
+                'overall_rating': review_data['overall_rating'],
+                'difficulty_rating': review_data.get('difficulty_rating'),
+                'would_take_again': review_data.get('would_take_again'),
+                'review_text': review_data.get('review_text', ''),
+                'course_name': review_data.get('course_name', ''),
+                'attendance_required': review_data.get('attendance_required'),
+                'created_at': review_data['created_at'],
+                'status': review_data['status'],
+                'has_flags': has_flags,
+                'flag_count': len(flags_result.data or []),
+                'author_id': author_id
+            })
+        
+        return {
+            'reviews': reviews,
+            'total': result.count or 0,
+            'limit': limit,
+            'offset': offset
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get professor reviews: {str(e)}"
+        )
+
+
+@router.get("/professor-reviews/stats")
+async def get_professor_review_stats(
+    current_user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase)
+):
+    """Get statistics for professor reviews moderation."""
+    try:
+        # Check admin privileges
+        if not is_admin_user(current_user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin privileges required"
+            )
+        
+        # Use admin client
+        admin_client = get_admin_supabase()
+        if not admin_client:
+            admin_client = supabase
+        
+        # Count by status
+        pending_result = admin_client.table('reviews').select('id', count='exact').eq('status', 'pending').execute()
+        approved_result = admin_client.table('reviews').select('id', count='exact').eq('status', 'approved').execute()
+        removed_result = admin_client.table('reviews').select('id', count='exact').eq('status', 'removed').execute()
+        
+        # Count flagged reviews
+        flagged_result = admin_client.table('review_flags').select('review_id', count='exact').execute()
+        
+        # Get unique flagged review count
+        flagged_review_ids = set()
+        if flagged_result.data:
+            flagged_review_ids = set(flag['review_id'] for flag in flagged_result.data)
+        
+        return {
+            'total_reviews': (pending_result.count or 0) + (approved_result.count or 0) + (removed_result.count or 0),
+            'pending_reviews': pending_result.count or 0,
+            'approved_reviews': approved_result.count or 0,
+            'removed_reviews': removed_result.count or 0,
+            'flagged_reviews': len(flagged_review_ids),
+            'total_flags': flagged_result.count or 0
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get stats: {str(e)}"
+        )
+
+
 @router.post("/reviews/{review_id}/action")
 async def moderate_review(
     review_id: str,
     request: ModerationAction,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase)
 ):
@@ -317,13 +477,34 @@ async def moderate_review(
                 detail="Admin privileges required for moderation actions"
             )
         
-        # Check if review exists
-        review_check = supabase.table('reviews').select('id, status').eq('id', review_id).single().execute()
+        # Check if review exists and get full details for notification
+        review_check = supabase.table('reviews').select(
+            'id, status, professor_id, course_name, review_text, created_at'
+        ).eq('id', review_id).single().execute()
+        
         if not review_check.data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Review not found"
             )
+        
+        review_data = review_check.data
+        
+        # Get author ID from mapping table
+        author_mapping = supabase.table('review_author_mappings').select(
+            'author_id'
+        ).eq('review_id', review_id).single().execute()
+        
+        author_id = author_mapping.data['author_id'] if author_mapping.data else None
+        
+        # Get professor details for notification
+        professor_data = None
+        if review_data.get('professor_id'):
+            prof_result = supabase.table('professors').select(
+                'name, college_id'
+            ).eq('id', review_data['professor_id']).single().execute()
+            if prof_result.data:
+                professor_data = prof_result.data
         
         # Update review status
         update_result = supabase.table('reviews').update({
@@ -333,7 +514,7 @@ async def moderate_review(
         }).eq('id', review_id).execute()
         
         # Recalculate professor ratings after moderation action
-        professor_id = review_check.data['professor_id']
+        professor_id = review_data['professor_id']
         approved_reviews = supabase.table('reviews').select('overall_rating').eq(
             'professor_id', professor_id
         ).eq('status', 'approved').execute()
@@ -358,10 +539,46 @@ async def moderate_review(
             'moderator_id': current_user['id'],
             'action': request.action,
             'reason': request.reason,
-            'previous_status': review_check.data['status']
+            'previous_status': review_data['status']
         }
         
         supabase.table('moderation_logs').insert(log_data).execute()
+        
+        # Send notification to user (in background)
+        if author_id:
+            from src.services.user_communication import UserCommunicationSystem, NotificationType
+            
+            async def send_moderation_notification():
+                try:
+                    comm_system = UserCommunicationSystem(supabase)
+                    
+                    if request.action == 'approve':
+                        await comm_system.send_notification(
+                            user_id=author_id,
+                            notification_type=NotificationType.REVIEW_APPROVED,
+                            context_data={
+                                'professor_name': professor_data['name'] if professor_data else 'Unknown',
+                                'course_name': review_data.get('course_name', 'N/A'),
+                                'created_at': review_data['created_at'],
+                                'review_id': review_id
+                            }
+                        )
+                    elif request.action == 'remove':
+                        await comm_system.send_notification(
+                            user_id=author_id,
+                            notification_type=NotificationType.REVIEW_REJECTED,
+                            context_data={
+                                'professor_name': professor_data['name'] if professor_data else 'Unknown',
+                                'course_name': review_data.get('course_name', 'N/A'),
+                                'created_at': review_data['created_at'],
+                                'reason': request.reason or 'Policy violation',
+                                'review_id': review_id
+                            }
+                        )
+                except Exception as e:
+                    print(f"Failed to send notification: {str(e)}")
+            
+            background_tasks.add_task(send_moderation_notification)
         
         action_messages = {
             'approve': 'Review approved successfully',
