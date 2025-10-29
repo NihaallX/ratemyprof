@@ -81,7 +81,17 @@ def get_supabase_with_token(token: str) -> Client:
     # This ensures all subsequent requests include the user's JWT
     print(f"🔑 Setting JWT token on client (length: {len(token)})")
     print(f"🔑 Token preview: {token[:50]}..." if len(token) > 50 else f"🔑 Token: {token}")
+    
+    # Try BOTH methods of setting auth
     client.postgrest.auth(token)
+    
+    # Also set on the main client auth module
+    try:
+        # Set access token directly on auth module
+        client.auth.set_session(token, token)  # access_token, refresh_token
+        print(f"🔑 Auth session set via set_session()")
+    except Exception as e:
+        print(f"⚠️ Could not set auth session: {e}")
     
     # Verify the auth header was set
     print(f"🔑 Client auth headers: {client.postgrest.session.headers.get('Authorization', 'NOT SET')[:80]}...")
