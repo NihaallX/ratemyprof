@@ -323,11 +323,13 @@ async def delete_account(
         print(f"🗑️ Attempting to delete account for user: {user_id}")
         
         # Import admin client
-        from src.lib.database import get_admin_supabase
+        from src.lib.database import get_supabase_admin
         
         # Get admin supabase client
         try:
-            admin_supabase = get_admin_supabase()
+            admin_supabase = get_supabase_admin()
+            if not admin_supabase:
+                raise Exception("Admin client not configured - missing SUPABASE_SERVICE_ROLE_KEY")
             print("✅ Got admin Supabase client")
         except Exception as e:
             error_detail = f"Failed to initialize admin client: {str(e)}"

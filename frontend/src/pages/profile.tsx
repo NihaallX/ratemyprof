@@ -102,10 +102,24 @@ export default function ProfilePage() {
       })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        console.error('Delete account error response:', errorData)
+        // Try to get error as JSON first, then as text
+        let errorMessage = 'Failed to delete account'
+        try {
+          const errorData = await response.json()
+          console.error('Delete account error response (JSON):', errorData)
+          errorMessage = errorData.detail || errorMessage
+        } catch (jsonError) {
+          // If JSON parsing fails, try to get as text
+          try {
+            const errorText = await response.text()
+            console.error('Delete account error response (TEXT):', errorText)
+            errorMessage = errorText || errorMessage
+          } catch (textError) {
+            console.error('Could not parse error response at all')
+          }
+        }
         console.error('Response status:', response.status)
-        throw new Error(errorData.detail || 'Failed to delete account')
+        throw new Error(errorMessage)
       }
 
       showToast('Account deleted successfully. Goodbye!', 'success')
