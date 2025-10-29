@@ -62,6 +62,24 @@ def get_supabase() -> Client:
     return supabase
 
 
+def get_supabase_service() -> Client:
+    """Get Supabase service role client for backend operations that bypass RLS.
+    
+    This should be used for all backend database writes (inserts, updates, deletes)
+    where RLS policies should be bypassed since authentication is handled at the
+    application layer.
+    
+    Returns:
+        Client: Supabase client with service role key (bypasses RLS)
+        
+    Raises:
+        ValueError: If service role key is not configured
+    """
+    if not supabase_admin:
+        raise ValueError("Service role key not configured")
+    return supabase_admin
+
+
 def get_supabase_with_token(token: str) -> Client:
     """Get Supabase client authenticated with user's JWT token.
     

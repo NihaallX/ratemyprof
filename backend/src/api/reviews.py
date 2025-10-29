@@ -10,7 +10,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, field_validator
 from supabase import Client, create_client
 
-from src.lib.database import get_supabase
+from src.lib.database import get_supabase, get_supabase_service
 from src.lib.auth import get_current_user, get_optional_current_user, get_authenticated_supabase
 from src.services.auto_flagging import AutoFlaggingSystem
 
@@ -119,14 +119,17 @@ class Review(BaseModel):
 async def create_review(
     request: ReviewCreate,
     background_tasks: BackgroundTasks,
-    current_user: dict = Depends(get_current_user),  # Now required authentication
-    supabase: Client = Depends(get_supabase)  # Use default client (will use service role for inserts)
+    current_user: dict = Depends(get_current_user),  # Authentication required
+    supabase: Client = Depends(get_supabase_service)  # Use service role to bypass RLS
 ):
     """Submit a review for a professor.
     
     All reviews are anonymous by default. User authentication is required
     for moderation purposes, but user identity is never publicly displayed.
     Includes automated content filtering.
+    
+    NOTE: Uses service role client to bypass RLS since authentication
+    is enforced at the FastAPI layer via get_current_user.
     
     NOTE: Uses authenticated Supabase client so RLS can verify auth.uid().
     """
