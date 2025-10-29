@@ -7,6 +7,7 @@ from pydantic import BaseModel, EmailStr, field_validator
 from supabase import Client
 
 from src.lib.database import get_supabase
+from src.lib.auth import get_current_user
 
 router = APIRouter()
 
@@ -305,6 +306,7 @@ async def verify_email(
 
 @router.delete("/delete-account")
 async def delete_account(
+    current_user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_supabase)
 ):
     """Delete the authenticated user's account and all associated data.
@@ -318,16 +320,7 @@ async def delete_account(
     This action is irreversible.
     """
     try:
-        # Get the authenticated user from the request
-        user = supabase.auth.get_user()
-        
-        if not user or not user.user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Authentication required"
-            )
-        
-        user_id = user.user.id
+        user_id = current_user['id']
         
         # Use admin client for deletion operations
         from src.lib.database import get_admin_supabase

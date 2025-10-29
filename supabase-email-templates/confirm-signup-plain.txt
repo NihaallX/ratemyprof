@@ -1,0 +1,29 @@
+🎓 Welcome to RateMyProf India!
+
+Hey there! 👋
+
+You're officially part of India's largest community of students helping each other make smarter academic choices.
+
+Just one more step — let's confirm your email and get you started:
+
+👉 CONFIRM YOUR EMAIL:
+{{ .ConfirmationURL }}
+
+
+🚀 What You Can Do:
+
+🔍 Search thousands of professors across India
+⭐ Rate and review your professors anonymously
+🤝 Help fellow students choose the right courses
+🏆 Build your reputation in the community
+
+
+Welcome to the community! 🎉
+
+Team RateMyProf India
+---
+
+⏰ This link will expire in 24 hours.
+Didn't create an account? You can safely ignore this email.
+
+© 2025 RateMyProf India. Built with ❤️ by students, for students.
