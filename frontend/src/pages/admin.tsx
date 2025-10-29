@@ -845,6 +845,54 @@ const AdminPage: NextPage = () => {
     }
   };
 
+  const deleteProfessorReview = async (reviewId: string) => {
+    if (!confirm('Are you sure you want to PERMANENTLY DELETE this review? This action cannot be undone!')) {
+      return;
+    }
+
+    try {
+      // Get admin token
+      const storedSession = localStorage.getItem('adminSession');
+      let adminToken = null;
+      
+      if (storedSession) {
+        try {
+          const sessionData = JSON.parse(storedSession);
+          adminToken = sessionData.access_token;
+        } catch (e) {
+          console.error('Failed to parse admin session');
+        }
+      }
+
+      if (!adminToken) {
+        showToast('Admin session not found. Please refresh the page.', 'error');
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE}/api/moderation/reviews/${reviewId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${adminToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.ok) {
+        showToast('Review permanently deleted', 'success');
+        await loadProfessorReviews(); // Reload
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        showToast(`Failed to delete review: ${errorData.detail || response.statusText}`, 'error');
+      }
+    } catch (error) {
+      console.error('Failed to delete review:', error);
+      showToast('Network error: Failed to delete review', 'error');
+    }
+  };
+
   // College Reviews Moderation Functions
   const loadFlaggedCollegeReviews = async () => {
     setIsLoadingCollegeReviews(true);
@@ -2000,6 +2048,13 @@ const AdminPage: NextPage = () => {
                                   </button>
                                 </>
                               )}
+                              <button
+                                onClick={() => deleteProfessorReview(review.id)}
+                                className="text-gray-600 hover:text-gray-900"
+                                title="Permanently delete review"
+                              >
+                                Delete
+                              </button>
                             </td>
                           </tr>
                         ))}

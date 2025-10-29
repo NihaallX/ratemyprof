@@ -603,6 +603,96 @@ async def moderate_review(
         )
 
 
+@router.delete("/reviews/{review_id}")
+async def delete_review(
+    review_id: str,
+    current_user: dict = Depends(get_current_user),
+    supabase: Client = Depends(get_supabase)
+):
+    """Permanently delete a review from the database.
+    
+    Admin-only endpoint. This completely removes the review and all associated data.
+    """
+    try:
+        # Validate UUID format
+        try:
+            UUID(review_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid review ID format"
+            )
+        
+        # Check admin privileges
+        if not is_admin_user(current_user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin privileges required to delete reviews"
+            )
+        
+        # Check if review exists
+        review_check = supabase.table('reviews').select(
+            'id, professor_id'
+        ).eq('id', review_id).single().execute()
+        
+        if not review_check.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Review not found"
+            )
+        
+        professor_id = review_check.data['professor_id']
+        
+        # Use admin client to bypass RLS
+        admin_client = get_admin_supabase()
+        if not admin_client:
+            admin_client = supabase
+        
+        # Delete associated data first (due to foreign key constraints)
+        # Delete flags
+        admin_client.table('review_flags').delete().eq('review_id', review_id).execute()
+        
+        # Delete author mapping
+        admin_client.table('review_author_mappings').delete().eq('review_id', review_id).execute()
+        
+        # Delete vote records
+        admin_client.table('review_votes').delete().eq('review_id', review_id).execute()
+        
+        # Delete the review itself
+        admin_client.table('reviews').delete().eq('id', review_id).execute()
+        
+        # Recalculate professor ratings after deletion
+        approved_reviews = admin_client.table('reviews').select('overall_rating').eq(
+            'professor_id', professor_id
+        ).eq('status', 'approved').execute()
+        
+        if approved_reviews.data and len(approved_reviews.data) > 0:
+            total_reviews = len(approved_reviews.data)
+            average_rating = sum(r['overall_rating'] for r in approved_reviews.data) / total_reviews
+            admin_client.table('professors').update({
+                'average_rating': round(average_rating, 1),
+                'total_reviews': total_reviews
+            }).eq('id', professor_id).execute()
+        else:
+            # No approved reviews left, reset to 0
+            admin_client.table('professors').update({
+                'average_rating': 0.0,
+                'total_reviews': 0
+            }).eq('id', professor_id).execute()
+        
+        return {"message": "Review permanently deleted"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete review: {str(e)}"
+        )
+
+
 class UserAction(BaseModel):
     action: str
     reason: str
