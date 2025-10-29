@@ -727,14 +727,42 @@ const AdminPage: NextPage = () => {
   const loadProfessorReviews = async () => {
     setIsLoadingProfessorReviews(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        console.warn('No session token available');
-        return;
+      // Get admin token (same approach as college reviews)
+      const storedSession = localStorage.getItem('adminSession');
+      let adminToken = null;
+      
+      if (storedSession) {
+        try {
+          const sessionData = JSON.parse(storedSession);
+          adminToken = sessionData.access_token;
+        } catch (e) {
+          console.error('Failed to parse admin session');
+        }
+      }
+
+      if (!adminToken) {
+        const adminLoginResponse = await fetch(`${API_BASE}/api/moderation/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: 'admin@gmail.com',
+            password: 'gauravnihal123'
+          })
+        });
+        
+        if (adminLoginResponse.ok) {
+          const adminData = await adminLoginResponse.json();
+          adminToken = adminData.access_token;
+          localStorage.setItem('adminSession', JSON.stringify(adminData));
+        }
+      }
+
+      if (!adminToken) {
+        throw new Error('Failed to get admin token');
       }
 
       const headers = {
-        'Authorization': `Bearer ${session.access_token}`,
+        'Authorization': `Bearer ${adminToken}`,
         'Content-Type': 'application/json'
       };
 
@@ -747,6 +775,8 @@ const AdminPage: NextPage = () => {
       if (reviewsResponse.ok) {
         const data = await reviewsResponse.json();
         setProfessorReviews(data.reviews || []);
+      } else {
+        console.error('Failed to load reviews:', reviewsResponse.status);
       }
 
       // Load stats
@@ -758,6 +788,8 @@ const AdminPage: NextPage = () => {
       if (statsResponse.ok) {
         const statsData = await statsResponse.json();
         setProfessorReviewStats(statsData);
+      } else {
+        console.error('Failed to load stats:', statsResponse.status);
       }
 
     } catch (error) {
@@ -770,15 +802,30 @@ const AdminPage: NextPage = () => {
 
   const moderateProfessorReview = async (reviewId: string, action: 'approve' | 'remove', reason: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) return;
+      // Get admin token
+      const storedSession = localStorage.getItem('adminSession');
+      let adminToken = null;
+      
+      if (storedSession) {
+        try {
+          const sessionData = JSON.parse(storedSession);
+          adminToken = sessionData.access_token;
+        } catch (e) {
+          console.error('Failed to parse admin session');
+        }
+      }
+
+      if (!adminToken) {
+        showToast('Admin session not found. Please refresh the page.', 'error');
+        return;
+      }
 
       const response = await fetch(
         `${API_BASE}/api/moderation/reviews/${reviewId}/action`,
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${session.access_token}`,
+            'Authorization': `Bearer ${adminToken}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ action, reason })
