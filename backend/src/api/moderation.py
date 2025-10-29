@@ -348,7 +348,7 @@ async def get_all_professor_reviews(
             
             # Get flag info if exists
             flags_result = admin_client.table('review_flags').select(
-                'id, flag_reason, flagged_by, created_at'
+                'id, flag_reason, flagger_id, created_at'
             ).eq('review_id', review_data['id']).execute()
             
             has_flags = len(flags_result.data or []) > 0
