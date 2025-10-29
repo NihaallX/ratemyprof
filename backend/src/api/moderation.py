@@ -11,7 +11,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, field_validator
 from supabase import Client
 
-from src.lib.database import get_supabase, get_supabase_admin
+from src.lib.database import get_supabase, get_supabase_admin, get_supabase_service
 from src.lib.auth import get_current_user
 from src.services.auto_flagging import AutoFlaggingSystem
 from src.services.content_filter import content_filter, ContentAnalysis
@@ -485,7 +485,7 @@ async def moderate_review(
     request: ModerationAction,
     background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase_service)
 ):
     """Take moderation action on a review.
     
