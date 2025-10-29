@@ -167,10 +167,13 @@ async def create_review(
                 # Get the review_ids to check their professor_id
                 review_ids = [m['review_id'] for m in user_mappings.data]
                 
-                # Check if any of these reviews are for this professor
+                # Check if any of these reviews are for this professor AND not deleted
+                # This allows users to re-review if their previous review was deleted by admin
                 existing_reviews = supabase.table('reviews').select(
-                    'id, professor_id'
-                ).in_('id', review_ids).eq('professor_id', request.professor_id).execute()
+                    'id, professor_id, deleted_at'
+                ).in_('id', review_ids).eq(
+                    'professor_id', request.professor_id
+                ).is_('deleted_at', 'null').execute()  # Only check non-deleted reviews
                 
                 if existing_reviews.data:
                     raise HTTPException(
