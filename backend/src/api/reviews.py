@@ -120,7 +120,7 @@ async def create_review(
     request: ReviewCreate,
     background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),  # Now required authentication
-    supabase: Client = Depends(get_authenticated_supabase)
+    supabase: Client = Depends(get_supabase)  # Use default client (will use service role for inserts)
 ):
     """Submit a review for a professor.
     
