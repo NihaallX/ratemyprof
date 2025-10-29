@@ -57,7 +57,7 @@ const AdminPage: NextPage = () => {
     pending_reviews: 0,
     approved_reviews: 0,
     removed_reviews: 0,
-    flagged_reviews: 0,
+    flagged_reviews_count: 0,
     total_flags: 0
   });
   const [professorReviewStatusFilter, setProfessorReviewStatusFilter] = useState<string>('pending');
@@ -1915,7 +1915,7 @@ const AdminPage: NextPage = () => {
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-gray-600">Flagged Reviews</p>
-                      <p className="text-2xl font-bold text-gray-900">{professorReviewStats.flagged_reviews}</p>
+                      <p className="text-2xl font-bold text-gray-900">{professorReviewStats.flagged_reviews_count || 0}</p>
                     </div>
                   </div>
                 </div>

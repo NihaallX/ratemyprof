@@ -333,8 +333,29 @@ async def get_all_professor_reviews(
         )
         
         # Apply status filter
-        if status_filter != 'all':
-            query = query.eq('status', status_filter)
+        if status_filter == 'pending':
+            query = query.eq('status', 'pending')
+        elif status_filter == 'approved':
+            query = query.eq('status', 'approved')
+        elif status_filter == 'removed':
+            # Check for both 'removed' and 'rejected' status
+            query = query.in_('status', ['removed', 'rejected'])
+        elif status_filter == 'flagged':
+            # Get all review IDs that have flags
+            flagged_reviews = admin_client.table('review_flags').select('review_id').execute()
+            flagged_ids = list(set([f['review_id'] for f in (flagged_reviews.data or [])]))
+            
+            if flagged_ids:
+                query = query.in_('id', flagged_ids)
+            else:
+                # No flagged reviews, return empty
+                return {
+                    'reviews': [],
+                    'total': 0,
+                    'limit': limit,
+                    'offset': offset
+                }
+        # else: status_filter == 'all', no filter needed
         
         # Get paginated results
         query = query.order('created_at', desc=True).range(offset, offset + limit - 1)
@@ -425,7 +446,12 @@ async def get_professor_review_stats(
         # Count by status
         pending_result = admin_client.table('reviews').select('id', count='exact').eq('status', 'pending').execute()
         approved_result = admin_client.table('reviews').select('id', count='exact').eq('status', 'approved').execute()
-        removed_result = admin_client.table('reviews').select('id', count='exact').eq('status', 'removed').execute()
+        
+        # Count removed/rejected (handle both possible status values)
+        removed_result = admin_client.table('reviews').select('id', count='exact').in_('status', ['removed', 'rejected']).execute()
+        
+        # Get total count
+        total_result = admin_client.table('reviews').select('id', count='exact').execute()
         
         # Count flagged reviews
         flagged_result = admin_client.table('review_flags').select('review_id', count='exact').execute()
@@ -436,11 +462,11 @@ async def get_professor_review_stats(
             flagged_review_ids = set(flag['review_id'] for flag in flagged_result.data)
         
         return {
-            'total_reviews': (pending_result.count or 0) + (approved_result.count or 0) + (removed_result.count or 0),
+            'total_reviews': total_result.count or 0,
             'pending_reviews': pending_result.count or 0,
             'approved_reviews': approved_result.count or 0,
             'removed_reviews': removed_result.count or 0,
-            'flagged_reviews': len(flagged_review_ids),
+            'flagged_reviews_count': len(flagged_review_ids),
             'total_flags': flagged_result.count or 0
         }
         
