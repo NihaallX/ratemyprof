@@ -199,7 +199,7 @@ async def create_review(
             'would_take_again': True,  # Default for now
             'assignment_load': 'moderate',  # Default for now
             'helpful_count': 0,
-            'status': 'approved'  # Default, may be changed by auto-flagging
+            'status': 'pending'  # All reviews start pending, require admin approval
         }
         
         # Insert review using authenticated client

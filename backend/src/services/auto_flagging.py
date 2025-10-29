@@ -38,14 +38,18 @@ class AutoFlaggingSystem:
             # Analyze content
             analysis = content_filter.analyze_content(review_text)
             
-            # If content should be auto-flagged, create flags
+            # If content should be auto-flagged, create flags and keep as pending
             if analysis.auto_flag:
                 await self._create_auto_flags(review_id, analysis.flag_reasons, reviewer_id)
                 
-                # Update review moderation status
+                # Update review moderation status to pending (requires admin review)
                 await self._update_review_moderation_status(review_id, "pending")
                 
                 logger.info(f"Auto-flagged review {review_id} for reasons: {analysis.flag_reasons}")
+            else:
+                # Content is clean, auto-approve it
+                await self._update_review_moderation_status(review_id, "approved")
+                logger.info(f"Auto-approved clean review {review_id}")
             
             # Log content analysis for monitoring
             await self._log_content_analysis(review_id, analysis)
@@ -84,14 +88,18 @@ class AutoFlaggingSystem:
             # Analyze content
             analysis = content_filter.analyze_content(review_text)
             
-            # If content should be auto-flagged, create flags
+            # If content should be auto-flagged, create flags and keep as pending
             if analysis.auto_flag:
                 await self._create_auto_college_flags(review_id, analysis.flag_reasons, reviewer_id)
                 
-                # Update college review moderation status
+                # Update college review moderation status to pending (requires admin review)
                 await self._update_college_review_moderation_status(review_id, "pending")
                 
                 logger.info(f"Auto-flagged college review {review_id} for reasons: {analysis.flag_reasons}")
+            else:
+                # Content is clean, auto-approve it
+                await self._update_college_review_moderation_status(review_id, "approved")
+                logger.info(f"Auto-approved clean college review {review_id}")
             
             # Log content analysis for monitoring
             await self._log_college_content_analysis(review_id, analysis)
