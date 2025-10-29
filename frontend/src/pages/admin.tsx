@@ -50,6 +50,19 @@ const AdminPage: NextPage = () => {
   const [totalProfessorsCount, setTotalProfessorsCount] = useState(0);
   const PAGE_SIZE = 100;
 
+  // Professor Reviews Moderation state
+  const [professorReviews, setProfessorReviews] = useState([]);
+  const [professorReviewStats, setProfessorReviewStats] = useState({
+    total_reviews: 0,
+    pending_reviews: 0,
+    approved_reviews: 0,
+    removed_reviews: 0,
+    flagged_reviews: 0,
+    total_flags: 0
+  });
+  const [professorReviewStatusFilter, setProfessorReviewStatusFilter] = useState<string>('pending');
+  const [isLoadingProfessorReviews, setIsLoadingProfessorReviews] = useState(false);
+
   // College Reviews Moderation state
   const [flaggedCollegeReviews, setFlaggedCollegeReviews] = useState([]);
   const [allCollegeReviews, setAllCollegeReviews] = useState([]);
@@ -710,6 +723,81 @@ const AdminPage: NextPage = () => {
     );
   };
 
+  // Professor Reviews Moderation Functions
+  const loadProfessorReviews = async () => {
+    setIsLoadingProfessorReviews(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        console.warn('No session token available');
+        return;
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      };
+
+      // Load professor reviews with current filter
+      const reviewsResponse = await fetch(
+        `${API_BASE}/api/moderation/professor-reviews/all?status_filter=${professorReviewStatusFilter || 'all'}&limit=100`,
+        { headers }
+      );
+
+      if (reviewsResponse.ok) {
+        const data = await reviewsResponse.json();
+        setProfessorReviews(data.reviews || []);
+      }
+
+      // Load stats
+      const statsResponse = await fetch(
+        `${API_BASE}/api/moderation/professor-reviews/stats`,
+        { headers }
+      );
+
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        setProfessorReviewStats(statsData);
+      }
+
+    } catch (error) {
+      console.error('Failed to load professor reviews:', error);
+      showToast('Failed to load professor reviews', 'error');
+    } finally {
+      setIsLoadingProfessorReviews(false);
+    }
+  };
+
+  const moderateProfessorReview = async (reviewId: string, action: 'approve' | 'remove', reason: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+
+      const response = await fetch(
+        `${API_BASE}/api/moderation/reviews/${reviewId}/action`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ action, reason })
+        }
+      );
+
+      if (response.ok) {
+        showToast(`Review ${action}d successfully`, 'success');
+        await loadProfessorReviews(); // Reload
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        showToast(`Failed to ${action} review: ${errorData.detail || response.statusText}`, 'error');
+      }
+    } catch (error) {
+      console.error(`Failed to ${action} review:`, error);
+      showToast(`Network error: Failed to ${action} review`, 'error');
+    }
+  };
+
   // College Reviews Moderation Functions
   const loadFlaggedCollegeReviews = async () => {
     setIsLoadingCollegeReviews(true);
@@ -894,6 +982,13 @@ const AdminPage: NextPage = () => {
       loadAllCollegeReviews();
     }
   }, [isAdmin, activeTab, collegeReviewStatusFilter]);
+
+  // Load professor reviews when tab changes
+  useEffect(() => {
+    if (isAdmin && activeTab === 'professor-reviews') {
+      loadProfessorReviews();
+    }
+  }, [isAdmin, activeTab, professorReviewStatusFilter]);
 
   // Show loading while checking auth
   if (authLoading || isLoading) {
@@ -1113,6 +1208,16 @@ const AdminPage: NextPage = () => {
                 }`}
               >
                 Users ({stats.totalUsers})
+              </button>
+              <button
+                onClick={() => setActiveTab('professor-reviews')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'professor-reviews'
+                    ? 'border-indigo-500 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Professor Reviews
               </button>
               <button
                 onClick={() => setActiveTab('college-reviews')}
@@ -1674,6 +1779,185 @@ const AdminPage: NextPage = () => {
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'professor-reviews' && (
+            <div className="space-y-6">
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 bg-yellow-100 rounded-md p-3">
+                      <Flag className="h-6 w-6 text-yellow-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Pending Reviews</p>
+                      <p className="text-2xl font-bold text-gray-900">{professorReviewStats.pending_reviews}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 bg-blue-100 rounded-md p-3">
+                      <Flag className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Total Flags</p>
+                      <p className="text-2xl font-bold text-gray-900">{professorReviewStats.total_flags}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 bg-red-100 rounded-md p-3">
+                      <Shield className="h-6 w-6 text-red-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Flagged Reviews</p>
+                      <p className="text-2xl font-bold text-gray-900">{professorReviewStats.flagged_reviews}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 bg-green-100 rounded-md p-3">
+                      <Check className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Total Reviews</p>
+                      <p className="text-2xl font-bold text-gray-900">{professorReviewStats.total_reviews}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Filters */}
+              <div className="bg-white rounded-lg shadow p-4">
+                <div className="flex items-center space-x-4">
+                  <label className="text-sm font-medium text-gray-700">Filter by status:</label>
+                  <select
+                    value={professorReviewStatusFilter}
+                    onChange={(e) => setProfessorReviewStatusFilter(e.target.value)}
+                    className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  >
+                    <option value="pending">Pending Review</option>
+                    <option value="approved">Approved</option>
+                    <option value="removed">Removed</option>
+                    <option value="flagged">Flagged Only</option>
+                    <option value="all">All Reviews</option>
+                  </select>
+                  <button
+                    onClick={loadProfessorReviews}
+                    disabled={isLoadingProfessorReviews}
+                    className="ml-auto px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                  >
+                    {isLoadingProfessorReviews ? 'Loading...' : 'Refresh'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Professor Reviews Table */}
+              <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="px-6 py-4 bg-gray-50 border-b">
+                  <h3 className="text-lg font-semibold text-gray-900">Professor Reviews</h3>
+                  <p className="text-sm text-gray-600 mt-1">View all submitted professor reviews and their authors</p>
+                </div>
+                
+                {isLoadingProfessorReviews ? (
+                  <div className="p-8 text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading reviews...</p>
+                  </div>
+                ) : professorReviews.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500">
+                    <p>No professor reviews found</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Professor</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Review Content</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Flag Type</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Flagged Date</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {professorReviews.map((review: any) => (
+                          <tr key={review.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">{review.professor_name}</div>
+                              <div className="text-sm text-gray-500">{review.college_name}</div>
+                              <div className="text-xs text-gray-400">{review.college_city}</div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="text-sm text-gray-900 max-w-md">
+                                <div className="font-medium">Course: {review.course_name}</div>
+                                <div className="mt-1">Rating: {review.overall_rating}/5 ⭐</div>
+                                {review.review_text && (
+                                  <div className="mt-2 text-gray-600 line-clamp-3">{review.review_text}</div>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              {review.has_flags ? (
+                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                  Flagged ({review.flag_count})
+                                </span>
+                              ) : (
+                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                  Clean
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {review.has_flags ? 'User reported' : 'N/A'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                review.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                review.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {review.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {new Date(review.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                              {review.status === 'pending' && (
+                                <>
+                                  <button
+                                    onClick={() => moderateProfessorReview(review.id, 'approve', 'Approved by admin')}
+                                    className="text-green-600 hover:text-green-900"
+                                  >
+                                    Approve
+                                  </button>
+                                  <button
+                                    onClick={() => moderateProfessorReview(review.id, 'remove', 'Policy violation')}
+                                    className="text-red-600 hover:text-red-900"
+                                  >
+                                    Dismiss
+                                  </button>
+                                </>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>
