@@ -9,7 +9,7 @@ import Link from 'next/link'
 import { useAuth } from '../contexts/AuthContext'
 import { useNotification } from '../contexts/NotificationContext'
 import { useRouter } from 'next/router'
-import { User, Mail, GraduationCap, Building, Link as LinkIcon, Save, Edit3, ArrowLeft } from 'lucide-react'
+import { User, Mail, GraduationCap, Building, Link as LinkIcon, Save, Edit3, ArrowLeft, Trash2, AlertTriangle } from 'lucide-react'
 
 interface ProfileData {
   name: string
@@ -21,7 +21,7 @@ interface ProfileData {
 }
 
 export default function ProfilePage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, session, loading: authLoading } = useAuth()
   const { showToast } = useNotification()
   const router = useRouter()
   const [profile, setProfile] = useState<ProfileData>({
@@ -34,6 +34,9 @@ export default function ProfilePage() {
   })
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -74,6 +77,55 @@ export default function ProfilePage() {
       ...prev,
       [field]: value
     }))
+  }
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') {
+      showToast('Please type DELETE to confirm', 'error')
+      return
+    }
+
+    setIsDeleting(true)
+    try {
+      // Check if we have a valid session token
+      if (!session?.access_token) {
+        throw new Error('Authentication required')
+      }
+
+      // Call backend API to delete account
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/delete-account`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.detail || 'Failed to delete account')
+      }
+
+      showToast('Account deleted successfully. Goodbye!', 'success')
+      
+      // Sign out using supabase from lib
+      const { createClient } = await import('@supabase/supabase-js')
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+      await supabase.auth.signOut()
+      
+      setTimeout(() => router.push('/'), 1000)
+    } catch (error: any) {
+      console.error('Failed to delete account:', error)
+      showToast(
+        error.message || 'Failed to delete account. Please contact support at nihalpardeshi12344@gmail.com',
+        'error'
+      )
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   if (authLoading) {
@@ -291,6 +343,89 @@ export default function ProfilePage() {
                     >
                       <Save className="w-4 h-4" />
                       <span>{saving ? 'Saving...' : 'Save Changes'}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Danger Zone - Delete Account */}
+          <div className="mt-8 bg-white rounded-lg shadow border-2 border-red-200">
+            <div className="px-6 py-4 bg-red-50 border-b border-red-200">
+              <div className="flex items-center space-x-2 text-red-800">
+                <AlertTriangle className="w-5 h-5" />
+                <h3 className="text-lg font-semibold">Danger Zone</h3>
+              </div>
+            </div>
+            
+            <div className="px-6 py-6">
+              {!showDeleteConfirm ? (
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Delete Account</h4>
+                  <p className="text-gray-600 mb-4">
+                    Permanently delete your account and all associated data. This action cannot be undone.
+                  </p>
+                  <ul className="text-sm text-gray-600 mb-4 space-y-1 list-disc pl-5">
+                    <li>All your reviews will be permanently deleted</li>
+                    <li>Your profile information will be removed</li>
+                    <li>You will be immediately signed out</li>
+                    <li>This action is irreversible</li>
+                  </ul>
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete My Account</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="bg-red-50 p-6 rounded-lg border border-red-200">
+                  <div className="flex items-start space-x-3 mb-4">
+                    <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0 mt-1" />
+                    <div>
+                      <h4 className="text-lg font-bold text-red-900 mb-2">
+                        Are you absolutely sure?
+                      </h4>
+                      <p className="text-red-800 mb-4">
+                        This will permanently delete your account and all your data. This action cannot be undone.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-red-900 mb-2">
+                      Type <span className="font-bold">DELETE</span> to confirm:
+                    </label>
+                    <input
+                      type="text"
+                      value={deleteConfirmText}
+                      onChange={(e) => setDeleteConfirmText(e.target.value)}
+                      className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      placeholder="Type DELETE"
+                      disabled={isDeleting}
+                    />
+                  </div>
+
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => {
+                        setShowDeleteConfirm(false)
+                        setDeleteConfirmText('')
+                      }}
+                      disabled={isDeleting}
+                      className="flex-1 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleDeleteAccount}
+                      disabled={deleteConfirmText !== 'DELETE' || isDeleting}
+                      className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>{isDeleting ? 'Deleting...' : 'Delete Forever'}</span>
                     </button>
                   </div>
                 </div>
