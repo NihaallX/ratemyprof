@@ -205,6 +205,10 @@ async def create_review(
             'status': 'pending'  # All reviews start pending, require admin approval
         }
         
+        print(f"📝 REVIEW DATA TO INSERT: {review_data}")
+        print(f"📝 Field count: {len(review_data)} fields")
+        print(f"📝 Keys: {list(review_data.keys())}")
+        
         # Insert review using authenticated client
         # RLS policy: "Authenticated users create reviews" allows this
         result = supabase.table('reviews').insert(review_data).execute()
