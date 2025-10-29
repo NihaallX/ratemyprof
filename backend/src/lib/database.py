@@ -94,26 +94,31 @@ def get_supabase_with_token(token: str) -> Client:
         print(f"⚠️ Could not decode JWT: {e}")
     
     # Create a new client with the user's token
-    client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
-    
-    # Set the auth header directly on the client's headers
-    # This ensures all subsequent requests include the user's JWT
+    # IMPORTANT: We need to set the Authorization header for RLS to work
     print(f"🔑 Setting JWT token on client (length: {len(token)})")
     print(f"🔑 Token preview: {token[:50]}..." if len(token) > 50 else f"🔑 Token: {token}")
     
-    # Try BOTH methods of setting auth
+    # Create a fresh client instance
+    client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+    
+    # Set the JWT token on the postgrest client
+    # This is the critical step for RLS to recognize the authenticated user
     client.postgrest.auth(token)
     
-    # Also set on the main client auth module
-    try:
-        # Set access token directly on auth module
-        client.auth.set_session(token, token)  # access_token, refresh_token
-        print(f"🔑 Auth session set via set_session()")
-    except Exception as e:
-        print(f"⚠️ Could not set auth session: {e}")
+    # CRITICAL: Manually set the Authorization header on the session
+    # The postgrest.auth() method should do this, but we'll ensure it's set
+    client.postgrest.session.headers['Authorization'] = f"Bearer {token}"
+    client.postgrest.session.headers['apikey'] = SUPABASE_ANON_KEY
     
-    # Verify the auth header was set
-    print(f"🔑 Client auth headers: {client.postgrest.session.headers.get('Authorization', 'NOT SET')[:80]}...")
+    # Verify the auth header was set correctly
+    auth_header = client.postgrest.session.headers.get('Authorization', 'NOT SET')
+    print(f"🔑 Authorization header set: {auth_header[:80]}...")
+    
+    if not auth_header.startswith('Bearer ey'):
+        print(f"⚠️ ERROR: Authorization header is not properly set!")
+        print(f"⚠️ Header value: {auth_header}")
+    else:
+        print(f"✅ Authorization header correctly set with JWT token")
     
     return client
 
