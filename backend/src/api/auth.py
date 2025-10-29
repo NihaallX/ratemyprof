@@ -306,8 +306,7 @@ async def verify_email(
 
 @router.delete("/delete-account")
 async def delete_account(
-    current_user: dict = Depends(get_current_user),
-    supabase: Client = Depends(get_supabase)
+    current_user: dict = Depends(get_current_user)
 ):
     """Delete the authenticated user's account and all associated data.
     
@@ -321,64 +320,113 @@ async def delete_account(
     """
     try:
         user_id = current_user['id']
+        print(f"🗑️ Attempting to delete account for user: {user_id}")
         
-        # Use admin client for deletion operations
+        # Import admin client
         from src.lib.database import get_admin_supabase
-        admin_supabase = get_admin_supabase()
         
-        # Step 1: Get all professor review IDs from mapping table
-        prof_mappings = admin_supabase.table('review_author_mappings').select('review_id').eq('author_id', user_id).execute()
-        prof_review_ids = [m['review_id'] for m in prof_mappings.data] if prof_mappings.data else []
-        
-        # Step 2: Get all college review IDs from mapping table
-        college_mappings = admin_supabase.table('college_review_author_mappings').select('review_id').eq('author_id', user_id).execute()
-        college_review_ids = [m['review_id'] for m in college_mappings.data] if college_mappings.data else []
-        
-        # Step 3: Delete professor reviews
-        for review_id in prof_review_ids:
-            # Delete the review itself
-            admin_supabase.table('reviews').delete().eq('id', review_id).execute()
-            # Delete the mapping
-            admin_supabase.table('review_author_mappings').delete().eq('review_id', review_id).execute()
-        
-        # Step 4: Delete college reviews
-        for review_id in college_review_ids:
-            # Delete the review itself
-            admin_supabase.table('college_reviews').delete().eq('id', review_id).execute()
-            # Delete the mapping
-            admin_supabase.table('college_review_author_mappings').delete().eq('review_id', review_id).execute()
-        
-        # Step 5: Delete user's review votes (if these tables exist and have user_id)
+        # Get admin supabase client
         try:
-            admin_supabase.table('review_votes').delete().eq('user_id', user_id).execute()
-        except Exception:
-            pass  # Table might not exist or have different structure
+            admin_supabase = get_admin_supabase()
+            print("✅ Got admin Supabase client")
+        except Exception as e:
+            error_detail = f"Failed to initialize admin client: {str(e)}"
+            print(f"❌ {error_detail}")
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=error_detail
+            )
+        
+        deleted_counts = {
+            "professor_reviews": 0,
+            "college_reviews": 0,
+            "votes": 0,
+            "activities": 0
+        }
+        
+        # Step 1: Get and delete professor reviews
+        try:
+            prof_mappings = admin_supabase.table('review_author_mappings').select('review_id').eq('author_id', user_id).execute()
+            prof_review_ids = [m['review_id'] for m in (prof_mappings.data or [])]
+            print(f"📝 Found {len(prof_review_ids)} professor reviews")
+            
+            for review_id in prof_review_ids:
+                try:
+                    admin_supabase.table('reviews').delete().eq('id', review_id).execute()
+                    admin_supabase.table('review_author_mappings').delete().eq('review_id', review_id).execute()
+                    deleted_counts["professor_reviews"] += 1
+                except Exception as e:
+                    print(f"⚠️ Failed to delete professor review {review_id}: {str(e)}")
+        except Exception as e:
+            print(f"⚠️ Error processing professor reviews: {str(e)}")
+        
+        # Step 2: Get and delete college reviews
+        try:
+            college_mappings = admin_supabase.table('college_review_author_mappings').select('review_id').eq('author_id', user_id).execute()
+            college_review_ids = [m['review_id'] for m in (college_mappings.data or [])]
+            print(f"🏛️ Found {len(college_review_ids)} college reviews")
+            
+            for review_id in college_review_ids:
+                try:
+                    admin_supabase.table('college_reviews').delete().eq('id', review_id).execute()
+                    admin_supabase.table('college_review_author_mappings').delete().eq('review_id', review_id).execute()
+                    deleted_counts["college_reviews"] += 1
+                except Exception as e:
+                    print(f"⚠️ Failed to delete college review {review_id}: {str(e)}")
+        except Exception as e:
+            print(f"⚠️ Error processing college reviews: {str(e)}")
+        
+        # Step 3: Delete votes and activities (best effort)
+        try:
+            result = admin_supabase.table('review_votes').delete().eq('user_id', user_id).execute()
+            print("✅ Deleted review votes")
+        except Exception as e:
+            print(f"⚠️ Could not delete review votes: {str(e)}")
         
         try:
-            admin_supabase.table('college_review_votes').delete().eq('user_id', user_id).execute()
-        except Exception:
-            pass  # Table might not exist or have different structure
+            result = admin_supabase.table('college_review_votes').delete().eq('user_id', user_id).execute()
+            print("✅ Deleted college review votes")
+        except Exception as e:
+            print(f"⚠️ Could not delete college review votes: {str(e)}")
         
-        # Step 6: Delete user activities
         try:
-            admin_supabase.table('user_activities').delete().eq('user_id', user_id).execute()
-        except Exception:
-            pass  # Table might not exist
+            result = admin_supabase.table('user_activities').delete().eq('user_id', user_id).execute()
+            print("✅ Deleted user activities")
+        except Exception as e:
+            print(f"⚠️ Could not delete user activities: {str(e)}")
         
-        # Step 7: Finally, delete the user account
-        admin_supabase.auth.admin.delete_user(user_id)
+        # Step 4: Delete the user account from Supabase Auth
+        try:
+            print(f"🔐 Attempting to delete user from Supabase Auth: {user_id}")
+            admin_supabase.auth.admin.delete_user(user_id)
+            print("✅ User deleted from Supabase Auth")
+        except Exception as e:
+            error_msg = str(e)
+            print(f"❌ Failed to delete user from auth: {error_msg}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to delete user account from authentication system: {error_msg}"
+            )
+        
+        print(f"🎉 Account deletion complete for user: {user_id}")
+        print(f"📊 Deleted: {deleted_counts}")
         
         return {
             "message": "Account deleted successfully",
             "user_id": user_id,
-            "deleted_professor_reviews": len(prof_review_ids),
-            "deleted_college_reviews": len(college_review_ids)
+            "deleted": deleted_counts
         }
         
     except HTTPException:
         raise
     except Exception as e:
+        error_msg = str(e)
+        print(f"💥 Unexpected error during account deletion: {error_msg}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete account: {str(e)}"
+            detail=f"Account deletion failed: {error_msg}"
         )

@@ -103,6 +103,8 @@ export default function ProfilePage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
+        console.error('Delete account error response:', errorData)
+        console.error('Response status:', response.status)
         throw new Error(errorData.detail || 'Failed to delete account')
       }
 
