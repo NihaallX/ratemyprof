@@ -74,6 +74,25 @@ def get_supabase_with_token(token: str) -> Client:
     if not SUPABASE_URL or not SUPABASE_ANON_KEY:
         raise ValueError("Supabase configuration missing")
     
+    # Debug: Decode JWT to see what role it has
+    import base64
+    import json
+    try:
+        # Decode JWT payload (second part)
+        parts = token.split('.')
+        if len(parts) >= 2:
+            # Add padding if needed
+            payload = parts[1]
+            padding = 4 - len(payload) % 4
+            if padding != 4:
+                payload += '=' * padding
+            decoded = base64.b64decode(payload)
+            jwt_data = json.loads(decoded)
+            print(f"🔍 JWT DECODED - role: {jwt_data.get('role', 'NONE')}, aud: {jwt_data.get('aud', 'NONE')}")
+            print(f"🔍 JWT claims: {list(jwt_data.keys())}")
+    except Exception as e:
+        print(f"⚠️ Could not decode JWT: {e}")
+    
     # Create a new client with the user's token
     client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
     
