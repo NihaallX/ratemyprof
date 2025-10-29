@@ -324,7 +324,7 @@ async def get_all_professor_reviews(
             would_take_again,
             review_text,
             course_name,
-            attendance_required,
+            attendance_mandatory,
             created_at,
             status,
             professors!inner(id, name, college_id, colleges(name, city, state))
@@ -377,7 +377,7 @@ async def get_all_professor_reviews(
                 'would_take_again': review_data.get('would_take_again'),
                 'review_text': review_data.get('review_text', ''),
                 'course_name': review_data.get('course_name', ''),
-                'attendance_required': review_data.get('attendance_required'),
+                'attendance_mandatory': review_data.get('attendance_mandatory'),
                 'created_at': review_data['created_at'],
                 'status': review_data['status'],
                 'has_flags': has_flags,
