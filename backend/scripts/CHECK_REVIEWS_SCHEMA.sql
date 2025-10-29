@@ -1,27 +1,23 @@
--- Check reviews table schema and constraints
+-- Check reviews table structure to see what columns exist
+-- and which ones are required (NOT NULL without defaults)
+
 SELECT 
     column_name,
     data_type,
     is_nullable,
-    column_default
+    column_default,
+    CASE 
+        WHEN is_nullable = 'NO' AND column_default IS NULL THEN '❌ REQUIRED - Must provide value!'
+        WHEN is_nullable = 'NO' AND column_default IS NOT NULL THEN '✅ Has default'
+        ELSE '✅ Optional (nullable)'
+    END as requirement_status
 FROM information_schema.columns
-WHERE table_name = 'reviews'
-ORDER BY ordinal_position;
-
--- Check constraints
-SELECT 
-    conname as constraint_name,
-    contype as constraint_type,
-    pg_get_constraintdef(oid) as definition
-FROM pg_constraint
-WHERE conrelid = 'reviews'::regclass;
-
--- Check RLS policies WITH CHECK clauses
-SELECT 
-    policyname,
-    cmd,
-    roles,
-    qual as using_expression,
-    with_check as with_check_expression
-FROM pg_policies
-WHERE tablename = 'reviews' AND cmd = 'INSERT';
+WHERE table_schema = 'public' 
+    AND table_name = 'reviews'
+ORDER BY 
+    CASE 
+        WHEN is_nullable = 'NO' AND column_default IS NULL THEN 1  -- Required fields first
+        WHEN is_nullable = 'NO' THEN 2  -- Has default
+        ELSE 3  -- Optional
+    END,
+    ordinal_position;
