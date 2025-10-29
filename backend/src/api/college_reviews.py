@@ -5,12 +5,13 @@ All college reviews are anonymous to protect student privacy.
 """
 from typing import Optional, List, Dict, Any
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks
 from pydantic import BaseModel, field_validator
 from supabase import Client
 
 from src.lib.database import get_supabase
 from src.lib.auth import get_current_user, get_authenticated_supabase
+from src.services.auto_flagging import AutoFlaggingSystem
 
 router = APIRouter()
 
@@ -248,6 +249,7 @@ async def get_my_college_reviews(
 @router.post("", response_model=CollegeReview, status_code=status.HTTP_201_CREATED)
 async def create_college_review(
     request: CollegeReviewCreate,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
     supabase: Client = Depends(get_authenticated_supabase)
 ):
@@ -350,6 +352,17 @@ async def create_college_review(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to create review mapping: {str(mapping_error)}"
             )
+        
+        # Run automated content filtering in background if review has text
+        if request.review_text and request.review_text.strip():
+            auto_flagging = AutoFlaggingSystem(supabase)
+            background_tasks.add_task(
+                auto_flagging.process_college_review_content,
+                review_data['id'],
+                request.review_text,
+                current_user['id']
+            )
+            print(f"🤖 Auto-flagging scheduled for college review {review_data['id']}")
         
         # Update college statistics
         await _update_college_stats(request.college_id, supabase)
