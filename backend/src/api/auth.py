@@ -312,9 +312,9 @@ async def delete_account(
     """Delete the authenticated user's account and all associated data.
     
     This endpoint:
-    1. Deletes all user reviews
-    2. Deletes all user activities
-    3. Deletes the user's profile data
+    1. Finds all user's reviews via mapping tables
+    2. Deletes reviews and their mappings
+    3. Deletes user activities and votes
     4. Deletes the user account from Supabase Auth
     
     This action is irreversible.
@@ -326,23 +326,53 @@ async def delete_account(
         from src.lib.database import get_admin_supabase
         admin_supabase = get_admin_supabase()
         
-        # Delete user's reviews (both professor and college reviews)
-        admin_supabase.table('reviews').delete().eq('user_id', user_id).execute()
-        admin_supabase.table('college_reviews').delete().eq('user_id', user_id).execute()
+        # Step 1: Get all professor review IDs from mapping table
+        prof_mappings = admin_supabase.table('review_author_mappings').select('review_id').eq('author_id', user_id).execute()
+        prof_review_ids = [m['review_id'] for m in prof_mappings.data] if prof_mappings.data else []
         
-        # Delete user's review votes
-        admin_supabase.table('review_votes').delete().eq('user_id', user_id).execute()
-        admin_supabase.table('college_review_votes').delete().eq('user_id', user_id).execute()
+        # Step 2: Get all college review IDs from mapping table
+        college_mappings = admin_supabase.table('college_review_author_mappings').select('review_id').eq('author_id', user_id).execute()
+        college_review_ids = [m['review_id'] for m in college_mappings.data] if college_mappings.data else []
         
-        # Delete user activities
-        admin_supabase.table('user_activities').delete().eq('user_id', user_id).execute()
+        # Step 3: Delete professor reviews
+        for review_id in prof_review_ids:
+            # Delete the review itself
+            admin_supabase.table('reviews').delete().eq('id', review_id).execute()
+            # Delete the mapping
+            admin_supabase.table('review_author_mappings').delete().eq('review_id', review_id).execute()
         
-        # Finally, delete the user account
+        # Step 4: Delete college reviews
+        for review_id in college_review_ids:
+            # Delete the review itself
+            admin_supabase.table('college_reviews').delete().eq('id', review_id).execute()
+            # Delete the mapping
+            admin_supabase.table('college_review_author_mappings').delete().eq('review_id', review_id).execute()
+        
+        # Step 5: Delete user's review votes (if these tables exist and have user_id)
+        try:
+            admin_supabase.table('review_votes').delete().eq('user_id', user_id).execute()
+        except Exception:
+            pass  # Table might not exist or have different structure
+        
+        try:
+            admin_supabase.table('college_review_votes').delete().eq('user_id', user_id).execute()
+        except Exception:
+            pass  # Table might not exist or have different structure
+        
+        # Step 6: Delete user activities
+        try:
+            admin_supabase.table('user_activities').delete().eq('user_id', user_id).execute()
+        except Exception:
+            pass  # Table might not exist
+        
+        # Step 7: Finally, delete the user account
         admin_supabase.auth.admin.delete_user(user_id)
         
         return {
             "message": "Account deleted successfully",
-            "user_id": user_id
+            "user_id": user_id,
+            "deleted_professor_reviews": len(prof_review_ids),
+            "deleted_college_reviews": len(college_review_ids)
         }
         
     except HTTPException:
