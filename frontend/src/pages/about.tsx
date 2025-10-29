@@ -95,21 +95,19 @@ export default function AboutPage() {
 
               {/* Founders */}
               <section className="mt-12 pt-8 border-t border-gray-200">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">The Team</h2>
+                <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">The Founders</h2>
                 <div className="grid md:grid-cols-2 gap-8">
                   <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl">
                     <div className="w-24 h-24 mx-auto mb-4 bg-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
                       N
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">Nihal Pardeshi</h3>
-                    <p className="text-gray-600">Co-Founder</p>
                   </div>
                   <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl">
                     <div className="w-24 h-24 mx-auto mb-4 bg-indigo-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
                       G
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">Gaurav Guddeti</h3>
-                    <p className="text-gray-600">Co-Founder</p>
                   </div>
                 </div>
               </section>
