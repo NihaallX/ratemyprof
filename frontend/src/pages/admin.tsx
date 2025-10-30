@@ -46,6 +46,7 @@ const AdminPage: NextPage = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isLoadingAllProfessors, setIsLoadingAllProfessors] = useState(false);
   const [professorsLoaded, setProfessorsLoaded] = useState(false);
+  const [usersLoaded, setUsersLoaded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProfessorsCount, setTotalProfessorsCount] = useState(0);
   const PAGE_SIZE = 100;
@@ -332,7 +333,7 @@ const AdminPage: NextPage = () => {
 
   // Load all users when user switches to Users tab
   useEffect(() => {
-    if (activeTab === 'users' && users.length <= 5) {
+    if (activeTab === 'users' && !usersLoaded) {
       loadAllUsers();
     }
   }, [activeTab]);
@@ -365,6 +366,7 @@ const AdminPage: NextPage = () => {
         const usersData = await usersResponse.json();
         console.log('All users loaded:', usersData.length);
         setUsers(Array.isArray(usersData) ? usersData : []);
+        setUsersLoaded(true);
       } else {
         console.log('Failed to load users:', await usersResponse.text());
       }
