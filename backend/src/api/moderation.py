@@ -495,6 +495,9 @@ async def moderate_review(
     Allows admin users to approve, remove, or mark reviews as pending
     based on moderation guidelines and flag reports.
     """
+    print(f"🔧 MODERATION REQUEST: review_id={review_id}, action={request.action}, reason={request.reason}")
+    print(f"🔧 Current user: {current_user.get('email', 'unknown')}")
+    
     try:
         # Validate UUID format
         try:
@@ -507,6 +510,7 @@ async def moderate_review(
         
         # Check admin privileges
         if not is_admin_user(current_user):
+            print(f"❌ NOT ADMIN: {current_user}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Admin privileges required for moderation actions"
@@ -549,11 +553,16 @@ async def moderate_review(
         }
         new_status = status_map.get(request.action, request.action)
         
+        # Get user ID - use None for admin users (they don't have real UUIDs)
+        user_id = current_user.get('id')
+        if user_id == 'admin-user-id':
+            user_id = None
+        
         # Update review status
         update_result = supabase.table('reviews').update({
             'status': new_status,
             'moderated_at': 'now()',
-            'moderated_by': current_user['id']
+            'moderated_by': user_id
         }).eq('id', review_id).execute()
         
         # Recalculate professor ratings after moderation action
