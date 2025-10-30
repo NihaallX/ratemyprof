@@ -49,7 +49,7 @@ ACCESS_TOKEN_EXPIRE_HOURS = 24
 # Request/Response Models
 class ModerationAction(BaseModel):
     action: str
-    reason: str
+    reason: Optional[str] = None  # Make reason optional
     
     @field_validator('action')
     @classmethod
@@ -62,11 +62,14 @@ class ModerationAction(BaseModel):
     @field_validator('reason')
     @classmethod
     def validate_reason(cls, v):
-        if not v or len(v.strip()) == 0:
-            raise ValueError('Reason is required for moderation action')
-        if len(v) > 1000:
-            raise ValueError('Reason cannot exceed 1000 characters')
-        return v.strip()
+        # Reason is optional for approve action
+        if v is not None:
+            if len(v.strip()) == 0:
+                return None  # Treat empty string as None
+            if len(v) > 1000:
+                raise ValueError('Reason cannot exceed 1000 characters')
+            return v.strip()
+        return v
 
 
 class ReviewFlag(BaseModel):
@@ -538,9 +541,17 @@ async def moderate_review(
             if prof_result.data:
                 professor_data = prof_result.data
         
+        # Map action to status (approve -> approved, remove -> removed)
+        status_map = {
+            'approve': 'approved',
+            'remove': 'removed',
+            'pending': 'pending'
+        }
+        new_status = status_map.get(request.action, request.action)
+        
         # Update review status
         update_result = supabase.table('reviews').update({
-            'status': request.action,
+            'status': new_status,
             'moderated_at': 'now()',
             'moderated_by': current_user['id']
         }).eq('id', review_id).execute()
@@ -565,16 +576,18 @@ async def moderate_review(
                 'total_reviews': 0
             }).eq('id', professor_id).execute()
         
-        # Log moderation action
-        log_data = {
-            'review_id': review_id,
-            'moderator_id': current_user['id'],
-            'action': request.action,
-            'reason': request.reason,
-            'previous_status': review_data['status']
-        }
-        
-        supabase.table('moderation_logs').insert(log_data).execute()
+        # Log moderation action (optional - don't fail if table doesn't exist)
+        try:
+            log_data = {
+                'review_id': review_id,
+                'moderator_id': current_user['id'],
+                'action': request.action,
+                'reason': request.reason,
+                'previous_status': review_data['status']
+            }
+            supabase.table('moderation_logs').insert(log_data).execute()
+        except Exception as log_error:
+            print(f"⚠️ Could not log moderation action: {log_error}")
         
         # Send notification to user (in background)
         if author_id:
@@ -623,6 +636,10 @@ async def moderate_review(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"❌ MODERATION ERROR: {str(e)}")
+        print(f"❌ Error type: {type(e).__name__}")
+        import traceback
+        print(f"❌ Traceback: {traceback.format_exc()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to moderate review: {str(e)}"
