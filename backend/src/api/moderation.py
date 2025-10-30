@@ -765,6 +765,7 @@ class UserInfo(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     is_active: bool
+    is_verified: bool  # Email confirmation status (same as is_active)
     created_at: str
     total_reviews: int = 0
     total_flags_submitted: int = 0
@@ -910,6 +911,7 @@ async def get_users(
                         first_name=meta_data.get('first_name'),
                         last_name=meta_data.get('last_name'),
                         is_active=auth_user.email_confirmed_at is not None,
+                        is_verified=auth_user.email_confirmed_at is not None,
                         created_at=str(auth_user.created_at) if auth_user.created_at else "2025-01-01T00:00:00Z",
                         total_reviews=prof_review_count + college_review_count,
                         total_flags_submitted=flag_count
@@ -977,6 +979,7 @@ async def get_users(
                     first_name=None,
                     last_name=None,
                     is_active=True,
+                    is_verified=True,
                     created_at=user_creation_dates.get(user_id, "2025-01-01T00:00:00Z"),
                     total_reviews=prof_review_count + college_review_count,
                     total_flags_submitted=flag_count
@@ -1087,6 +1090,7 @@ async def get_users(
                         first_name=None,
                         last_name=None,
                         is_active=True,
+                        is_verified=True,
                         created_at=user_creation_dates.get(user_id, "2025-01-01T00:00:00Z"),
                         total_reviews=prof_review_count + college_review_count,
                         total_flags_submitted=flag_count
