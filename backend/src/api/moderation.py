@@ -2984,6 +2984,7 @@ async def get_dashboard_stats(
                         "first_name": meta_data.get('first_name'),
                         "last_name": meta_data.get('last_name'),
                         "is_active": auth_user.email_confirmed_at is not None,
+                        "is_verified": auth_user.email_confirmed_at is not None,  # Add verification status
                         "created_at": str(auth_user.created_at) if auth_user.created_at else "2025-01-01T00:00:00Z",
                         "total_reviews": prof_review_count + college_review_count,
                         "total_flags_submitted": flag_count
