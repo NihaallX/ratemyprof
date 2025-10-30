@@ -868,10 +868,14 @@ async def get_users(
         # Try to get users from auth.users using admin client
         try:
             if admin_supabase:
+                print("🔵 Attempting to list users from Supabase Auth...")
                 users_response = admin_supabase.auth.admin.list_users()
+                print(f"✅ Got users response: {type(users_response)}")
                 auth_users = users_response if isinstance(users_response, list) else []
+                print(f"📊 Found {len(auth_users)} auth users")
                 
                 for auth_user in auth_users[:limit]:
+                    user_id = auth_user.id
                     user_id = auth_user.id
                     
                     # Get review counts for each user - use review_author_mappings table
@@ -918,12 +922,17 @@ async def get_users(
                     ))
                     
                 # Successfully loaded users
+                print(f"✅ Successfully loaded {len(users)} users from Supabase Auth")
             else:
                 # No admin client available
+                print("⚠️ No admin client available, will use fallback")
                 pass
                 
         except Exception as auth_error:
             # Error getting users from auth.users
+            print(f"❌ Error getting users from Supabase Auth: {str(auth_error)}")
+            import traceback
+            traceback.print_exc()
             users = []
             
             # Fallback: Get user IDs from reviews and build user list
