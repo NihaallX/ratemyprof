@@ -209,18 +209,8 @@ const AdminPage: NextPage = () => {
             setFlaggedReviews(flaggedReviews);
           }
           
-          // Load users (when table exists)
-          const usersResponse = await fetch(`${API_BASE}/api/moderation/users`, { headers });
-          console.log('Users response status:', usersResponse.status);
-          if (usersResponse.ok) {
-            const usersData = await usersResponse.json();
-            console.log('Raw users data:', usersData);
-            users = Array.isArray(usersData) ? usersData : [];
-            console.log('Processed users array:', users, 'Length:', users.length);
-            setUsers(users);
-          } else {
-            console.log('Users response not ok:', await usersResponse.text());
-          }
+          // Don't load all users here - let the Users tab load them when needed
+          // The stats endpoint provides recent_users which is enough for the dashboard
           
           // Load pending professors
           const pendingResponse = await fetch(`${API_BASE}/api/moderation/professors/pending`, { headers });
