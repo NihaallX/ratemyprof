@@ -479,7 +479,8 @@ const AdminPage: NextPage = () => {
                 status: user.is_active ? 'active' : 'banned',
                 reviews_count: user.total_reviews || 0,
                 flags_submitted: user.total_flags_submitted || 0,
-                is_active: user.is_active
+                is_active: user.is_active,
+                is_verified: user.is_verified  // Add email verification status
               }));
               console.log(`Fetched ${realUsers.length} real users from API`);
             }
