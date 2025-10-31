@@ -12,6 +12,8 @@ import { supabase } from '../lib/supabase';
 import { Professor } from '../services/api';
 import { API_BASE_URL, API_BASE } from '../config/api';
 
+type AdminTab = 'dashboard' | 'reviews' | 'professors' | 'users' | 'all-professors' | 'pending-approval' | 'professor-reviews' | 'college-reviews';
+
 const AdminPage: NextPage = () => {
   const router = useRouter();
   const { user, session, loading: authLoading, signIn } = useAuth();
@@ -31,7 +33,7 @@ const AdminPage: NextPage = () => {
   const [users, setUsers] = useState([]);
   const [allProfessors, setAllProfessors] = useState<Professor[]>([]);
   const [pendingApprovalProfessors, setPendingApprovalProfessors] = useState([]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'reviews' | 'professors' | 'users' | 'all-professors' | 'pending-approval' | 'professor-reviews' | 'college-reviews'>('dashboard');
+  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [showAdminLoginModal, setShowAdminLoginModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
