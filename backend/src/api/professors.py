@@ -468,8 +468,8 @@ async def get_similar_professors(
 
 @router.get("/more-professors")
 async def get_more_professors(
-    college_id: Optional[str] = None,
-    exclude_id: Optional[str] = None,
+    college_id: Optional[str] = Query(None),
+    exclude_id: Optional[str] = Query(None),
     limit: int = Query(6, ge=1, le=20),
     supabase: Client = Depends(get_supabase)
 ):
@@ -478,8 +478,8 @@ async def get_more_professors(
     Returns top-rated professors, optionally filtered by college.
     Can exclude a specific professor (useful for showing on professor detail page).
     """
+    print(f"🔍 More professors request: college_id={college_id}, exclude_id={exclude_id}, limit={limit}")
     try:
-        print(f"🔍 More professors request: college_id={college_id}, exclude_id={exclude_id}, limit={limit}")
         query = supabase.table('professors').select(
             'id, name, department, average_rating, total_reviews, subjects, college_id'
         )
@@ -540,17 +540,20 @@ async def compare_professors(
         print(f"📊 Parsed {len(professor_ids)} professor IDs: {professor_ids}")
         
         if len(professor_ids) < 2:
+            print(f"❌ Error: Only {len(professor_ids)} professor(s) provided")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="At least 2 professors are required for comparison"
             )
         
         if len(professor_ids) > 4:
+            print(f"❌ Error: Too many professors ({len(professor_ids)})")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Maximum 4 professors can be compared at once"
             )
         
+        print(f"🔍 Fetching professor details from database...")
         # Fetch professor details
         professors_result = supabase.table('professors').select(
             'id, name, department, average_rating, total_reviews, subjects, college_id, colleges(name)'
@@ -560,18 +563,28 @@ async def compare_professors(
         
         if len(professors_result.data) != len(professor_ids):
             print(f"❌ Mismatch: requested {len(professor_ids)} but found {len(professors_result.data)}")
+            missing_ids = set(professor_ids) - set(p['id'] for p in professors_result.data)
+            print(f"   Missing professor IDs: {missing_ids}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="One or more professors not found"
+                detail=f"One or more professors not found: {missing_ids}"
             )
         
         # Get average ratings breakdown for each professor
         comparison_data = []
         for prof in professors_result.data:
-            # Calculate average ratings from reviews AND get additional stats
-            reviews_result = supabase.table('reviews').select(
-                'overall_rating, difficulty_rating, clarity_rating, helpfulness_rating, would_take_again, for_credit, attendance_mandatory'
-            ).eq('professor_id', prof['id']).eq('status', 'approved').execute()
+            print(f"🔍 Processing professor: {prof['name']} (ID: {prof['id']})")
+            try:
+                # Calculate average ratings from reviews AND get additional stats
+                reviews_result = supabase.table('reviews').select(
+                    'overall_rating, difficulty_rating, clarity_rating, helpfulness_rating, would_take_again, for_credit, attendance_mandatory'
+                ).eq('professor_id', prof['id']).eq('status', 'approved').execute()
+                
+                print(f"   Found {len(reviews_result.data)} approved reviews")
+            except Exception as review_error:
+                print(f"❌ Error fetching reviews for {prof['name']}: {str(review_error)}")
+                # Continue with empty reviews if fetch fails
+                reviews_result = type('obj', (object,), {'data': []})()
             
             avg_ratings = {
                 'overall': 0.0,
