@@ -71,8 +71,8 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
   }, [searchQuery, selectedProfessors]);
 
   const addProfessor = (professorId: string) => {
-    if (selectedProfessors.length >= 2) {
-      alert('You can only compare with one other professor');
+    if (selectedProfessors.length >= 4) {
+      alert('You can compare up to 4 professors at once');
       return;
     }
     if (!selectedProfessors.includes(professorId)) {
@@ -124,6 +124,19 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
     return 'text-red-600';
   };
 
+  // For difficulty: lower is better (easier), so invert the colors
+  const getDifficultyBg = (difficulty: number) => {
+    if (difficulty <= 2.0) return 'bg-green-500';  // Easy = green
+    if (difficulty <= 3.5) return 'bg-yellow-500'; // Medium = yellow
+    return 'bg-red-500';                           // Hard = red
+  };
+
+  const getDifficultyColor = (difficulty: number) => {
+    if (difficulty <= 2.0) return 'text-green-600';
+    if (difficulty <= 3.5) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
   return (
     <div className="max-h-[85vh] overflow-y-auto">
       {/* Header */}
@@ -146,7 +159,7 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search for professors..."
               className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              disabled={selectedProfessors.length >= 2}
+              disabled={selectedProfessors.length >= 4}
             />
           </div>
 
@@ -220,7 +233,7 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
       ) : comparisonData.length >= 2 ? (
         <div className="space-y-6">
           {/* Professor Cards Side by Side */}
-          <div className="grid grid-cols-2 gap-6">
+          <div className={`grid gap-6 ${comparisonData.length === 2 ? 'grid-cols-2' : comparisonData.length === 3 ? 'grid-cols-3' : 'grid-cols-2 lg:grid-cols-4'}`}>
             {comparisonData.map((prof) => (
               <div key={prof.id} className="bg-gray-50 rounded-lg p-6 text-center">
                 {/* Overall Rating Badge matching detail page style */}
@@ -316,11 +329,11 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
                   <div className="flex-1 flex items-center gap-2">
                     <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div 
-                        className={`h-full rounded-full transition-all ${getRatingBg(5 - prof.ratings_breakdown.difficulty)}`}
+                        className={`h-full rounded-full transition-all ${getDifficultyBg(prof.ratings_breakdown.difficulty)}`}
                         style={{ width: `${(prof.ratings_breakdown.difficulty / 5) * 100}%` }}
                       />
                     </div>
-                    <span className={`font-semibold w-12 ${getRatingColor(5 - prof.ratings_breakdown.difficulty)}`}>
+                    <span className={`font-semibold w-12 ${getDifficultyColor(prof.ratings_breakdown.difficulty)}`}>
                       {prof.ratings_breakdown.difficulty.toFixed(1)}
                     </span>
                   </div>
