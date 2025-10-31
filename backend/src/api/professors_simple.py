@@ -361,8 +361,8 @@ async def get_similar_professors(
 
 @router.get("/more-professors")
 async def get_more_professors(
-    college_id: Optional[str] = None,
-    exclude_id: Optional[str] = None,
+    college_id: Optional[str] = Query(None),
+    exclude_id: Optional[str] = Query(None),
     limit: int = Query(6, ge=1, le=20),
     supabase: Client = Depends(get_supabase)
 ):
@@ -371,8 +371,8 @@ async def get_more_professors(
     Returns top-rated professors, optionally filtered by college.
     Can exclude a specific professor (useful for showing on professor detail page).
     """
+    print(f"🔍 More professors request: college_id={college_id}, exclude_id={exclude_id}, limit={limit}")
     try:
-        print(f"🔍 More professors request: college_id={college_id}, exclude_id={exclude_id}, limit={limit}")
         
         query = supabase.table('professors').select(
             'id, name, department, average_rating, total_reviews, subjects, college_id'
@@ -443,17 +443,20 @@ async def compare_professors(
         print(f"📝 Parsed {len(professor_ids)} professor IDs: {professor_ids}")
         
         if len(professor_ids) < 2:
+            print(f"❌ Error: Only {len(professor_ids)} professor(s) provided")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="At least 2 professors are required for comparison"
             )
         
         if len(professor_ids) > 4:
+            print(f"❌ Error: Too many professors ({len(professor_ids)})")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Maximum 4 professors can be compared at once"
             )
         
+        print(f"🔍 Fetching professor details from database...")
         # Fetch professor details
         professors_result = supabase.table('professors').select(
             'id, name, department, average_rating, total_reviews, subjects, college_id, colleges(name)'
@@ -462,19 +465,27 @@ async def compare_professors(
         print(f"✅ Found {len(professors_result.data) if professors_result.data else 0} professors")
         
         if len(professors_result.data) != len(professor_ids):
+            missing_ids = set(professor_ids) - set(p['id'] for p in professors_result.data)
+            print(f"❌ Missing professor IDs: {missing_ids}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="One or more professors not found"
+                detail=f"One or more professors not found: {missing_ids}"
             )
         
         # Get average ratings breakdown for each professor
         comparison_data = []
         for prof in professors_result.data:
-            # Calculate average ratings from reviews using the ratings JSON field
-            # The reviews table has a 'ratings' JSONB field with clarity, helpfulness, workload, engagement
-            reviews_result = supabase.table('reviews').select(
-                'ratings'
-            ).eq('professor_id', prof['id']).execute()
+            print(f"🔍 Processing professor: {prof['name']} (ID: {prof['id']})")
+            try:
+                # Fetch reviews with correct schema (separate rating columns)
+                reviews_result = supabase.table('reviews').select(
+                    'overall_rating, difficulty_rating, clarity_rating, helpfulness_rating, would_take_again, for_credit, attendance_mandatory'
+                ).eq('professor_id', prof['id']).eq('status', 'approved').execute()
+                
+                print(f"   Found {len(reviews_result.data)} approved reviews")
+            except Exception as review_error:
+                print(f"❌ Error fetching reviews for {prof['name']}: {str(review_error)}")
+                reviews_result = type('obj', (object,), {'data': []})()
             
             avg_ratings = {
                 'overall': 0.0,
@@ -483,27 +494,54 @@ async def compare_professors(
                 'helpfulness': 0.0
             }
             
+            # Rating distribution (for 5-star breakdown)
+            rating_distribution = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+            
+            # Additional stats
+            would_take_again_yes = 0
+            would_take_again_total = 0
+            taken_for_credit_yes = 0
+            taken_for_credit_no = 0
+            taken_for_credit_na = 0
+            attendance_yes = 0
+            attendance_no = 0
+            attendance_na = 0
+            
             if reviews_result.data and len(reviews_result.data) > 0:
                 count = len(reviews_result.data)
-                # Extract ratings from JSON field
-                total_clarity = 0
-                total_helpfulness = 0
-                total_workload = 0
-                total_engagement = 0
+                avg_ratings['overall'] = sum(r['overall_rating'] for r in reviews_result.data) / count
+                avg_ratings['difficulty'] = sum(r['difficulty_rating'] for r in reviews_result.data) / count
+                avg_ratings['clarity'] = sum(r['clarity_rating'] for r in reviews_result.data) / count
+                avg_ratings['helpfulness'] = sum(r['helpfulness_rating'] for r in reviews_result.data) / count
                 
-                for r in reviews_result.data:
-                    if r.get('ratings'):
-                        ratings = r['ratings']
-                        total_clarity += ratings.get('clarity', 0)
-                        total_helpfulness += ratings.get('helpfulness', 0)
-                        total_workload += ratings.get('workload', 0)
-                        total_engagement += ratings.get('engagement', 0)
-                
-                if count > 0:
-                    avg_ratings['clarity'] = total_clarity / count
-                    avg_ratings['helpfulness'] = total_helpfulness / count
-                    avg_ratings['difficulty'] = total_workload / count  # Using workload as difficulty
-                    avg_ratings['overall'] = (total_clarity + total_helpfulness + total_engagement) / (count * 3)
+                # Calculate rating distribution
+                for review in reviews_result.data:
+                    rating = int(round(review['overall_rating']))
+                    rating_distribution[rating] = rating_distribution.get(rating, 0) + 1
+                    
+                    # Would take again
+                    if review.get('would_take_again') is not None:
+                        would_take_again_total += 1
+                        if review['would_take_again']:
+                            would_take_again_yes += 1
+                    
+                    # Taken for credit
+                    credit_val = review.get('for_credit')
+                    if credit_val == True:
+                        taken_for_credit_yes += 1
+                    elif credit_val == False:
+                        taken_for_credit_no += 1
+                    else:
+                        taken_for_credit_na += 1
+                    
+                    # Attendance
+                    attendance_val = review.get('attendance_mandatory')
+                    if attendance_val == True:
+                        attendance_yes += 1
+                    elif attendance_val == False:
+                        attendance_no += 1
+                    else:
+                        attendance_na += 1
             
             # Handle colleges data
             college_name = 'Unknown'
@@ -521,6 +559,9 @@ async def compare_professors(
             elif not isinstance(subjects, list):
                 subjects = []
             
+            # Calculate would_take_again percentage
+            would_take_again_pct = (would_take_again_yes / would_take_again_total * 100) if would_take_again_total > 0 else 0
+            
             comparison_data.append({
                 'id': prof['id'],
                 'name': prof['name'],
@@ -529,9 +570,22 @@ async def compare_professors(
                 'average_rating': prof.get('average_rating') or 0.0,
                 'total_reviews': prof.get('total_reviews') or 0,
                 'subjects': subjects,
-                'ratings_breakdown': avg_ratings
+                'ratings_breakdown': avg_ratings,
+                'rating_distribution': rating_distribution,
+                'would_take_again_percentage': round(would_take_again_pct, 0),
+                'taken_for_credit': {
+                    'yes': taken_for_credit_yes,
+                    'no': taken_for_credit_no,
+                    'na': taken_for_credit_na
+                },
+                'mandatory_attendance': {
+                    'yes': attendance_yes,
+                    'no': attendance_no,
+                    'na': attendance_na
+                }
             })
         
+        print(f"✅ Successfully built comparison data for {len(comparison_data)} professors")
         return {
             'professors': comparison_data,
             'count': len(comparison_data)
@@ -540,7 +594,12 @@ async def compare_professors(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"❌ Compare error: {str(e)}")
+        print(f"   Error type: {type(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to compare professors: {str(e)}"
         )
+
