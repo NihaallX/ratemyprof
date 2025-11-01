@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, API_LEGACY_BASE } from '../config/api';
 
 interface Professor {
   id: string
@@ -116,7 +116,7 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
   const fetchComparisonData = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/professors/compare?ids=${selectedProfessors.join(',')}`);
+      const response = await fetch(`${API_LEGACY_BASE}/professors/compare?ids=${selectedProfessors.join(',')}`);
       if (response.ok) {
         const data = await response.json();
         setComparisonData(data.professors);
