@@ -135,7 +135,7 @@ async def compare_professors(
     Returns detailed comparison data including ratings and review stats.
     """
     try:
-        print(f"🔍 Compare request: ids={ids}")
+        print(f"🔍 [COMPARE v2.0] Compare request: ids={ids}")
         
         # Parse professor IDs
         professor_ids = [pid.strip() for pid in ids.split(',') if pid.strip()]
