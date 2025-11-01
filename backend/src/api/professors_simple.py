@@ -193,7 +193,7 @@ async def compare_professors(
                 
                 # Fetch reviews with correct schema (separate rating columns)
                 reviews_result = supabase.table('reviews').select(
-                    'overall_rating, difficulty_rating, clarity_rating, helpfulness_rating, would_take_again, for_credit, attendance_mandatory'
+                    'overall_rating, difficulty_rating, clarity_rating, helpfulness_rating, would_take_again, attendance_required'
                 ).eq('professor_id', prof['id']).eq('status', 'approved').execute()
                 
                 print(f"   ✅ Found {len(reviews_result.data)} APPROVED reviews")
@@ -201,7 +201,7 @@ async def compare_professors(
                 # If no approved, try pending
                 if len(reviews_result.data) == 0:
                     pending_reviews = supabase.table('reviews').select(
-                        'overall_rating, difficulty_rating, clarity_rating, helpfulness_rating, would_take_again, for_credit, attendance_mandatory'
+                        'overall_rating, difficulty_rating, clarity_rating, helpfulness_rating, would_take_again, attendance_required'
                     ).eq('professor_id', prof['id']).eq('status', 'pending').execute()
                     print(f"   ⚠️ Found {len(pending_reviews.data)} PENDING reviews (using these for now)")
                     if len(pending_reviews.data) > 0:
@@ -249,17 +249,8 @@ async def compare_professors(
                         if review['would_take_again']:
                             would_take_again_yes += 1
                     
-                    # Taken for credit
-                    credit_val = review.get('for_credit')
-                    if credit_val == True:
-                        taken_for_credit_yes += 1
-                    elif credit_val == False:
-                        taken_for_credit_no += 1
-                    else:
-                        taken_for_credit_na += 1
-                    
-                    # Attendance
-                    attendance_val = review.get('attendance_mandatory')
+                    # Attendance (use attendance_required instead of attendance_mandatory)
+                    attendance_val = review.get('attendance_required')
                     if attendance_val == True:
                         attendance_yes += 1
                     elif attendance_val == False:
@@ -298,9 +289,9 @@ async def compare_professors(
                 'rating_distribution': rating_distribution,
                 'would_take_again_percentage': round(would_take_again_pct, 0),
                 'taken_for_credit': {
-                    'yes': taken_for_credit_yes,
-                    'no': taken_for_credit_no,
-                    'na': taken_for_credit_na
+                    'yes': 0,
+                    'no': 0,
+                    'na': 0
                 },
                 'mandatory_attendance': {
                     'yes': attendance_yes,

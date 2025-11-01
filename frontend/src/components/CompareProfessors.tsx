@@ -135,6 +135,12 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
       if (response.ok) {
         const data = await response.json();
         console.log('✅ Comparison data received:', data);
+        console.log('📊 First professor data:', data.professors[0]);
+        if (data.professors[0]) {
+          console.log('   - Rating distribution:', data.professors[0].rating_distribution);
+          console.log('   - Ratings breakdown:', data.professors[0].ratings_breakdown);
+          console.log('   - Would take again:', data.professors[0].would_take_again_percentage);
+        }
         setComparisonData(data.professors);
       } else {
         const errorText = await response.text();
