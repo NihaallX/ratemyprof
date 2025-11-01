@@ -176,13 +176,37 @@ async def compare_professors(
         comparison_data = []
         for prof in professors_result.data:
             print(f"🔍 Processing professor: {prof['name']} (ID: {prof['id']})")
+            print(f"   Professor total_reviews from DB: {prof.get('total_reviews', 0)}")
+            
             try:
+                # First check ALL reviews (not just approved) for debugging
+                all_reviews = supabase.table('reviews').select(
+                    'id, status'
+                ).eq('professor_id', prof['id']).execute()
+                print(f"   📊 Total reviews in DB: {len(all_reviews.data)}")
+                if all_reviews.data:
+                    status_counts = {}
+                    for r in all_reviews.data:
+                        status = r.get('status', 'unknown')
+                        status_counts[status] = status_counts.get(status, 0) + 1
+                    print(f"   📊 Status breakdown: {status_counts}")
+                
                 # Fetch reviews with correct schema (separate rating columns)
                 reviews_result = supabase.table('reviews').select(
                     'overall_rating, difficulty_rating, clarity_rating, helpfulness_rating, would_take_again, for_credit, attendance_mandatory'
                 ).eq('professor_id', prof['id']).eq('status', 'approved').execute()
                 
-                print(f"   Found {len(reviews_result.data)} approved reviews")
+                print(f"   ✅ Found {len(reviews_result.data)} APPROVED reviews")
+                
+                # If no approved, try pending
+                if len(reviews_result.data) == 0:
+                    pending_reviews = supabase.table('reviews').select(
+                        'overall_rating, difficulty_rating, clarity_rating, helpfulness_rating, would_take_again, for_credit, attendance_mandatory'
+                    ).eq('professor_id', prof['id']).eq('status', 'pending').execute()
+                    print(f"   ⚠️ Found {len(pending_reviews.data)} PENDING reviews (using these for now)")
+                    if len(pending_reviews.data) > 0:
+                        reviews_result = pending_reviews
+                        
             except Exception as review_error:
                 print(f"❌ Error fetching reviews for {prof['name']}: {str(review_error)}")
                 reviews_result = type('obj', (object,), {'data': []})()
