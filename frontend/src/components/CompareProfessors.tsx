@@ -114,11 +114,11 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
 
   useEffect(() => {
     console.log('🔄 selectedProfessors changed:', selectedProfessors);
-    if (selectedProfessors.length >= 2) {
+    if (selectedProfessors.length >= 1) {
       console.log('   📊 Fetching comparison data...');
       fetchComparisonData();
     } else {
-      console.log('   ⏸️ Not enough professors selected for comparison');
+      console.log('   ⏸️ No professors selected');
       setComparisonData([]);
     }
   }, [selectedProfessors]);
@@ -224,10 +224,10 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
           <p className="mt-2 text-gray-600">Loading comparison...</p>
         </div>
-      ) : comparisonData.length >= 2 ? (
+      ) : comparisonData.length >= 1 ? (
         <div className="space-y-4">
           {/* Side by Side Comparison Cards */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className={`grid ${comparisonData.length === 1 ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-2'} gap-4`}>
             {comparisonData.map((prof) => (
               <div key={prof.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                 {/* Header with name and overall rating */}
@@ -348,6 +348,17 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
                 </div>
               </div>
             ))}
+            
+            {/* Placeholder for second professor when only one is selected */}
+            {comparisonData.length === 1 && (
+              <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg overflow-hidden flex items-center justify-center min-h-[400px]">
+                <div className="text-center px-6 py-12">
+                  <Search className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p className="text-gray-500 font-medium mb-2">Look up a professor to add to comparison</p>
+                  <p className="text-sm text-gray-400">Search using the box above</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       ) : (
