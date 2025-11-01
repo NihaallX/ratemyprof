@@ -442,17 +442,6 @@ async def compare_professors(
         
         print(f"📝 Parsed {len(professor_ids)} professor IDs: {professor_ids}")
         
-        # Validate UUID format for all IDs
-        for pid in professor_ids:
-            try:
-                uuid.UUID(pid)
-            except ValueError:
-                print(f"❌ Invalid UUID format: {pid}")
-                return JSONResponse(
-                    status_code=400,
-                    content={"error": "invalid_uuid", "message": f"Invalid professor ID format: {pid}"}
-                )
-        
         if len(professor_ids) < 1:
             print(f"❌ Error: No professor IDs provided")
             raise HTTPException(
