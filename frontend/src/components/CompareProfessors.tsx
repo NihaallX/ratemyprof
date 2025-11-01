@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, API_LEGACY_BASE } from '../config/api';
 
 interface Professor {
   id: string
@@ -89,14 +89,21 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
   }, [searchQuery, selectedProfessors]);
 
   const addProfessor = (professorId: string) => {
+    console.log('🔍 addProfessor called with ID:', professorId);
+    console.log('   Current selected professors:', selectedProfessors);
+    
     if (selectedProfessors.length >= 2) {
       alert('You can compare up to 2 professors at once');
       return;
     }
     if (!selectedProfessors.includes(professorId)) {
-      setSelectedProfessors([...selectedProfessors, professorId]);
+      const newSelection = [...selectedProfessors, professorId];
+      console.log('   ✅ Adding professor, new selection:', newSelection);
+      setSelectedProfessors(newSelection);
       setSearchQuery('');
       setSearchResults([]);
+    } else {
+      console.log('   ⚠️ Professor already selected');
     }
   };
 
@@ -106,9 +113,12 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
   };
 
   useEffect(() => {
+    console.log('🔄 selectedProfessors changed:', selectedProfessors);
     if (selectedProfessors.length >= 2) {
+      console.log('   📊 Fetching comparison data...');
       fetchComparisonData();
     } else {
+      console.log('   ⏸️ Not enough professors selected for comparison');
       setComparisonData([]);
     }
   }, [selectedProfessors]);
@@ -116,12 +126,19 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
   const fetchComparisonData = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/professors/compare?ids=${selectedProfessors.join(',')}`);
+      const url = `${API_LEGACY_BASE}/professors/compare?ids=${selectedProfessors.join(',')}`;
+      console.log('🌐 Fetching comparison data from:', url);
+      
+      const response = await fetch(url);
+      console.log('📡 Response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ Comparison data received:', data);
         setComparisonData(data.professors);
       } else {
-        console.error('Compare API error:', response.status);
+        const errorText = await response.text();
+        console.error('❌ Compare API error:', response.status, errorText);
       }
     } catch (err) {
       console.error('Failed to fetch comparison data:', err);
