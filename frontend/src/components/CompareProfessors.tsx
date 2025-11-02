@@ -154,10 +154,10 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
   };
 
   const getRatingColor = (rating: number) => {
-    if (rating >= 4.0) return 'bg-yellow-400';
-    if (rating >= 3.0) return 'bg-yellow-300';
-    if (rating >= 2.0) return 'bg-orange-300';
-    return 'bg-orange-400';
+    if (rating >= 4.0) return 'bg-green-500';  // Excellent: 4.0-5.0
+    if (rating >= 3.0) return 'bg-yellow-400'; // Good: 3.0-3.9
+    if (rating >= 2.0) return 'bg-orange-400'; // Fair: 2.0-2.9
+    return 'bg-red-500';                       // Poor: 0-1.9
   };
 
   return (
