@@ -66,8 +66,8 @@ BEGIN
     END IF;
 
     -- Only notify when professor is verified (approved by admin)
-    -- This prevents notifications for unverified submissions
-    IF NEW.is_verified = true THEN
+    -- Check if this is a new verification (not already verified)
+    IF NEW.is_verified = true AND (TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND OLD.is_verified = false)) THEN
         -- Create notification for all users
         PERFORM public.create_broadcast_notification(
             '🎓 Fresh Professor Alert!',
@@ -92,7 +92,6 @@ DROP TRIGGER IF EXISTS trigger_notify_new_professor ON public.professors;
 CREATE TRIGGER trigger_notify_new_professor
 AFTER INSERT OR UPDATE OF is_verified ON public.professors
 FOR EACH ROW
-WHEN (NEW.is_verified = true AND (TG_OP = 'INSERT' OR OLD.is_verified = false))
 EXECUTE FUNCTION public.notify_new_professor();
 
 
