@@ -46,6 +46,7 @@ def get_user_from_token(supabase: Client, access_token: str) -> Optional[Dict[st
         payload = jwt.decode(access_token, ADMIN_SECRET_KEY, algorithms=[ADMIN_ALGORITHM])
         username = payload.get("sub")
         if username == "admin@gmail.com":
+            print(f"✅ Admin token verified for: {username}")
             return {
                 "id": "admin-user-id",
                 "email": "admin@gmail.com",
@@ -56,15 +57,18 @@ def get_user_from_token(supabase: Client, access_token: str) -> Optional[Dict[st
                 "user_metadata": {"role": "admin"},
                 "app_metadata": {"role": "admin"},
             }
-    except jwt.PyJWTError:
+    except jwt.PyJWTError as e:
         # Not an admin token, continue to Supabase verification
+        print(f"⚠️ Not an admin token (JWT error): {str(e)[:100]}")
         pass
-    except Exception:
+    except Exception as e:
         # Any other error with admin token, continue to Supabase
+        print(f"⚠️ Admin token parse error: {str(e)[:100]}")
         pass
     
     # Try Supabase token verification
     try:
+        print(f"🔍 Attempting Supabase token verification...")
         # Get current user directly without setting session
         user_response = supabase.auth.get_user(access_token)
         
@@ -72,9 +76,12 @@ def get_user_from_token(supabase: Client, access_token: str) -> Optional[Dict[st
             user_email = user_response.user.email
             email_confirmed = user_response.user.email_confirmed_at is not None
             
+            print(f"✅ Supabase user found: {user_email}, email_confirmed_at: {user_response.user.email_confirmed_at}")
+            
             # Force email_confirmed = True for admin users
             if user_email == 'admin@gmail.com' or user_email.endswith('@ratemyprof.in'):
                 email_confirmed = True
+                print(f"🔧 Forcing email_confirmed=True for admin: {user_email}")
             
             return {
                 "id": user_response.user.id,
@@ -85,9 +92,11 @@ def get_user_from_token(supabase: Client, access_token: str) -> Optional[Dict[st
                 "user_metadata": user_response.user.user_metadata or {},
                 "app_metadata": user_response.user.app_metadata or {},
             }
+        print(f"❌ Supabase returned no user")
         return None
     except Exception as e:
-        # Silently handle - likely invalid token
+        # Log the actual error for debugging
+        print(f"❌ Supabase token verification failed: {str(e)}")
         return None
 
 
