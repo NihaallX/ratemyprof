@@ -109,7 +109,18 @@ async def get_current_user(
     if user is None:
         raise AuthError("Invalid token or user not found")
     
-    if not user.get("email_confirmed", False):
+    # Check if user is admin (admins bypass email verification)
+    user_email = user.get('email', '')
+    user_metadata = user.get('user_metadata', {}) or {}
+    is_admin = (
+        user_email == 'admin@gmail.com' or
+        user_email.endswith('@ratemyprof.in') or
+        user_metadata.get('role') == 'admin' or
+        user_metadata.get('is_moderator') == True
+    )
+    
+    # Require email confirmation for non-admin users only
+    if not is_admin and not user.get("email_confirmed", False):
         raise AuthError("Email not verified")
     
     return user
