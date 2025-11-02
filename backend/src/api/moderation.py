@@ -912,8 +912,13 @@ async def get_users(
                     # Extract user metadata
                     meta_data = getattr(auth_user, 'user_metadata', {}) or {}
                     
-                    # Extract display_name from metadata or construct from first/last name
-                    display_name = meta_data.get('display_name') or meta_data.get('full_name')
+                    # Extract display_name from metadata
+                    # Priority: name -> display_name -> full_name -> first_name + last_name
+                    display_name = (
+                        meta_data.get('name') or 
+                        meta_data.get('display_name') or 
+                        meta_data.get('full_name')
+                    )
                     if not display_name and meta_data.get('first_name') and meta_data.get('last_name'):
                         display_name = f"{meta_data.get('first_name')} {meta_data.get('last_name')}"
                     
