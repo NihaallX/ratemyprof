@@ -243,8 +243,8 @@ class NotificationService:
         
         return {
             "template_id": template.value,
-            "preview_title": template_data["title"],
-            "preview_message": template_data["message"],
+            "title": template_data["title"],
+            "message": template_data["message"],
             "icon": template_data["icon"],
             "type": template_data["type"],
             "required_fields": list(set(title_fields + message_fields))
