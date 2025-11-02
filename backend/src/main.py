@@ -57,21 +57,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware
+# CORS middleware - Allow all origins temporarily for debugging
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # Next.js development (default)
-        "http://localhost:3001",  # Next.js development (alternative port)
-        "http://localhost:3002",  # Next.js development (backup port)
-        "https://ratemyprof-india.vercel.app",  # Production frontend (Vercel)
-        "https://ratemyprof.me",  # Production custom domain (HTTPS)
-        "http://ratemyprof.me",  # Production custom domain (HTTP)
-        "https://www.ratemyprof.me",  # Production with www
-        "http://www.ratemyprof.me",  # Production with www (HTTP)
-        os.getenv("FRONTEND_URL", "http://localhost:3000"),  # Configurable frontend URL
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],  # Temporarily allow all origins to debug CORS issue
+    allow_credentials=False,  # Must be False when allow_origins is ["*"]
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["*"],
@@ -86,6 +76,8 @@ if os.getenv("ENVIRONMENT") == "production":
             "api.ratemyprof-india.com",
             "*.railway.app",  # Railway deployment
             "*.render.com",   # Render deployment
+            "ratemyprof.me",  # Production frontend domain
+            "www.ratemyprof.me",  # Production with www
         ]
     )
 
