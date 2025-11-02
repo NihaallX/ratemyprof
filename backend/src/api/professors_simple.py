@@ -193,7 +193,7 @@ async def compare_professors(
                 
                 # Fetch reviews with correct schema (separate rating columns)
                 reviews_result = supabase.table('reviews').select(
-                    'overall_rating, difficulty_rating, clarity_rating, helpfulness_rating, would_take_again, attendance_required'
+                    'overall_rating, difficulty_rating, clarity_rating, helpfulness_rating, would_take_again, attendance_mandatory'
                 ).eq('professor_id', prof['id']).eq('status', 'approved').execute()
                 
                 print(f"   ✅ Found {len(reviews_result.data)} APPROVED reviews")
@@ -201,7 +201,7 @@ async def compare_professors(
                 # If no approved, try pending
                 if len(reviews_result.data) == 0:
                     pending_reviews = supabase.table('reviews').select(
-                        'overall_rating, difficulty_rating, clarity_rating, helpfulness_rating, would_take_again, attendance_required'
+                        'overall_rating, difficulty_rating, clarity_rating, helpfulness_rating, would_take_again, attendance_mandatory'
                     ).eq('professor_id', prof['id']).eq('status', 'pending').execute()
                     print(f"   ⚠️ Found {len(pending_reviews.data)} PENDING reviews (using these for now)")
                     if len(pending_reviews.data) > 0:
@@ -249,8 +249,8 @@ async def compare_professors(
                         if review['would_take_again']:
                             would_take_again_yes += 1
                     
-                    # Attendance (use attendance_required instead of attendance_mandatory)
-                    attendance_val = review.get('attendance_required')
+                    # Attendance (use attendance_mandatory - the ACTUAL database column name)
+                    attendance_val = review.get('attendance_mandatory')
                     if attendance_val == True:
                         attendance_yes += 1
                     elif attendance_val == False:

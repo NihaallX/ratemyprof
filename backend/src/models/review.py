@@ -76,7 +76,7 @@ class Review(Base):
     semester = Column(String(20), nullable=False)  # Fall, Spring, Summer
     year = Column(Integer, nullable=False)
     grade_received = Column(String(5), nullable=True)  # A+, A, B+, etc.
-    attendance_required = Column(Boolean, nullable=True)
+    attendance_mandatory = Column(Boolean, nullable=True)  # Fixed: actual DB column name
     
     # Review content
     review_text = Column(Text, nullable=True)
