@@ -8,7 +8,7 @@ import { useNotification } from '../contexts/NotificationContext';
 import { Shield, Users, Flag, Check, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare, Bell } from 'lucide-react';
 import Link from 'next/link';
 import AdminLoginModal from '../components/AdminLoginModal';
-import NotificationSender from '../components/NotificationSender';
+import NotificationSenderTemplates from '../components/NotificationSenderTemplates';
 import { supabase } from '../lib/supabase';
 import { Professor } from '../services/api';
 import { API_BASE_URL, API_BASE } from '../config/api';
@@ -2815,7 +2815,7 @@ const AdminPage: NextPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Notification Sender Component */}
             <div>
-              <NotificationSender
+              <NotificationSenderTemplates
                 onNotificationSent={() => {
                   showToast('Notification sent successfully! 🎉', 'success');
                 }}
@@ -2826,28 +2826,28 @@ const AdminPage: NextPage = () => {
             <div className="space-y-4">
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  💡 Tips for Great Notifications
+                  ✨ Template Benefits
                 </h3>
                 <ul className="space-y-3 text-sm text-gray-700">
                   <li className="flex items-start">
                     <span className="text-green-500 mr-2">✓</span>
-                    <span><strong>Keep it short:</strong> Users scan notifications quickly</span>
+                    <span><strong>Professional:</strong> Pre-written by experts</span>
                   </li>
                   <li className="flex items-start">
                     <span className="text-green-500 mr-2">✓</span>
-                    <span><strong>Be specific:</strong> Clear action items work best</span>
+                    <span><strong>Consistent:</strong> Uniform brand voice</span>
                   </li>
                   <li className="flex items-start">
                     <span className="text-green-500 mr-2">✓</span>
-                    <span><strong>Use emojis:</strong> They grab attention! 🎯</span>
+                    <span><strong>Quick:</strong> Just fill in the blanks</span>
                   </li>
                   <li className="flex items-start">
                     <span className="text-green-500 mr-2">✓</span>
-                    <span><strong>Timing matters:</strong> Send during peak hours</span>
+                    <span><strong>Engaging:</strong> Tested for effectiveness</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-red-500 mr-2">✗</span>
-                    <span><strong>Don't spam:</strong> Quality over quantity</span>
+                    <span className="text-indigo-500 mr-2">🎯</span>
+                    <span><strong>20+ templates:</strong> For every occasion</span>
                   </li>
                 </ul>
               </div>
