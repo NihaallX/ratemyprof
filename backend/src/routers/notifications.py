@@ -69,6 +69,17 @@ class BroadcastNotificationResponse(BaseModel):
     notification_count: int
 
 
+class SingleUserNotificationRequest(BaseModel):
+    """Request to send notification to a specific user"""
+    user_id: str
+    template_id: Optional[str] = None
+    template_data: Optional[Dict[str, Any]] = None
+    title: Optional[str] = None
+    message: Optional[str] = None
+    type: str = "custom"
+    metadata: dict = {}
+
+
 @router.get("/templates", response_model=TemplateListResponse)
 async def get_notification_templates(current_user = Depends(get_current_user)):
     """
@@ -120,7 +131,7 @@ async def get_user_notifications(
     Auto-filters out expired notifications
     """
     supabase = get_supabase()
-    user_id = current_user.id
+    user_id = current_user.get('id')
     
     # Build query
     query = supabase.table("notifications").select("*", count="exact")
@@ -165,7 +176,7 @@ async def mark_notification_as_read(
 ):
     """Mark a single notification as read"""
     supabase = get_supabase()
-    user_id = current_user.id
+    user_id = current_user.get('id')
     
     # Verify notification belongs to user and update
     response = supabase.table("notifications")\
@@ -186,7 +197,7 @@ async def mark_all_notifications_as_read(
 ):
     """Mark all user's notifications as read"""
     supabase = get_supabase()
-    user_id = current_user.id
+    user_id = current_user.get('id')
     
     response = supabase.table("notifications")\
         .update({"is_read": True})\
@@ -289,6 +300,96 @@ async def broadcast_notification(
         )
 
 
+@router.post("/send-to-user", response_model=BroadcastNotificationResponse)
+async def send_notification_to_user(
+    notification: SingleUserNotificationRequest,
+    current_user = Depends(get_current_user)
+):
+    """
+    Admin only: Send notification to a specific user
+    """
+    supabase = get_supabase()
+    
+    # Check if user is admin
+    user_email = current_user.get('email', '')
+    user_metadata = current_user.get('user_metadata', {}) or {}
+    
+    is_admin = (
+        user_email == 'admin@gmail.com' or
+        user_email.endswith('@ratemyprof.in') or
+        user_metadata.get('role') == 'admin' or
+        user_metadata.get('is_moderator') == True
+    )
+    
+    if not is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Only administrators can send notifications"
+        )
+    
+    # Determine if using template or custom message
+    title = notification.title
+    message = notification.message
+    notification_type = notification.type
+    
+    if notification.template_id:
+        # Template-based notification
+        try:
+            template_enum = NotificationTemplate[notification.template_id]
+        except KeyError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid template_id: {notification.template_id}"
+            )
+        
+        # Render template with provided data
+        rendered = NotificationService.render_template(
+            template_enum,
+            notification.template_data or {}
+        )
+        
+        title = rendered["title"]
+        message = rendered["message"]
+        notification_type = rendered["type"]
+    else:
+        # Custom notification - require title and message
+        if not title or not message:
+            raise HTTPException(
+                status_code=400,
+                detail="Either template_id or both title and message must be provided"
+            )
+    
+    # Insert notification for specific user
+    try:
+        result = supabase.table("notifications").insert({
+            "user_id": notification.user_id,
+            "title": title,
+            "message": message,
+            "type": notification_type,
+            "metadata": notification.metadata,
+            "is_read": False,
+            "created_at": datetime.utcnow().isoformat(),
+            "expires_at": (datetime.utcnow() + timedelta(days=4)).isoformat()
+        }).execute()
+        
+        if result.data:
+            return {
+                "success": True,
+                "message": f"Notification sent to user {notification.user_id}",
+                "notification_count": 1
+            }
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to create notification"
+            )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to send notification: {str(e)}"
+        )
+
+
 @router.delete("/{notification_id}")
 async def delete_notification(
     notification_id: str,
@@ -296,7 +397,7 @@ async def delete_notification(
 ):
     """Delete a notification (user can delete their own, admin can delete any)"""
     supabase = get_supabase()
-    user_id = current_user.id
+    user_id = current_user.get('id')
     
     # Try to delete (RLS will handle permissions)
     response = supabase.table("notifications")\

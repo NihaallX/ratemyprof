@@ -1,26 +1,68 @@
 /**
  * Admin Notification Sender Component
- * Allows admins to send broadcast notifications to all users
+ * Allows admins to send broadcast notifications to all users or specific user
  */
 
-import { useState } from 'react'
-import { Send, Bell, AlertCircle, CheckCircle } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Send, Bell, AlertCircle, CheckCircle, Users, User } from 'lucide-react'
 import { API_BASE_URL } from '../config/api'
 
 interface NotificationSenderProps {
   onNotificationSent?: () => void
 }
 
+interface UserOption {
+  id: string
+  email: string
+  name?: string
+}
+
 export default function NotificationSender({ onNotificationSent }: NotificationSenderProps) {
   const [title, setTitle] = useState('')
   const [message, setMessage] = useState('')
   const [type, setType] = useState<'custom' | 'system'>('custom')
+  const [recipientType, setRecipientType] = useState<'all' | 'specific'>('all')
+  const [selectedUserId, setSelectedUserId] = useState('')
+  const [users, setUsers] = useState<UserOption[]>([])
+  const [loadingUsers, setLoadingUsers] = useState(false)
   const [sending, setSending] = useState(false)
   const [result, setResult] = useState<{
     success: boolean
     message: string
     count?: number
   } | null>(null)
+
+  // Load users when "specific user" is selected
+  useEffect(() => {
+    if (recipientType === 'specific' && users.length === 0) {
+      loadUsers()
+    }
+  }, [recipientType])
+
+  const loadUsers = async () => {
+    setLoadingUsers(true)
+    try {
+      const token = localStorage.getItem('authToken')
+      const response = await fetch(`${API_BASE_URL}/admin/moderation/users`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setUsers(data.map((u: any) => ({
+          id: u.id,
+          email: u.email,
+          name: u.user_metadata?.name || u.email
+        })))
+      }
+    } catch (error) {
+      console.error('Failed to load users:', error)
+    } finally {
+      setLoadingUsers(false)
+    }
+  }
 
   const handleSend = async () => {
     if (!title.trim() || !message.trim()) {
@@ -31,40 +73,69 @@ export default function NotificationSender({ onNotificationSent }: NotificationS
       return
     }
 
+    if (recipientType === 'specific' && !selectedUserId) {
+      setResult({
+        success: false,
+        message: 'Please select a user to send the notification to'
+      })
+      return
+    }
+
     setSending(true)
     setResult(null)
 
     try {
       const token = localStorage.getItem('authToken')
-      const response = await fetch(`${API_BASE_URL}/notifications/broadcast`, {
+      const endpoint = recipientType === 'all' 
+        ? `${API_BASE_URL}/notifications/broadcast`
+        : `${API_BASE_URL}/notifications/send-to-user`
+      
+      const body = recipientType === 'all'
+        ? {
+            title,
+            message,
+            type,
+            metadata: {
+              sent_at: new Date().toISOString(),
+              sender: 'admin'
+            }
+          }
+        : {
+            user_id: selectedUserId,
+            title,
+            message,
+            type,
+            metadata: {
+              sent_at: new Date().toISOString(),
+              sender: 'admin'
+            }
+          }
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          title,
-          message,
-          type,
-          metadata: {
-            sent_at: new Date().toISOString(),
-            sender: 'admin'
-          }
-        })
+        body: JSON.stringify(body)
       })
 
       const data = await response.json()
 
       if (response.ok) {
+        const userName = users.find(u => u.id === selectedUserId)?.name
         setResult({
           success: true,
-          message: data.message,
+          message: recipientType === 'all' 
+            ? data.message 
+            : `Notification sent to ${userName || 'user'}`,
           count: data.notification_count
         })
         
         // Clear form
         setTitle('')
         setMessage('')
+        setSelectedUserId('')
         
         // Callback
         if (onNotificationSent) {
@@ -118,6 +189,68 @@ export default function NotificationSender({ onNotificationSent }: NotificationS
       </div>
 
       <div className="space-y-4">
+        {/* Recipient Type */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Send To
+          </label>
+          <div className="flex space-x-4">
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="recipientType"
+                value="all"
+                checked={recipientType === 'all'}
+                onChange={(e) => setRecipientType(e.target.value as 'all')}
+                className="mr-2"
+              />
+              <Users className="w-4 h-4 mr-1" />
+              <span className="text-sm text-gray-700">All Users</span>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="radio"
+                name="recipientType"
+                value="specific"
+                checked={recipientType === 'specific'}
+                onChange={(e) => setRecipientType(e.target.value as 'specific')}
+                className="mr-2"
+              />
+              <User className="w-4 h-4 mr-1" />
+              <span className="text-sm text-gray-700">Specific User</span>
+            </label>
+          </div>
+        </div>
+
+        {/* User Selection (only shown for specific user) */}
+        {recipientType === 'specific' && (
+          <div>
+            <label htmlFor="user-select" className="block text-sm font-medium text-gray-700 mb-1">
+              Select User <span className="text-red-500">*</span>
+            </label>
+            {loadingUsers ? (
+              <div className="text-sm text-gray-500">Loading users...</div>
+            ) : (
+              <select
+                id="user-select"
+                value={selectedUserId}
+                onChange={(e) => setSelectedUserId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">-- Select a user --</option>
+                {users.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.name} ({user.email})
+                  </option>
+                ))}
+              </select>
+            )}
+            <p className="text-xs text-gray-500 mt-1">
+              {users.length} users available
+            </p>
+          </div>
+        )}
+
         {/* Notification Type */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
