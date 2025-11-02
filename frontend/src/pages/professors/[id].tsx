@@ -71,6 +71,7 @@ export default function ProfessorProfile() {
   
   const [professor, setProfessor] = useState<Professor | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [filteredReviews, setFilteredReviews] = useState<Review[]>([]);
   const [similarProfessors, setSimilarProfessors] = useState<SimilarProfessor[]>([]);
   const [moreProfessors, setMoreProfessors] = useState<MoreProfessor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,6 +80,12 @@ export default function ProfessorProfile() {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [showCompareModal, setShowCompareModal] = useState(false);
+  
+  // Filter states
+  const [selectedYear, setSelectedYear] = useState<string>('all');
+  const [selectedSubject, setSelectedSubject] = useState<string>('all');
+  const [availableYears, setAvailableYears] = useState<string[]>([]);
+  const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
 
 
   useEffect(() => {
@@ -116,7 +123,12 @@ export default function ProfessorProfile() {
       const response = await fetch(`${API_BASE_URL}/reviews/professor/${professorId}`);
       if (response.ok) {
         const data = await response.json();
-        setReviews(data.reviews || []);
+        const reviewsData = data.reviews || [];
+        setReviews(reviewsData);
+        setFilteredReviews(reviewsData);
+        
+        // Extract unique years and subjects for filters
+        extractFilterOptions(reviewsData);
       }
     } catch (err) {
       console.error('Failed to fetch reviews:', err);
@@ -161,6 +173,64 @@ export default function ProfessorProfile() {
       setMoreProfessors([]);
     }
   };
+
+  // Extract unique years and subjects from reviews for filter options
+  const extractFilterOptions = (reviewsData: Review[]) => {
+    // Extract unique academic years
+    const years = new Set<string>();
+    const subjects = new Set<string>();
+    
+    reviewsData.forEach(review => {
+      // Add academic year (e.g., "2024-25")
+      if (review.academic_year) {
+        years.add(review.academic_year);
+      }
+      
+      // Add course name and parse compound subjects
+      if (review.course_name) {
+        const courseName = review.course_name.trim();
+        subjects.add(courseName); // Add full name (e.g., "TSDL Java")
+        
+        // Also add individual words for compound subjects
+        const words = courseName.split(/[\s,]+/).filter(w => w.length > 1);
+        words.forEach(word => subjects.add(word));
+      }
+    });
+    
+    setAvailableYears(Array.from(years).sort().reverse()); // Most recent first
+    setAvailableSubjects(Array.from(subjects).sort());
+  };
+
+  // Filter reviews based on selected year and subject
+  const applyFilters = () => {
+    let filtered = [...reviews];
+    
+    // Filter by year
+    if (selectedYear !== 'all') {
+      filtered = filtered.filter(review => review.academic_year === selectedYear);
+    }
+    
+    // Filter by subject (smart matching)
+    if (selectedSubject !== 'all') {
+      filtered = filtered.filter(review => {
+        if (!review.course_name) return false;
+        const courseName = review.course_name.toLowerCase();
+        const subject = selectedSubject.toLowerCase();
+        
+        // Exact match or partial match
+        return courseName === subject || 
+               courseName.includes(subject) ||
+               courseName.split(/[\s,]+/).some(word => word.toLowerCase() === subject);
+      });
+    }
+    
+    setFilteredReviews(filtered);
+  };
+
+  // Apply filters whenever selection changes
+  useEffect(() => {
+    applyFilters();
+  }, [selectedYear, selectedSubject, reviews]);
 
   const getRatingColorClasses = (rating: number) => {
     if (rating >= 4.0) return 'bg-green-500 text-white';
@@ -383,16 +453,60 @@ export default function ProfessorProfile() {
 
               {/* Reviews Section */}
               <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Student Reviews ({reviews.length})</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Student Reviews ({filteredReviews.length})</h3>
+                  
+                  {/* Filter Controls */}
+                  {reviews.length > 0 && (
+                    <div className="flex gap-3">
+                      {/* Year Filter */}
+                      <select
+                        value={selectedYear}
+                        onChange={(e) => setSelectedYear(e.target.value)}
+                        className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="all">All Years</option>
+                        {availableYears.map(year => (
+                          <option key={year} value={year}>{year}</option>
+                        ))}
+                      </select>
+                      
+                      {/* Subject Filter */}
+                      <select
+                        value={selectedSubject}
+                        onChange={(e) => setSelectedSubject(e.target.value)}
+                        className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="all">All Subjects</option>
+                        {availableSubjects.map(subject => (
+                          <option key={subject} value={subject}>{subject}</option>
+                        ))}
+                      </select>
+                      
+                      {/* Reset Filters */}
+                      {(selectedYear !== 'all' || selectedSubject !== 'all') && (
+                        <button
+                          onClick={() => {
+                            setSelectedYear('all');
+                            setSelectedSubject('all');
+                          }}
+                          className="px-3 py-1.5 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                        >
+                          Reset
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
                 
                 {reviewsLoading ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
                     <p className="mt-2 text-gray-600">Loading reviews...</p>
                   </div>
-                ) : reviews.length > 0 ? (
+                ) : filteredReviews.length > 0 ? (
                   <div className="space-y-6">
-                    {reviews.map((review) => (
+                    {filteredReviews.map((review) => (
                       <div key={review.id} className="border-b border-gray-200 pb-6 last:border-b-0">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center space-x-4">
@@ -535,7 +649,22 @@ export default function ProfessorProfile() {
                 ) : (
                   <div className="text-center py-8 text-gray-500">
                     <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>No reviews yet. Be the first to review this professor!</p>
+                    {reviews.length > 0 ? (
+                      <div>
+                        <p className="font-medium">No reviews match your filters</p>
+                        <button
+                          onClick={() => {
+                            setSelectedYear('all');
+                            setSelectedSubject('all');
+                          }}
+                          className="mt-2 text-indigo-600 hover:text-indigo-800 underline text-sm"
+                        >
+                          Clear filters to see all {reviews.length} review{reviews.length !== 1 ? 's' : ''}
+                        </button>
+                      </div>
+                    ) : (
+                      <p>No reviews yet. Be the first to review this professor!</p>
+                    )}
                   </div>
                 )}
               </div>
