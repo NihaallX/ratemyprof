@@ -29,10 +29,10 @@ interface Professor {
     5: number
   }
   would_take_again_percentage: number
-  taken_for_credit: {
-    yes: number
-    no: number
-    na: number
+  assignment_load: {
+    light: number
+    moderate: number
+    heavy: number
   }
   mandatory_attendance: {
     yes: number
@@ -302,28 +302,28 @@ export default function CompareProfessors({ currentProfessorId, currentProfessor
                   <p className="text-xs text-gray-600 font-semibold mt-1">Would Take Again</p>
                 </div>
 
-                {/* Taken for Credit - Donut Chart */}
+                {/* Assignment Load */}
                 <div className="p-4 bg-white border-b">
-                  <p className="text-xs text-gray-600 font-semibold mb-3 text-center">Taken for Credit</p>
+                  <p className="text-xs text-gray-600 font-semibold mb-3 text-center">Assignment Load</p>
                   <div className="flex items-center justify-center gap-4">
                     {/* Simple bar visualization */}
                     <div className="text-center">
                       <div className="w-16 h-16 rounded-full border-4 border-green-500 flex items-center justify-center bg-green-50">
-                        <span className="text-lg font-bold text-green-700">{prof.taken_for_credit.yes}</span>
+                        <span className="text-lg font-bold text-green-700">{prof.assignment_load.light}</span>
                       </div>
-                      <p className="text-xs text-gray-600 mt-1">Yes</p>
+                      <p className="text-xs text-gray-600 mt-1">Light</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-16 h-16 rounded-full border-4 border-yellow-500 flex items-center justify-center bg-yellow-50">
+                        <span className="text-lg font-bold text-yellow-700">{prof.assignment_load.moderate}</span>
+                      </div>
+                      <p className="text-xs text-gray-600 mt-1">Moderate</p>
                     </div>
                     <div className="text-center">
                       <div className="w-16 h-16 rounded-full border-4 border-red-500 flex items-center justify-center bg-red-50">
-                        <span className="text-lg font-bold text-red-700">{prof.taken_for_credit.no}</span>
+                        <span className="text-lg font-bold text-red-700">{prof.assignment_load.heavy}</span>
                       </div>
-                      <p className="text-xs text-gray-600 mt-1">No</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-16 h-16 rounded-full border-4 border-gray-400 flex items-center justify-center bg-gray-50">
-                        <span className="text-lg font-bold text-gray-700">{prof.taken_for_credit.na}</span>
-                      </div>
-                      <p className="text-xs text-gray-600 mt-1">N/A</p>
+                      <p className="text-xs text-gray-600 mt-1">Heavy</p>
                     </div>
                   </div>
                 </div>

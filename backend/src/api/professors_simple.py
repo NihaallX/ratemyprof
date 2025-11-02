@@ -193,7 +193,7 @@ async def compare_professors(
                 
                 # Fetch reviews with correct schema (separate rating columns)
                 reviews_result = supabase.table('reviews').select(
-                    'overall_rating, difficulty_rating, clarity_rating, helpfulness_rating, would_take_again, attendance_mandatory'
+                    'overall_rating, difficulty_rating, clarity_rating, helpfulness_rating, would_take_again, attendance_mandatory, assignment_load'
                 ).eq('professor_id', prof['id']).eq('status', 'approved').execute()
                 
                 print(f"   ✅ Found {len(reviews_result.data)} APPROVED reviews")
@@ -201,7 +201,7 @@ async def compare_professors(
                 # If no approved, try pending
                 if len(reviews_result.data) == 0:
                     pending_reviews = supabase.table('reviews').select(
-                        'overall_rating, difficulty_rating, clarity_rating, helpfulness_rating, would_take_again, attendance_mandatory'
+                        'overall_rating, difficulty_rating, clarity_rating, helpfulness_rating, would_take_again, attendance_mandatory, assignment_load'
                     ).eq('professor_id', prof['id']).eq('status', 'pending').execute()
                     print(f"   ⚠️ Found {len(pending_reviews.data)} PENDING reviews (using these for now)")
                     if len(pending_reviews.data) > 0:
@@ -224,9 +224,9 @@ async def compare_professors(
             # Additional stats
             would_take_again_yes = 0
             would_take_again_total = 0
-            taken_for_credit_yes = 0
-            taken_for_credit_no = 0
-            taken_for_credit_na = 0
+            assignment_light = 0
+            assignment_moderate = 0
+            assignment_heavy = 0
             attendance_yes = 0
             attendance_no = 0
             attendance_na = 0
@@ -248,6 +248,15 @@ async def compare_professors(
                         would_take_again_total += 1
                         if review['would_take_again']:
                             would_take_again_yes += 1
+                    
+                    # Assignment Load
+                    assignment_val = review.get('assignment_load')
+                    if assignment_val == 'light':
+                        assignment_light += 1
+                    elif assignment_val == 'moderate':
+                        assignment_moderate += 1
+                    elif assignment_val == 'heavy':
+                        assignment_heavy += 1
                     
                     # Attendance (use attendance_mandatory - the ACTUAL database column name)
                     attendance_val = review.get('attendance_mandatory')
@@ -288,10 +297,10 @@ async def compare_professors(
                 'ratings_breakdown': avg_ratings,
                 'rating_distribution': rating_distribution,
                 'would_take_again_percentage': round(would_take_again_pct, 0),
-                'taken_for_credit': {
-                    'yes': 0,
-                    'no': 0,
-                    'na': 0
+                'assignment_load': {
+                    'light': assignment_light,
+                    'moderate': assignment_moderate,
+                    'heavy': assignment_heavy
                 },
                 'mandatory_attendance': {
                     'yes': attendance_yes,
