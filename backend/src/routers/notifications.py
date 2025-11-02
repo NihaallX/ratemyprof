@@ -1,14 +1,19 @@
-"""
+﻿"""
 Notifications API endpoints
 Handles user notifications, read status, and admin broadcasting
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 from ..lib.database import get_supabase
 from ..lib.auth import get_current_user
+from ..lib.notification_templates import (
+    NotificationTemplate,
+    NotificationService,
+    TEMPLATES
+)
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
@@ -31,9 +36,29 @@ class NotificationsListResponse(BaseModel):
     unread_count: int
 
 
-class BroadcastNotificationRequest(BaseModel):
+class TemplateInfo(BaseModel):
+    """Information about a notification template"""
+    id: str
     title: str
     message: str
+    icon: str
+    type: str
+    required_fields: List[str]
+
+
+class TemplateListResponse(BaseModel):
+    """Response containing all available templates"""
+    templates: List[TemplateInfo]
+
+
+class BroadcastNotificationRequest(BaseModel):
+    # Support both template-based and custom notifications
+    template_id: Optional[str] = None  # Template enum name (e.g., "PROFESSOR_TRENDING")
+    template_data: Optional[Dict[str, Any]] = None  # Data to fill template placeholders
+    
+    # Legacy fields for custom notifications
+    title: Optional[str] = None
+    message: Optional[str] = None
     type: str = "custom"
     metadata: dict = {}
 
@@ -42,6 +67,42 @@ class BroadcastNotificationResponse(BaseModel):
     success: bool
     message: str
     notification_count: int
+
+
+@router.get("/templates", response_model=TemplateListResponse)
+async def get_notification_templates(current_user = Depends(get_current_user)):
+    """
+    Get all available notification templates for admin use
+    Returns template metadata including required fields
+    """
+    # Check if user is admin
+    user_email = current_user.email
+    user_metadata = getattr(current_user, 'user_metadata', {}) or {}
+    is_admin = (
+        user_email and user_email.endswith('@ratemyprof.in') or
+        user_metadata.get('role') == 'admin'
+    )
+    
+    if not is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Only administrators can access notification templates"
+        )
+    
+    # Get all templates with their info
+    templates = []
+    for template_id in NotificationTemplate:
+        info = NotificationService.get_template_info(template_id)
+        templates.append({
+            "id": template_id.name,
+            "title": info["title"],
+            "message": info["message"],
+            "icon": info["icon"],
+            "type": info["type"],
+            "required_fields": info["required_fields"]
+        })
+    
+    return {"templates": templates}
 
 
 @router.get("", response_model=NotificationsListResponse)
@@ -163,14 +224,46 @@ async def broadcast_notification(
             detail="Only administrators can broadcast notifications"
         )
     
+    # Determine if using template or custom message
+    title = notification.title
+    message = notification.message
+    notification_type = notification.type
+    
+    if notification.template_id:
+        # Template-based notification
+        try:
+            template_enum = NotificationTemplate[notification.template_id]
+        except KeyError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid template_id: {notification.template_id}"
+            )
+        
+        # Render template with provided data
+        rendered = NotificationService.render_template(
+            template_enum,
+            notification.template_data or {}
+        )
+        
+        title = rendered["title"]
+        message = rendered["message"]
+        notification_type = rendered["type"]
+    else:
+        # Custom notification - require title and message
+        if not title or not message:
+            raise HTTPException(
+                status_code=400,
+                detail="Either template_id or both title and message must be provided"
+            )
+    
     # Call the database function to create notifications for all users
     try:
         result = supabase.rpc(
             'create_broadcast_notification',
             {
-                'p_title': notification.title,
-                'p_message': notification.message,
-                'p_type': notification.type,
+                'p_title': title,
+                'p_message': message,
+                'p_type': notification_type,
                 'p_metadata': notification.metadata
             }
         ).execute()
@@ -180,7 +273,8 @@ async def broadcast_notification(
         return {
             "success": True,
             "message": f"Notification sent to {notification_count} users",
-            "notification_count": notification_count
+            "notification_count": notification_count,
+            "template_used": notification.template_id is not None
         }
     except Exception as e:
         raise HTTPException(
@@ -249,3 +343,4 @@ async def cleanup_expired_notifications(
             status_code=500,
             detail=f"Failed to cleanup notifications: {str(e)}"
         )
+
