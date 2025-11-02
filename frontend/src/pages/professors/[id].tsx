@@ -84,8 +84,8 @@ export default function ProfessorProfile() {
   // Filter states
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
-  const [availableYears, setAvailableYears] = useState<string[]>([]);
-  const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
+  const [availableYears, setAvailableYears] = useState<Array<{ value: string; count: number }>>([]);
+  const [availableSubjects, setAvailableSubjects] = useState<Array<{ value: string; count: number }>>([]);
 
 
   useEffect(() => {
@@ -176,29 +176,45 @@ export default function ProfessorProfile() {
 
   // Extract unique years and subjects from reviews for filter options
   const extractFilterOptions = (reviewsData: Review[]) => {
-    // Extract unique academic years
-    const years = new Set<string>();
-    const subjects = new Set<string>();
+    // Extract unique academic years with counts
+    const yearsMap = new Map<string, number>();
+    const subjectsMap = new Map<string, number>();
     
     reviewsData.forEach(review => {
-      // Add academic year (e.g., "2024-25")
+      // Count academic years
       if (review.academic_year) {
-        years.add(review.academic_year);
+        yearsMap.set(review.academic_year, (yearsMap.get(review.academic_year) || 0) + 1);
       }
       
-      // Add course name and parse compound subjects
+      // Count subjects
       if (review.course_name) {
         const courseName = review.course_name.trim();
-        subjects.add(courseName); // Add full name (e.g., "TSDL Java")
         
-        // Also add individual words for compound subjects
+        // Count full course name
+        subjectsMap.set(courseName, (subjectsMap.get(courseName) || 0) + 1);
+        
+        // Also count individual words for compound subjects
         const words = courseName.split(/[\s,]+/).filter(w => w.length > 1);
-        words.forEach(word => subjects.add(word));
+        words.forEach(word => {
+          // Only count if not already counted as full name
+          if (word !== courseName) {
+            subjectsMap.set(word, (subjectsMap.get(word) || 0) + 1);
+          }
+        });
       }
     });
     
-    setAvailableYears(Array.from(years).sort().reverse()); // Most recent first
-    setAvailableSubjects(Array.from(subjects).sort());
+    // Sort years (most recent first) and subjects (alphabetically)
+    const sortedYears = Array.from(yearsMap.entries())
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([year, count]) => ({ value: year, count }));
+    
+    const sortedSubjects = Array.from(subjectsMap.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([subject, count]) => ({ value: subject, count }));
+    
+    setAvailableYears(sortedYears);
+    setAvailableSubjects(sortedSubjects);
   };
 
   // Filter reviews based on selected year and subject
@@ -466,8 +482,8 @@ export default function ProfessorProfile() {
                         className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       >
                         <option value="all">All Years</option>
-                        {availableYears.map(year => (
-                          <option key={year} value={year}>{year}</option>
+                        {availableYears.map(({ value, count }) => (
+                          <option key={value} value={value}>{value} ({count})</option>
                         ))}
                       </select>
                       
@@ -478,8 +494,8 @@ export default function ProfessorProfile() {
                         className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       >
                         <option value="all">All Subjects</option>
-                        {availableSubjects.map(subject => (
-                          <option key={subject} value={subject}>{subject}</option>
+                        {availableSubjects.map(({ value, count }) => (
+                          <option key={value} value={value}>{value} ({count})</option>
                         ))}
                       </select>
                       
