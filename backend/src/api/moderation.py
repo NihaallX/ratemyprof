@@ -762,10 +762,13 @@ class UserAction(BaseModel):
 class UserInfo(BaseModel):
     id: str
     email: str
+    display_name: Optional[str] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     is_active: bool
     is_verified: bool  # Email confirmation status (same as is_active)
+    is_admin: Optional[bool] = False
+    is_banned: Optional[bool] = False
     created_at: str
     total_reviews: int = 0
     total_flags_submitted: int = 0
@@ -909,13 +912,21 @@ async def get_users(
                     # Extract user metadata
                     meta_data = getattr(auth_user, 'user_metadata', {}) or {}
                     
+                    # Extract display_name from metadata or construct from first/last name
+                    display_name = meta_data.get('display_name') or meta_data.get('full_name')
+                    if not display_name and meta_data.get('first_name') and meta_data.get('last_name'):
+                        display_name = f"{meta_data.get('first_name')} {meta_data.get('last_name')}"
+                    
                     users.append(UserInfo(
                         id=user_id,
                         email=auth_user.email or f"user-{user_id[:8]}",
+                        display_name=display_name,
                         first_name=meta_data.get('first_name'),
                         last_name=meta_data.get('last_name'),
                         is_active=auth_user.email_confirmed_at is not None,
                         is_verified=auth_user.email_confirmed_at is not None,
+                        is_admin=meta_data.get('role') == 'admin' or auth_user.email in ['admin@gmail.com', 'admin@ratemyprof.in'],
+                        is_banned=meta_data.get('is_banned', False),
                         created_at=str(auth_user.created_at) if auth_user.created_at else "2025-01-01T00:00:00Z",
                         total_reviews=prof_review_count + college_review_count,
                         total_flags_submitted=flag_count
@@ -985,10 +996,13 @@ async def get_users(
                 users.append(UserInfo(
                     id=user_id,
                     email=f"user-{user_id[:8]}@domain.com",
+                    display_name=None,
                     first_name=None,
                     last_name=None,
                     is_active=True,
                     is_verified=True,
+                    is_admin=False,
+                    is_banned=False,
                     created_at=user_creation_dates.get(user_id, "2025-01-01T00:00:00Z"),
                     total_reviews=prof_review_count + college_review_count,
                     total_flags_submitted=flag_count
@@ -1096,10 +1110,13 @@ async def get_users(
                     users.append(UserInfo(
                         id=user_id,
                         email=email,
+                        display_name=None,
                         first_name=None,
                         last_name=None,
                         is_active=True,
                         is_verified=True,
+                        is_admin=False,
+                        is_banned=False,
                         created_at=user_creation_dates.get(user_id, "2025-01-01T00:00:00Z"),
                         total_reviews=prof_review_count + college_review_count,
                         total_flags_submitted=flag_count
