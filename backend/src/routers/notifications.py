@@ -15,7 +15,7 @@ from ..lib.notification_templates import (
     TEMPLATES
 )
 
-router = APIRouter(prefix="/notifications", tags=["notifications"])
+router = APIRouter(tags=["notifications"])
 
 
 # Pydantic Models
