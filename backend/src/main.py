@@ -64,14 +64,18 @@ app.add_middleware(
         "http://localhost:3000",  # Next.js development (default)
         "http://localhost:3001",  # Next.js development (alternative port)
         "http://localhost:3002",  # Next.js development (backup port)
-        "https://ratemyprof-india.vercel.app",  # Production frontend
-        "https://ratemyprof.me",  # Production custom domain
-        "http://ratemyprof.me",  # Production custom domain (http)
+        "https://ratemyprof-india.vercel.app",  # Production frontend (Vercel)
+        "https://ratemyprof.me",  # Production custom domain (HTTPS)
+        "http://ratemyprof.me",  # Production custom domain (HTTP)
+        "https://www.ratemyprof.me",  # Production with www
+        "http://www.ratemyprof.me",  # Production with www (HTTP)
         os.getenv("FRONTEND_URL", "http://localhost:3000"),  # Configurable frontend URL
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600,  # Cache preflight requests for 1 hour
 )
 
 # Trusted host middleware for production
