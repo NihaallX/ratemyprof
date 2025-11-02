@@ -2381,6 +2381,92 @@ const AdminPage: NextPage = () => {
               </button>
             </div>
           )}
+
+          {/* Notifications Tab Content */}
+          {activeTab === 'notifications' && (
+            <div className="space-y-6">
+              <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+                <div className="flex items-center space-x-3 mb-2">
+                  <Bell className="w-8 h-8" />
+                  <h2 className="text-2xl font-bold">Send Notifications to All Users</h2>
+                </div>
+                <p className="text-indigo-100">
+                  Broadcast important announcements, new features, or updates to all users in the system.
+                  Notifications will appear in their inbox and expire after 4 days.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Notification Sender Component */}
+                <div>
+                  <NotificationSenderTemplates
+                    onNotificationSent={() => {
+                      showToast('Notification sent successfully! 🎉', 'success');
+                    }}
+                  />
+                </div>
+
+                {/* Tips & Best Practices */}
+                <div className="space-y-4">
+                  <div className="bg-white rounded-lg shadow-md p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      ✨ Template Benefits
+                    </h3>
+                    <ul className="space-y-3 text-sm text-gray-700">
+                      <li className="flex items-start">
+                        <span className="text-green-500 mr-2">✓</span>
+                        <span><strong>Professional:</strong> Pre-written by experts</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-green-500 mr-2">✓</span>
+                        <span><strong>Consistent:</strong> Uniform brand voice</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-green-500 mr-2">✓</span>
+                        <span><strong>Quick:</strong> Just fill in the blanks</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-green-500 mr-2">✓</span>
+                        <span><strong>Engaging:</strong> Tested for effectiveness</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-indigo-500 mr-2">✓</span>
+                        <span><strong>20+ templates:</strong> For every occasion</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-blue-900 mb-2">
+                      📊 Automatic Notifications
+                    </h4>
+                    <p className="text-xs text-blue-800">
+                      The system automatically notifies users when:
+                    </p>
+                    <ul className="mt-2 space-y-1 text-xs text-blue-700">
+                      <li>• 👨‍🏫 A new professor is added</li>
+                      <li>• 🏛️ A new college is added</li>
+                    </ul>
+                    <p className="mt-2 text-xs text-blue-600">
+                      Use custom notifications for announcements, features, maintenance, or special events.
+                    </p>
+                  </div>
+
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-yellow-900 mb-2">
+                      ⏰ Notification Lifecycle
+                    </h4>
+                    <ul className="space-y-1 text-xs text-yellow-800">
+                      <li>• Notifications are shown to all active users</li>
+                      <li>• They remain in user inbox for <strong>4 days</strong></li>
+                      <li>• Auto-deleted after expiry to keep inbox clean</li>
+                      <li>• Users can mark as read or dismiss anytime</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -2792,92 +2878,6 @@ const AdminPage: NextPage = () => {
                     Close
                   </button>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Notifications Tab Content */}
-      {activeTab === 'notifications' && (
-        <div className="space-y-6">
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
-            <div className="flex items-center space-x-3 mb-2">
-              <Bell className="w-8 h-8" />
-              <h2 className="text-2xl font-bold">Send Notifications to All Users</h2>
-            </div>
-            <p className="text-indigo-100">
-              Broadcast important announcements, new features, or updates to all users in the system.
-              Notifications will appear in their inbox and expire after 4 days.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Notification Sender Component */}
-            <div>
-              <NotificationSenderTemplates
-                onNotificationSent={() => {
-                  showToast('Notification sent successfully! 🎉', 'success');
-                }}
-              />
-            </div>
-
-            {/* Tips & Best Practices */}
-            <div className="space-y-4">
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  ✨ Template Benefits
-                </h3>
-                <ul className="space-y-3 text-sm text-gray-700">
-                  <li className="flex items-start">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span><strong>Professional:</strong> Pre-written by experts</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span><strong>Consistent:</strong> Uniform brand voice</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span><strong>Quick:</strong> Just fill in the blanks</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span><strong>Engaging:</strong> Tested for effectiveness</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-indigo-500 mr-2">🎯</span>
-                    <span><strong>20+ templates:</strong> For every occasion</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-blue-900 mb-2">
-                  📊 Automatic Notifications
-                </h4>
-                <p className="text-xs text-blue-800">
-                  The system automatically notifies users when:
-                </p>
-                <ul className="mt-2 space-y-1 text-xs text-blue-700">
-                  <li>• 👨‍🏫 A new professor is added</li>
-                  <li>• 🏛️ A new college is added</li>
-                </ul>
-                <p className="mt-2 text-xs text-blue-600">
-                  Use custom notifications for announcements, features, maintenance, or special events.
-                </p>
-              </div>
-
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-yellow-900 mb-2">
-                  ⏰ Notification Lifecycle
-                </h4>
-                <ul className="space-y-1 text-xs text-yellow-800">
-                  <li>• Notifications are shown to all active users</li>
-                  <li>• They remain in user inbox for <strong>4 days</strong></li>
-                  <li>• Auto-deleted after expiry to keep inbox clean</li>
-                  <li>• Users can mark as read or dismiss anytime</li>
-                </ul>
               </div>
             </div>
           </div>

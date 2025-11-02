@@ -285,7 +285,7 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
   console.log('🎨 Rendering component with', templates.length, 'templates')
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6" style={{ border: '5px solid red', minHeight: '400px' }}>
+    <div className="bg-white rounded-lg shadow-md p-6">
       <div className="flex items-center space-x-2 mb-6">
         <Sparkles className="w-5 h-5 text-indigo-600" />
         <h2 className="text-xl font-bold text-gray-900">
