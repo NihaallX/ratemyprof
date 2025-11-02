@@ -7,8 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional
 from pydantic import BaseModel
 from datetime import datetime, timedelta
-from ..database import get_supabase
-from ..auth import get_current_user
+from ..lib.database import get_supabase
+from ..lib.auth import get_current_user
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
