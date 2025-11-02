@@ -75,12 +75,15 @@ async def get_notification_templates(current_user = Depends(get_current_user)):
     Get all available notification templates for admin use
     Returns template metadata including required fields
     """
-    # Check if user is admin
-    user_email = current_user.email
-    user_metadata = getattr(current_user, 'user_metadata', {}) or {}
+    # Check if user is admin (consistent with moderation.py logic)
+    user_email = current_user.get('email', '')
+    user_metadata = current_user.get('user_metadata', {}) or {}
+    
     is_admin = (
-        user_email and user_email.endswith('@ratemyprof.in') or
-        user_metadata.get('role') == 'admin'
+        user_email == 'admin@gmail.com' or
+        user_email.endswith('@ratemyprof.in') or
+        user_metadata.get('role') == 'admin' or
+        user_metadata.get('is_moderator') == True
     )
     
     if not is_admin:
@@ -210,12 +213,15 @@ async def broadcast_notification(
     """
     supabase = get_supabase()
     
-    # Check if user is admin
-    user_email = current_user.email
-    user_metadata = getattr(current_user, 'user_metadata', {}) or {}
+    # Check if user is admin (consistent with moderation.py logic)
+    user_email = current_user.get('email', '')
+    user_metadata = current_user.get('user_metadata', {}) or {}
+    
     is_admin = (
-        user_email and user_email.endswith('@ratemyprof.in') or
-        user_metadata.get('role') == 'admin'
+        user_email == 'admin@gmail.com' or
+        user_email.endswith('@ratemyprof.in') or
+        user_metadata.get('role') == 'admin' or
+        user_metadata.get('is_moderator') == True
     )
     
     if not is_admin:
@@ -315,12 +321,15 @@ async def cleanup_expired_notifications(
     """
     supabase = get_supabase()
     
-    # Check if user is admin
-    user_email = current_user.email
-    user_metadata = getattr(current_user, 'user_metadata', {}) or {}
+    # Check if user is admin (consistent with moderation.py logic)
+    user_email = current_user.get('email', '')
+    user_metadata = current_user.get('user_metadata', {}) or {}
+    
     is_admin = (
-        user_email and user_email.endswith('@ratemyprof.in') or
-        user_metadata.get('role') == 'admin'
+        user_email == 'admin@gmail.com' or
+        user_email.endswith('@ratemyprof.in') or
+        user_metadata.get('role') == 'admin' or
+        user_metadata.get('is_moderator') == True
     )
     
     if not is_admin:
