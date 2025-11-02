@@ -285,7 +285,7 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
   console.log('🎨 Rendering component with', templates.length, 'templates')
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="bg-white rounded-lg shadow-md p-6" style={{ border: '5px solid red', minHeight: '400px' }}>
       <div className="flex items-center space-x-2 mb-6">
         <Sparkles className="w-5 h-5 text-indigo-600" />
         <h2 className="text-xl font-bold text-gray-900">
@@ -302,17 +302,21 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
           <select
             value={selectedTemplate?.id || ''}
             onChange={(e) => {
+              console.log('Template selected:', e.target.value)
               const template = templates.find(t => t.id === e.target.value)
               if (template) handleTemplateSelect(template)
             }}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value="">-- Choose a notification template --</option>
-            {templates.map(template => (
-              <option key={template.id} value={template.id}>
-                {template.icon} {template.title.split('{')[0].trim()}
-              </option>
-            ))}
+            {templates.map(template => {
+              console.log('Rendering option:', template.id, template.title)
+              return (
+                <option key={template.id} value={template.id}>
+                  {template.icon} {template.title.split('{')[0].trim()}
+                </option>
+              )
+            })}
           </select>
           <p className="text-xs text-gray-500 mt-1">
             {templates.length} professional templates available
