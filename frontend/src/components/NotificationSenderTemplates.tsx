@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react'
 import { Send, Bell, AlertCircle, CheckCircle, Sparkles } from 'lucide-react'
 import { API_BASE_URL } from '../config/api'
+import { supabase } from '../lib/supabase'
 
 interface Template {
   id: string
@@ -32,6 +33,12 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
     count?: number
   } | null>(null)
 
+  // Get auth token from Supabase session
+  const getAuthToken = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    return session?.access_token || null
+  }
+
   // Fetch available templates on mount
   useEffect(() => {
     fetchTemplates()
@@ -39,7 +46,13 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
 
   const fetchTemplates = async () => {
     try {
-      const token = localStorage.getItem('authToken')
+      const token = await getAuthToken()
+      if (!token) {
+        console.error('No auth token available')
+        setLoading(false)
+        return
+      }
+
       const response = await fetch(`${API_BASE_URL}/notifications/templates`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -139,7 +152,16 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
     setResult(null)
 
     try {
-      const token = localStorage.getItem('authToken')
+      const token = await getAuthToken()
+      if (!token) {
+        setResult({
+          success: false,
+          message: 'Authentication required. Please log in again.'
+        })
+        setSending(false)
+        return
+      }
+
       const response = await fetch(`${API_BASE_URL}/notifications/broadcast`, {
         method: 'POST',
         headers: {
