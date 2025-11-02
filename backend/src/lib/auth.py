@@ -69,14 +69,21 @@ def get_user_from_token(supabase: Client, access_token: str) -> Optional[Dict[st
         user_response = supabase.auth.get_user(access_token)
         
         if user_response.user:
+            user_email = user_response.user.email
+            email_confirmed = user_response.user.email_confirmed_at is not None
+            
+            # Force email_confirmed = True for admin users
+            if user_email == 'admin@gmail.com' or user_email.endswith('@ratemyprof.in'):
+                email_confirmed = True
+            
             return {
                 "id": user_response.user.id,
-                "email": user_response.user.email,
-                "email_confirmed": user_response.user.email_confirmed_at is not None,
+                "email": user_email,
+                "email_confirmed": email_confirmed,
                 "created_at": user_response.user.created_at,
                 "updated_at": user_response.user.updated_at,
-                "user_metadata": user_response.user.user_metadata,
-                "app_metadata": user_response.user.app_metadata,
+                "user_metadata": user_response.user.user_metadata or {},
+                "app_metadata": user_response.user.app_metadata or {},
             }
         return None
     except Exception as e:
