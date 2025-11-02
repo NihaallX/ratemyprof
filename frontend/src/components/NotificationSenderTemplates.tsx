@@ -33,10 +33,31 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
     count?: number
   } | null>(null)
 
-  // Get auth token from Supabase session
+  // Get auth token from Supabase session or admin session
   const getAuthToken = async () => {
+    // First check for admin session in localStorage
+    const adminSessionStr = localStorage.getItem('adminSession')
+    if (adminSessionStr) {
+      try {
+        const adminSession = JSON.parse(adminSessionStr)
+        if (adminSession.access_token) {
+          console.log('✅ Using admin session token')
+          return adminSession.access_token
+        }
+      } catch (e) {
+        console.error('Failed to parse admin session:', e)
+      }
+    }
+    
+    // Fallback to Supabase session
     const { data: { session } } = await supabase.auth.getSession()
-    return session?.access_token || null
+    if (session?.access_token) {
+      console.log('✅ Using Supabase session token')
+      return session.access_token
+    }
+    
+    console.error('❌ No auth token available')
+    return null
   }
 
   // Fetch available templates on mount
