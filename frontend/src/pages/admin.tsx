@@ -5,14 +5,15 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
-import { Shield, Users, Flag, Check, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare } from 'lucide-react';
+import { Shield, Users, Flag, Check, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare, Bell } from 'lucide-react';
 import Link from 'next/link';
 import AdminLoginModal from '../components/AdminLoginModal';
+import NotificationSender from '../components/NotificationSender';
 import { supabase } from '../lib/supabase';
 import { Professor } from '../services/api';
 import { API_BASE_URL, API_BASE } from '../config/api';
 
-type AdminTab = 'dashboard' | 'reviews' | 'professors' | 'users' | 'all-professors' | 'pending-approval' | 'professor-reviews' | 'college-reviews';
+type AdminTab = 'dashboard' | 'reviews' | 'professors' | 'users' | 'all-professors' | 'pending-approval' | 'professor-reviews' | 'college-reviews' | 'notifications';
 
 const AdminPage: NextPage = () => {
   const router = useRouter();
@@ -1318,6 +1319,17 @@ const AdminPage: NextPage = () => {
                 }`}
               >
                 College Reviews
+              </button>
+              <button
+                onClick={() => setActiveTab('notifications')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-1 ${
+                  activeTab === 'notifications'
+                    ? 'border-indigo-500 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Bell className="w-4 h-4" />
+                Notifications
               </button>
             </nav>
           </div>
@@ -2780,6 +2792,92 @@ const AdminPage: NextPage = () => {
                     Close
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notifications Tab Content */}
+      {activeTab === 'notifications' && (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+            <div className="flex items-center space-x-3 mb-2">
+              <Bell className="w-8 h-8" />
+              <h2 className="text-2xl font-bold">Send Notifications to All Users</h2>
+            </div>
+            <p className="text-indigo-100">
+              Broadcast important announcements, new features, or updates to all users in the system.
+              Notifications will appear in their inbox and expire after 4 days.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Notification Sender Component */}
+            <div>
+              <NotificationSender
+                onNotificationSent={() => {
+                  showToast('Notification sent successfully! 🎉', 'success');
+                }}
+              />
+            </div>
+
+            {/* Tips & Best Practices */}
+            <div className="space-y-4">
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  💡 Tips for Great Notifications
+                </h3>
+                <ul className="space-y-3 text-sm text-gray-700">
+                  <li className="flex items-start">
+                    <span className="text-green-500 mr-2">✓</span>
+                    <span><strong>Keep it short:</strong> Users scan notifications quickly</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-green-500 mr-2">✓</span>
+                    <span><strong>Be specific:</strong> Clear action items work best</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-green-500 mr-2">✓</span>
+                    <span><strong>Use emojis:</strong> They grab attention! 🎯</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-green-500 mr-2">✓</span>
+                    <span><strong>Timing matters:</strong> Send during peak hours</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-red-500 mr-2">✗</span>
+                    <span><strong>Don't spam:</strong> Quality over quantity</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="text-sm font-semibold text-blue-900 mb-2">
+                  📊 Automatic Notifications
+                </h4>
+                <p className="text-xs text-blue-800">
+                  The system automatically notifies users when:
+                </p>
+                <ul className="mt-2 space-y-1 text-xs text-blue-700">
+                  <li>• 👨‍🏫 A new professor is added</li>
+                  <li>• 🏛️ A new college is added</li>
+                </ul>
+                <p className="mt-2 text-xs text-blue-600">
+                  Use custom notifications for announcements, features, maintenance, or special events.
+                </p>
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <h4 className="text-sm font-semibold text-yellow-900 mb-2">
+                  ⏰ Notification Lifecycle
+                </h4>
+                <ul className="space-y-1 text-xs text-yellow-800">
+                  <li>• Notifications are shown to all active users</li>
+                  <li>• They remain in user inbox for <strong>4 days</strong></li>
+                  <li>• Auto-deleted after expiry to keep inbox clean</li>
+                  <li>• Users can mark as read or dismiss anytime</li>
+                </ul>
               </div>
             </div>
           </div>

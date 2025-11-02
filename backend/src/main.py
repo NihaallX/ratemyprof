@@ -24,6 +24,7 @@ from src.api.college_reviews import router as college_reviews_router
 from src.api.moderation import router as moderation_router
 from src.api.user_limits import router as user_limits_router
 from src.api.college_review_moderation import router as college_review_moderation_router
+from src.routers.notifications import router as notifications_router
 
 
 @asynccontextmanager
@@ -256,6 +257,18 @@ app.include_router(
     user_limits_router,
     prefix="/api/user",
     tags=["User Limits (Legacy)"]
+)
+
+app.include_router(
+    notifications_router,
+    prefix="/v1/notifications",
+    tags=["Notifications"]
+)
+
+app.include_router(
+    notifications_router,
+    prefix="/api/notifications",
+    tags=["Notifications (Legacy)"]
 )
 
 app.include_router(

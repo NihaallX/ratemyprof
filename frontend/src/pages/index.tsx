@@ -9,7 +9,9 @@ import Link from 'next/link';
 import { Star, Search, ChevronDown, MapPin, Award, Users, Calendar } from 'lucide-react';
 import { RateMyProfAPI, Professor, College } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import CompareColleges from '../components/CompareColleges';
 import UserDropdown from '../components/UserDropdown';
+import NotificationInbox from '../components/NotificationInbox';
 import Footer from '../components/Footer';
 
 interface SearchSuggestion {
@@ -392,6 +394,9 @@ export default function HomePage() {
                   )}
                 </div>
               )}
+              
+              {/* Notification Inbox - Between User and Add Professor */}
+              {user && <NotificationInbox />}
               
               {/* Authentication UI */}
               {authLoading ? (
