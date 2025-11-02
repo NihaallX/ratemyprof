@@ -6,6 +6,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Bell, X } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../lib/supabase'
 import { API_BASE_URL } from '../config/api'
 
 interface Notification {
@@ -63,10 +64,18 @@ export default function NotificationInbox() {
     
     try {
       setLoading(true)
-      const token = localStorage.getItem('authToken')
+      
+      // Get Supabase session token
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        console.error('No session token available')
+        setLoading(false)
+        return
+      }
+      
       const response = await fetch(`${API_BASE_URL}/notifications?limit=3`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${session.access_token}`
         }
       })
       
@@ -74,6 +83,8 @@ export default function NotificationInbox() {
         const data = await response.json()
         setNotifications(data.notifications || [])
         setUnreadCount(data.unread_count || 0)
+      } else {
+        console.error('Failed to fetch notifications:', response.status, await response.text())
       }
     } catch (error) {
       console.error('Failed to fetch notifications:', error)
@@ -84,11 +95,13 @@ export default function NotificationInbox() {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      const token = localStorage.getItem('authToken')
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) return
+      
       await fetch(`${API_BASE_URL}/notifications/${notificationId}/read`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${session.access_token}`
         }
       })
       
@@ -104,11 +117,13 @@ export default function NotificationInbox() {
 
   const markAllAsRead = async () => {
     try {
-      const token = localStorage.getItem('authToken')
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) return
+      
       await fetch(`${API_BASE_URL}/notifications/read-all`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${session.access_token}`
         }
       })
       
