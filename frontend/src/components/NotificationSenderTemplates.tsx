@@ -69,23 +69,31 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
     try {
       const token = await getAuthToken()
       if (!token) {
-        console.error('No auth token available')
+        console.error('❌ No auth token available')
         setLoading(false)
         return
       }
 
+      console.log('🔍 Fetching templates from:', `${API_BASE_URL}/notifications/templates`)
       const response = await fetch(`${API_BASE_URL}/notifications/templates`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
 
+      console.log('📡 Response status:', response.status, response.statusText)
+      
       if (response.ok) {
         const data = await response.json()
+        console.log('✅ Templates received:', data.templates?.length || 0, 'templates')
+        console.log('📋 Templates data:', data)
         setTemplates(data.templates || [])
+      } else {
+        const errorText = await response.text()
+        console.error('❌ Failed to fetch templates:', response.status, errorText)
       }
     } catch (error) {
-      console.error('Failed to fetch templates:', error)
+      console.error('❌ Failed to fetch templates:', error)
     } finally {
       setLoading(false)
     }
