@@ -263,7 +263,7 @@ export default function CollegeDetail() {
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
+            <div className="bg-white rounded-lg p-6 shadow-sm border animate-scaleIn stagger-1">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-100 rounded-lg">
                   <Users className="w-6 h-6 text-blue-600" />
@@ -275,7 +275,7 @@ export default function CollegeDetail() {
               </div>
             </div>
             
-            <div className="bg-white rounded-lg p-6 shadow-sm border">
+            <div className="bg-white rounded-lg p-6 shadow-sm border animate-scaleIn stagger-2">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-green-100 rounded-lg">
                   <GraduationCap className="w-6 h-6 text-green-600" />
@@ -288,7 +288,7 @@ export default function CollegeDetail() {
             </div>
             
             {college.established_year && (
-              <div className="bg-white rounded-lg p-6 shadow-sm border">
+              <div className="bg-white rounded-lg p-6 shadow-sm border animate-scaleIn stagger-3">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-purple-100 rounded-lg">
                     <Calendar className="w-6 h-6 text-purple-600" />
@@ -415,11 +415,11 @@ export default function CollegeDetail() {
               </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredProfessors.map((professor) => (
+                {filteredProfessors.map((professor, index) => (
                   <Link
                     key={professor.id}
                     href={`/professors/${professor.id}`}
-                    className="block p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all"
+                    className={`block p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all animate-fadeSlideUp stagger-${Math.min(index + 1, 6)}`}
                   >
                     <h3 className="font-semibold text-gray-900 mb-1">{professor.name}</h3>
                     <p className="text-sm text-gray-600 mb-2">{professor.department}</p>

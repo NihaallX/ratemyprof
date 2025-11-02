@@ -659,11 +659,11 @@ export default function HomePage() {
                   </Link>
                 </div>
                 <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                  {topRatedProfessors.map((professor) => (
+                  {topRatedProfessors.map((professor, index) => (
                     <Link
                       key={professor.id}
                       href={`/professors/${professor.id}`}
-                      className="block bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group"
+                      className={`block bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group animate-scaleIn stagger-${Math.min(index + 1, 6)}`}
                     >
                       <div className="flex h-full">
                         {/* Left Side - Quality Rating */}
@@ -733,11 +733,11 @@ export default function HomePage() {
                   </Link>
                 </div>
                 <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                  {topRatedColleges.map((college) => (
+                  {topRatedColleges.map((college, index) => (
                     <Link
                       key={college.id}
                       href={`/colleges/${college.id}`}
-                      className="block bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group"
+                      className={`block bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group animate-scaleIn stagger-${Math.min(index + 1, 6)}`}
                     >
                       <div className="flex h-full">
                         {/* Left Side - Quality Rating */}

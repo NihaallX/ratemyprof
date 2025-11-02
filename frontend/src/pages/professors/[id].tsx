@@ -413,11 +413,11 @@ export default function ProfessorProfile() {
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Similar Professors</h3>
                     <p className="text-sm text-gray-600 mb-4">Professors from the same department at {professor.department}</p>
                     <div className="grid grid-cols-1 gap-3">
-                      {similarProfessors.map((prof) => (
+                      {similarProfessors.map((prof, index) => (
                         <Link
                           key={prof.id}
                           href={`/professors/${prof.id}`}
-                          className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg hover:shadow-md transition-all border border-indigo-100"
+                          className={`p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg hover:shadow-md transition-all border border-indigo-100 animate-slideInUp stagger-${Math.min(index + 1, 6)}`}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
@@ -522,8 +522,8 @@ export default function ProfessorProfile() {
                   </div>
                 ) : filteredReviews.length > 0 ? (
                   <div className="space-y-6">
-                    {filteredReviews.map((review) => (
-                      <div key={review.id} className="border-b border-gray-200 pb-6 last:border-b-0">
+                    {filteredReviews.map((review, index) => (
+                      <div key={review.id} className={`border-b border-gray-200 pb-6 last:border-b-0 animate-fadeSlideUp stagger-${Math.min(index + 1, 6)}`}>
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center space-x-4">
                             {/* Overall rating pill badge */}
@@ -554,11 +554,11 @@ export default function ProfessorProfile() {
                             <div className="flex-1 flex items-center gap-2">
                               <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                                 <div 
-                                  className={`h-full rounded-full transition-all ${
+                                  className={`h-full rounded-full animate-barGrow ${
                                     review.clarity_rating >= 4 ? 'bg-green-500' :
                                     review.clarity_rating >= 3 ? 'bg-yellow-500' : 'bg-red-500'
                                   }`}
-                                  style={{ width: `${(review.clarity_rating / 5) * 100}%` }}
+                                  style={{ '--bar-width': `${(review.clarity_rating / 5) * 100}%` } as React.CSSProperties}
                                 />
                               </div>
                               <span className={`font-semibold w-8 ${
@@ -576,11 +576,11 @@ export default function ProfessorProfile() {
                             <div className="flex-1 flex items-center gap-2">
                               <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                                 <div 
-                                  className={`h-full rounded-full transition-all ${
+                                  className={`h-full rounded-full animate-barGrow animate-delay-100 ${
                                     review.helpfulness_rating >= 4 ? 'bg-green-500' :
                                     review.helpfulness_rating >= 3 ? 'bg-yellow-500' : 'bg-red-500'
                                   }`}
-                                  style={{ width: `${(review.helpfulness_rating / 5) * 100}%` }}
+                                  style={{ '--bar-width': `${(review.helpfulness_rating / 5) * 100}%` } as React.CSSProperties}
                                 />
                               </div>
                               <span className={`font-semibold w-8 ${
@@ -598,11 +598,11 @@ export default function ProfessorProfile() {
                             <div className="flex-1 flex items-center gap-2">
                               <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                                 <div 
-                                  className={`h-full rounded-full transition-all ${
+                                  className={`h-full rounded-full animate-barGrow animate-delay-200 ${
                                     review.overall_rating >= 4 ? 'bg-green-500' :
                                     review.overall_rating >= 3 ? 'bg-yellow-500' : 'bg-red-500'
                                   }`}
-                                  style={{ width: `${(review.overall_rating / 5) * 100}%` }}
+                                  style={{ '--bar-width': `${(review.overall_rating / 5) * 100}%` } as React.CSSProperties}
                                 />
                               </div>
                               <span className={`font-semibold w-8 ${
@@ -620,11 +620,11 @@ export default function ProfessorProfile() {
                             <div className="flex-1 flex items-center gap-2">
                               <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                                 <div 
-                                  className={`h-full rounded-full transition-all ${
+                                  className={`h-full rounded-full animate-barGrow animate-delay-300 ${
                                     review.difficulty_rating <= 2 ? 'bg-green-500' :
                                     review.difficulty_rating <= 3 ? 'bg-yellow-500' : 'bg-red-500'
                                   }`}
-                                  style={{ width: `${(review.difficulty_rating / 5) * 100}%` }}
+                                  style={{ '--bar-width': `${(review.difficulty_rating / 5) * 100}%` } as React.CSSProperties}
                                 />
                               </div>
                               <span className={`font-semibold w-8 ${
