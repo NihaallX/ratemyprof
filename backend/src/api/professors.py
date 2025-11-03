@@ -108,11 +108,11 @@ class ProfessorsSearchResponse(BaseModel):
 
 @router.get("", response_model=ProfessorsSearchResponse)
 async def search_professors(
-    q: Optional[str] = Query(None, min_length=2, max_length=100, description="Search query (professor name)"),
+    q: Optional[str] = Query(None, description="Search query (professor name)"),
     college_id: Optional[str] = Query(None, description="Filter by specific college"),
-    college_name: Optional[str] = Query(None, max_length=200, description="Filter by college name (fuzzy match)"),
-    department: Optional[str] = Query(None, max_length=100, description="Filter by department"),
-    state: Optional[str] = Query(None, max_length=50, description="Filter by Indian state"),
+    college_name: Optional[str] = Query(None, description="Filter by college name (fuzzy match)"),
+    department: Optional[str] = Query(None, description="Filter by department"),
+    state: Optional[str] = Query(None, description="Filter by Indian state"),
     limit: int = Query(20, ge=1, le=200, description="Maximum results to return"),
     offset: int = Query(0, ge=0, description="Number of results to skip"),
     supabase: Client = Depends(get_supabase)
