@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { useAuth } from '../../contexts/AuthContext';
 import AdminLoginModal from '../../components/AdminLoginModal';
+import { API_BASE } from '../../config/api';
 
 /**
  * Secure Admin Login Page
@@ -27,21 +28,34 @@ export default function AdminLogin() {
 
   const handleAdminLogin = async (email: string, password: string) => {
     try {
-      const { error } = await signIn(email, password);
-      
-      if (error) {
-        return { success: false, error: error.message };
+      // Call backend admin login API (NOT Supabase)
+      const response = await fetch(`${API_BASE}/admin/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: email,  // Backend expects 'username' field
+          password: password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: data.detail || data.error || 'Invalid credentials' };
       }
+
+      // Store admin token in localStorage
+      localStorage.setItem('adminToken', data.access_token);
+      localStorage.setItem('adminUser', JSON.stringify(data.user));
       
-      // Check if the logged in user is admin
-      const isAdminUser = email === 'admin@ratemyprof.in' || email.endsWith('@ratemyprof.in');
-      if (!isAdminUser) {
-        return { success: false, error: 'Access denied. Admin credentials required.' };
-      }
+      // Redirect to admin dashboard
+      router.push('/admin');
       
-      // Success - the useEffect will handle the redirect
       return { success: true };
     } catch (error) {
+      console.error('Admin login error:', error);
       return { success: false, error: 'Login failed. Please try again.' };
     }
   };
