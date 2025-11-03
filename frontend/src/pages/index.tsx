@@ -652,16 +652,6 @@ export default function HomePage() {
                     <Award className="w-6 h-6 mr-2 text-yellow-500" />
                     Top Rated Professors
                   </h3>
-                  <Link 
-                    href="#"
-                    className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
-                    onClick={() => {
-                      setSearchType('professors');
-                      handleSearch();
-                    }}
-                  >
-                    View All →
-                  </Link>
                 </div>
                 <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   {topRatedProfessors.map((professor, index) => (
@@ -726,16 +716,6 @@ export default function HomePage() {
                     <Award className="w-6 h-6 mr-2 text-yellow-500" />
                     Top Rated Colleges
                   </h3>
-                  <Link 
-                    href="#"
-                    className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
-                    onClick={() => {
-                      setSearchType('colleges');
-                      loadAllColleges();
-                    }}
-                  >
-                    View All →
-                  </Link>
                 </div>
                 <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   {topRatedColleges.map((college, index) => (
