@@ -194,3 +194,27 @@ h1, h2, h3, h4, h5, h6 {
 .stagger-4 { animation-delay: 0.2s; }
 .stagger-5 { animation-delay: 0.25s; }
 .stagger-6 { animation-delay: 0.3s; }
+/* Maintenance Banner Styles */
+.maintenance-banner {
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+/* Adjust body padding when maintenance banner is visible */
+body:has(.maintenance-banner) {
+  padding-top: 48px;
+}
+
+@media (max-width: 768px) {
+  body:has(.maintenance-banner) {
+    padding-top: 56px;
+  }
+  
+  .maintenance-banner {
+    font-size: 13px !important;
+    padding: 10px 12px !important;
+  }
+  
+  .maintenance-banner span {
+    gap: 6px !important;
+  }
+}

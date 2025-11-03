@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import { AuthProvider } from '../contexts/AuthContext'
 import { NotificationProvider } from '../contexts/NotificationContext'
 import NotificationContainer from '../components/NotificationContainer'
+import MaintenanceBanner from '../components/MaintenanceBanner'
 import '../styles/globals.css'
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -29,6 +30,7 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <AuthProvider>
       <NotificationProvider>
+        <MaintenanceBanner />
         <Component {...pageProps} />
         <NotificationContainer />
       </NotificationProvider>
