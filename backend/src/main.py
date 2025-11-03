@@ -135,11 +135,15 @@ if os.getenv("ENVIRONMENT") == "production":
 # Global exception handler
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    """Handle Pydantic validation errors and return 400 status."""
+    """Handle Pydantic validation errors and return 422 status with detailed info."""
     error_details = []
     for error in exc.errors():
         field = error.get('loc', ['unknown'])[-1]
         message = error.get('msg', 'Validation error')
+        error_type = error.get('type', '')
+        
+        # Create detailed error message
+        field_error = f"{field}: {message}"
         
         if field == 'email':
             error_details.append("Invalid email format")
@@ -153,13 +157,17 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         elif field == 'college_id':
             error_details.append(message)
         else:
-            error_details.append(message)
+            error_details.append(field_error)  # Include field name in error
+    
+    # Also log the full error for debugging
+    print(f"❌ Validation Error on {request.url.path}: {exc.errors()}")
     
     return JSONResponse(
         status_code=422,
         content={
             "error": "validation_error",
-            "message": "; ".join(error_details)
+            "message": "; ".join(error_details),
+            "details": exc.errors() if os.getenv("ENVIRONMENT") != "production" else None
         }
     )
 

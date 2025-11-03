@@ -22,7 +22,7 @@ router = APIRouter()
 class Professor(BaseModel):
     id: str
     name: str
-    department: str
+    department: Optional[str] = None  # Make optional - some professors might not have department
     college_id: str
     average_rating: float
     total_reviews: int
@@ -90,6 +90,11 @@ async def search_professors(
         transformed_professors = []
         for prof in result.data:
             try:
+                # Skip professors with missing critical fields
+                if not prof.get('id') or not prof.get('name') or not prof.get('college_id'):
+                    print(f"Skipping professor with missing required fields: {prof.get('id', 'unknown')}")
+                    continue
+                
                 # Handle subjects field - convert to list if it's a string or null
                 subjects = prof.get('subjects', [])
                 if subjects is None:
@@ -100,7 +105,7 @@ async def search_professors(
                 professor_data = {
                     'id': prof['id'],
                     'name': prof['name'],
-                    'department': prof['department'],
+                    'department': prof.get('department'),  # Now optional
                     'college_id': prof['college_id'],
                     'average_rating': float(prof.get('average_rating', 0.0)),
                     'total_reviews': int(prof.get('total_reviews', 0)),
