@@ -122,10 +122,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signIn: async (email: string, password: string, rememberMe: boolean = false) => {
       try {
         // Regular Supabase authentication (NOT admin)
-        const { data, error } = await auth.signInWithPassword({
-          email,
-          password
-        })
+        const { data, error } = await auth.signIn(email, password)
         
         if (error) {
           return { error }
