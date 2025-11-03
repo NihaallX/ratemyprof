@@ -1,0 +1,10 @@
+# Allow all search engines to crawl the site
+User-agent: *
+Allow: /
+
+# Disallow crawling of admin pages
+Disallow: /admin/
+Disallow: /admin-login/
+
+# Sitemap location
+Sitemap: https://ratemyprof.me/sitemap.xml
