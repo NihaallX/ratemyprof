@@ -74,6 +74,41 @@ export default function Document() {
         <meta name="author" content="RateMyProf" />
         <meta name="theme-color" content="#4F46E5" />
         
+        {/* Structured Data for Google Search */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              "name": "RateMyProf",
+              "url": "https://ratemyprof.me",
+              "description": "Rate and review professors across Indian colleges and universities",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://ratemyprof.me/android-chrome-512x512.png",
+                "width": 512,
+                "height": 512
+              },
+              "publisher": {
+                "@type": "Organization",
+                "name": "RateMyProf",
+                "logo": {
+                  "@type": "ImageObject",
+                  "url": "https://ratemyprof.me/android-chrome-512x512.png",
+                  "width": 512,
+                  "height": 512
+                }
+              },
+              "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://ratemyprof.me/?q={search_term_string}",
+                "query-input": "required name=search_term_string"
+              }
+            })
+          }}
+        />
+        
         {/* Google Fonts - Inter, Poppins & Pacifico */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
