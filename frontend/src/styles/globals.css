@@ -218,3 +218,13 @@ body:has(.maintenance-banner) {
     gap: 6px !important;
   }
 }
+
+/* Hide scrollbar for navigation */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

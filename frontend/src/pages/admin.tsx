@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
-import { Shield, Users, Flag, Check, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare, Bell, Settings } from 'lucide-react';
+import { Shield, Users, Flag, Check, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare, Bell, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import AdminLoginModal from '../components/AdminLoginModal';
 import NotificationSenderTemplates from '../components/NotificationSenderTemplates';
@@ -53,6 +53,11 @@ const AdminPage: NextPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalProfessorsCount, setTotalProfessorsCount] = useState(0);
   const PAGE_SIZE = 100;
+
+  // Navigation scroll state
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(false);
+  const navRef = React.useRef<HTMLDivElement>(null);
 
   // Professor Reviews Moderation state
   const [professorReviews, setProfessorReviews] = useState([]);
@@ -1081,6 +1086,39 @@ const AdminPage: NextPage = () => {
     }
   }, [isAdmin, activeTab, professorReviewStatusFilter]);
 
+  // Handle navigation scroll arrows
+  useEffect(() => {
+    const handleScroll = () => {
+      if (navRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = navRef.current;
+        setShowLeftArrow(scrollLeft > 0);
+        setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+      }
+    };
+
+    const navElement = navRef.current;
+    if (navElement) {
+      handleScroll(); // Initial check
+      navElement.addEventListener('scroll', handleScroll);
+      window.addEventListener('resize', handleScroll);
+      
+      return () => {
+        navElement.removeEventListener('scroll', handleScroll);
+        window.removeEventListener('resize', handleScroll);
+      };
+    }
+  }, []);
+
+  const scrollNav = (direction: 'left' | 'right') => {
+    if (navRef.current) {
+      const scrollAmount = 300;
+      navRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   // Show loading while checking auth
   if (authLoading || isLoading) {
     return (
@@ -1238,9 +1276,36 @@ const AdminPage: NextPage = () => {
           </div>
 
           {/* Tab Navigation */}
-          <div className="mb-8 overflow-x-auto">
-            <nav className="flex space-x-8 min-w-max">
+          <div className="mb-8 relative">
+            {/* Left Arrow */}
+            {showLeftArrow && (
               <button
+                onClick={() => scrollNav('left')}
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-2 hover:bg-gray-100 transition-colors"
+                aria-label="Scroll left"
+              >
+                <ChevronLeft className="w-5 h-5 text-gray-600" />
+              </button>
+            )}
+            
+            {/* Right Arrow */}
+            {showRightArrow && (
+              <button
+                onClick={() => scrollNav('right')}
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-2 hover:bg-gray-100 transition-colors"
+                aria-label="Scroll right"
+              >
+                <ChevronRight className="w-5 h-5 text-gray-600" />
+              </button>
+            )}
+
+            <div 
+              ref={navRef}
+              className="overflow-x-auto scrollbar-hide"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              <nav className="flex space-x-8 min-w-max px-10">
+                <button
                 onClick={() => setActiveTab('dashboard')}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'dashboard'
@@ -1343,6 +1408,7 @@ const AdminPage: NextPage = () => {
                 Settings
               </button>
             </nav>
+            </div>
           </div>
 
           {/* Tab Content */}
