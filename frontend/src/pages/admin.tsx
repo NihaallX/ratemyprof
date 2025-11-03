@@ -1238,8 +1238,8 @@ const AdminPage: NextPage = () => {
           </div>
 
           {/* Tab Navigation */}
-          <div className="mb-8">
-            <nav className="flex space-x-8">
+          <div className="mb-8 overflow-x-auto">
+            <nav className="flex space-x-8 min-w-max">
               <button
                 onClick={() => setActiveTab('dashboard')}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
