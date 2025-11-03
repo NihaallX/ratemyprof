@@ -2,7 +2,7 @@
 Caching utilities for RateMyProf backend
 Reduces database queries by 70-90% for frequently accessed data
 """
-from functools import lru_cache
+from functools import lru_cache, wraps
 from typing import Any, Callable, Optional
 import time
 import hashlib
@@ -87,6 +87,7 @@ def cache_response(ttl_seconds: int = 300):
     cache = SimpleCache(ttl_seconds=ttl_seconds)
     
     def decorator(func: Callable):
+        @wraps(func)  # CRITICAL: Preserve function signature for FastAPI
         async def wrapper(*args, **kwargs):
             # Generate cache key
             cache_key = cache.get_cache_key(func.__name__, *args, **kwargs)
