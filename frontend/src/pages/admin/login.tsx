@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { useAuth } from '../../contexts/AuthContext';
 import AdminLoginModal from '../../components/AdminLoginModal';
-import { API_BASE } from '../../config/api';
+import { API_BASE_URL } from '../../config/api';
 
 /**
  * Secure Admin Login Page
@@ -28,8 +28,9 @@ export default function AdminLogin() {
 
   const handleAdminLogin = async (email: string, password: string) => {
     try {
-      // Call backend admin login API (NOT Supabase)
-      const response = await fetch(`${API_BASE}/admin/login`, {
+  // Call backend admin login API (NOT Supabase). The moderation router is mounted under /v1/moderation,
+  // so use API_BASE_URL (which already includes /v1) and append /moderation/admin/login.
+  const response = await fetch(`${API_BASE_URL}/moderation/admin/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
