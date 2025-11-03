@@ -1098,16 +1098,21 @@ const AdminPage: NextPage = () => {
 
     const navElement = navRef.current;
     if (navElement) {
-      handleScroll(); // Initial check
+      // Add a small delay to ensure content is fully rendered
+      const timeoutId = setTimeout(() => {
+        handleScroll(); // Initial check
+      }, 100);
+      
       navElement.addEventListener('scroll', handleScroll);
       window.addEventListener('resize', handleScroll);
       
       return () => {
+        clearTimeout(timeoutId);
         navElement.removeEventListener('scroll', handleScroll);
         window.removeEventListener('resize', handleScroll);
       };
     }
-  }, []);
+  }, [stats]); // Re-run when stats change (tabs update with counts)
 
   const scrollNav = (direction: 'left' | 'right') => {
     if (navRef.current) {
@@ -1276,12 +1281,12 @@ const AdminPage: NextPage = () => {
           </div>
 
           {/* Tab Navigation */}
-          <div className="mb-8 relative">
+          <div className="mb-8 relative px-8">
             {/* Left Arrow */}
             {showLeftArrow && (
               <button
                 onClick={() => scrollNav('left')}
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-2 hover:bg-gray-100 transition-colors"
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-2 hover:bg-gray-100 transition-colors border border-gray-200"
                 aria-label="Scroll left"
               >
                 <ChevronLeft className="w-5 h-5 text-gray-600" />
@@ -1292,7 +1297,7 @@ const AdminPage: NextPage = () => {
             {showRightArrow && (
               <button
                 onClick={() => scrollNav('right')}
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-2 hover:bg-gray-100 transition-colors"
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-lg rounded-full p-2 hover:bg-gray-100 transition-colors border border-gray-200"
                 aria-label="Scroll right"
               >
                 <ChevronRight className="w-5 h-5 text-gray-600" />
@@ -1301,10 +1306,10 @@ const AdminPage: NextPage = () => {
 
             <div 
               ref={navRef}
-              className="overflow-x-auto scrollbar-hide"
+              className="overflow-x-auto scrollbar-hide mx-8"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
-              <nav className="flex space-x-8 min-w-max px-10">
+              <nav className="flex space-x-8 min-w-max">
                 <button
                 onClick={() => setActiveTab('dashboard')}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
