@@ -46,13 +46,9 @@ export default function Login() {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      // Redirect admin users to admin dashboard, regular users to home or redirect URL
-      if (user.email === 'admin@gmail.com' || user.role === 'admin' || user.app_metadata?.role === 'admin' || user.user_metadata?.role === 'admin') {
-        router.push('/admin')
-      } else {
-        const redirectUrl = (redirect as string) || '/'
-        router.push(redirectUrl)
-      }
+      // Regular users only - admins must use /admin-login
+      const redirectUrl = (redirect as string) || '/'
+      router.push(redirectUrl)
     }
   }, [user, router, redirect])
 
@@ -74,14 +70,9 @@ export default function Login() {
         setError(result.error.message || 'Invalid login credentials')
         setLoading(false)
       } else {
-        // Successful login - redirect based on user type
-        if (email === 'admin@gmail.com') {
-          showToast('Admin login successful! Redirecting...', 'success')
-          router.push('/admin')
-        } else {
-          const redirectUrl = (redirect as string) || '/'
-          router.push(redirectUrl)
-        }
+        // Successful login - regular users only (admins use /admin-login)
+        const redirectUrl = (redirect as string) || '/'
+        router.push(redirectUrl)
       }
     } catch (err) {
       setError('An unexpected error occurred')

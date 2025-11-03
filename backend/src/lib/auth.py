@@ -78,11 +78,7 @@ def get_user_from_token(supabase: Client, access_token: str) -> Optional[Dict[st
             
             print(f"✅ Supabase user found: {user_email}, email_confirmed_at: {user_response.user.email_confirmed_at}")
             
-            # Force email_confirmed = True for admin users
-            if user_email == 'admin@gmail.com' or user_email.endswith('@ratemyprof.in'):
-                email_confirmed = True
-                print(f"🔧 Forcing email_confirmed=True for admin: {user_email}")
-            
+            # Regular user - NOT admin (admins use separate admin login endpoint)
             return {
                 "id": user_response.user.id,
                 "email": user_email,

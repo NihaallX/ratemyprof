@@ -30,11 +30,8 @@ export default function UserDropdown() {
   const displayName = user.user_metadata?.name || user.email?.split('@')[0] || 'User'
   const email = user.email || ''
   
-  // Check if user is admin
-  const isAdmin = user.email === 'admin@gmail.com' || 
-                  user.role === 'admin' || 
-                  user.app_metadata?.role === 'admin' || 
-                  user.user_metadata?.role === 'admin'
+  // Admin access is ONLY through /admin-login - regular users never get admin access
+  const isAdmin = false
 
   return (
     <div className="relative" ref={dropdownRef}>
