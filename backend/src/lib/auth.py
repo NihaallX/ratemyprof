@@ -258,3 +258,69 @@ def create_auth_response(auth_response) -> dict:
             "user_metadata": auth_response.user.user_metadata,
         }
     }
+
+
+async def get_current_admin_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    supabase: Client = Depends(get_supabase)
+) -> Dict[str, Any]:
+    """Dependency to get current admin user from JWT token.
+    
+    This is specifically for admin-only endpoints that require admin authentication.
+    
+    Args:
+        credentials: HTTP Bearer token credentials
+        supabase: Supabase client instance
+        
+    Returns:
+        dict: Admin user information
+        
+    Raises:
+        HTTPException: If token is invalid or user is not an admin
+    """
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    try:
+        # Verify admin JWT token
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        
+        if username != ADMIN_USERNAME:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin access required"
+            )
+        
+        # Return admin user info
+        return {
+            "id": "admin-user-id",
+            "email": username,
+            "username": username,
+            "role": "admin",
+            "email_confirmed": True,
+            "user_metadata": {"role": "admin"},
+            "app_metadata": {"role": "admin"},
+        }
+        
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Admin session expired. Please login again.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except jwt.PyJWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid admin credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Authentication error: {str(e)}"
+        )

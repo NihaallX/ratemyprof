@@ -14,7 +14,7 @@ from collections import defaultdict
 import time
 
 from src.lib.database import get_supabase, get_supabase_admin, get_supabase_service
-from src.lib.auth import get_current_user
+from src.lib.auth import get_current_user, get_current_admin_user
 from src.services.auto_flagging import AutoFlaggingSystem
 from src.services.content_filter import content_filter, ContentAnalysis
 from src.services.user_communication import UserCommunicationSystem, NotificationType
@@ -213,7 +213,7 @@ async def admin_login(credentials: AdminLogin, request: Request):
     return AdminLoginResponse(
         access_token=access_token,
         token_type="bearer",
-        expires_in=ACCESS_TOKEN_EXPIRE_HOURS * 3600,
+        expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         user={
             "username": credentials.username,
             "email": "admin@gmail.com",
