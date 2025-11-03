@@ -4,16 +4,26 @@ import Head from 'next/head';
 
 /**
  * Admin Gateway Route
- * This route redirects to /admin/login to prevent direct access to admin dashboard.
- * Accessing /admin without authentication will always redirect to login page.
+ * This route checks for admin authentication and redirects accordingly.
+ * - If admin token exists: load the admin dashboard
+ * - Otherwise: redirect to admin login
+ * 
+ * NOTE: This file redirects immediately. The actual dashboard is at /admin.tsx (parent route)
+ * which Next.js serves at /admin. We can't have both /admin/index.tsx and /admin.tsx,
+ * so /admin.tsx takes precedence and this file is effectively unused.
  */
 export default function AdminGateway() {
   const router = useRouter();
 
   useEffect(() => {
-    // Always redirect to admin login page
-    // The admin login page will handle authentication and redirect to dashboard
-    router.replace('/admin/login');
+    // Check if admin is already authenticated
+    const adminToken = localStorage.getItem('adminToken');
+    
+    if (!adminToken) {
+      // Not logged in, go to login page
+      router.replace('/admin/login');
+    }
+    // If logged in, stay on /admin (admin.tsx will render the dashboard)
   }, [router]);
 
   return (

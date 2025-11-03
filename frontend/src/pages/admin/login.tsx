@@ -51,7 +51,7 @@ export default function AdminLogin() {
       localStorage.setItem('adminToken', data.access_token);
       localStorage.setItem('adminUser', JSON.stringify(data.user));
       
-      // Redirect to admin dashboard
+      // Redirect to admin dashboard (admin.tsx is at /admin route)
       router.push('/admin');
       
       return { success: true };

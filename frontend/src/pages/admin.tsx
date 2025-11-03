@@ -89,6 +89,17 @@ const AdminPage: NextPage = () => {
     setTimeout(() => setShowWelcomeModal(false), 4000);
   };
 
+  // Helper function to get admin token from localStorage
+  const getAdminToken = (): string | null => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      console.log('No admin token found - redirecting to login');
+      router.push('/admin/login');
+      return null;
+    }
+    return token;
+  };
+
   const handleAdminLogin = async (email: string, password: string) => {
     try {
       const { error } = await signIn(email, password);
@@ -114,136 +125,91 @@ const AdminPage: NextPage = () => {
     try {
       console.log('Loading admin dashboard stats (lightweight)...');
       
-      // Get admin token using the admin login API
-      let adminToken = null;
-      
-      // Try to get from stored session first
-      const storedSession = localStorage.getItem('adminSession');
-      if (storedSession) {
-        try {
-          const sessionData = JSON.parse(storedSession);
-          adminToken = sessionData.access_token;
-          console.log('Using stored admin session token');
-        } catch (e) {
-          console.log('Failed to parse stored session');
-        }
-      }
-      
-      // If no stored token, try to login as admin
+      // Get admin token from localStorage (set by admin login)
+      const adminToken = localStorage.getItem('adminToken');
       if (!adminToken) {
-        try {
-          const adminLoginResponse = await fetch(`${API_BASE}/api/moderation/admin/login`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              username: 'admin@gmail.com',
-              password: 'gauravnihal123'
-            })
-          });
-          
-          if (adminLoginResponse.ok) {
-            const adminData = await adminLoginResponse.json();
-            adminToken = adminData.access_token;
-            localStorage.setItem('adminSession', JSON.stringify(adminData));
-            console.log('Admin login successful, got token');
-          } else {
-            console.log('Admin login failed');
-          }
-        } catch (loginError) {
-          console.log('Admin login error:', loginError);
-        }
+        console.log('No admin token found - user needs to login');
+        return;
       }
       
-      console.log('Admin token available:', !!adminToken);
+      console.log('Using stored admin token');
       
-      const headers = adminToken ? {
+      const headers = {
         'Authorization': `Bearer ${adminToken}`,
         'Content-Type': 'application/json'
-      } : { 'Content-Type': 'application/json' };
+      };
       
       // Use single optimized endpoint for all dashboard stats
-      if (adminToken) {
-        try {
-          const statsResponse = await fetch(`${API_BASE}/api/moderation/dashboard/stats`, { headers });
-          if (statsResponse.ok) {
-            const stats = await statsResponse.json();
-            
-            // Update all state from single response
-            setStats({
-              totalProfessors: stats.total_professors || 0,
-              pendingProfessors: stats.professors_with_no_reviews || 0,
-              flaggedReviews: stats.flagged_reviews_count || 0,
-              pendingApproval: stats.pending_professors || 0,
-              totalUsers: stats.total_users || 0
-            });
-            
-            // Set recent data for tables
-            setFlaggedReviews(stats.recent_flagged_reviews || []);
-            setPendingApprovalProfessors(stats.recent_pending_professors || []);
-            setUsers(stats.recent_users || []);
-            
-            setIsLoading(false);
-            return;
-          }
-        } catch (statsError) {
-          console.log('Optimized stats endpoint not available, falling back to old method:', statsError);
+      try {
+        const statsResponse = await fetch(`${API_BASE_URL}/moderation/dashboard/stats`, { headers });
+        if (statsResponse.ok) {
+          const stats = await statsResponse.json();
+          
+          // Update all state from single response
+          setStats({
+            totalProfessors: stats.total_professors || 0,
+            pendingProfessors: stats.professors_with_no_reviews || 0,
+            flaggedReviews: stats.flagged_reviews_count || 0,
+            pendingApproval: stats.pending_professors || 0,
+            totalUsers: stats.total_users || 0
+          });
+          
+          // Set recent data for tables
+          setFlaggedReviews(stats.recent_flagged_reviews || []);
+          setPendingApprovalProfessors(stats.recent_pending_professors || []);
+          setUsers(stats.recent_users || []);
+          
+          setIsLoading(false);
+          return;
         }
+      } catch (statsError) {
+        console.log('Optimized stats endpoint not available, falling back to old method:', statsError);
       }
       
       // Fallback: Load minimal data for dashboard stats (old method)
       // Just get counts, don't load full datasets
       // Fetch enough professors to calculate "no reviews" count accurately
-      const professorsResponse = await fetch(`${API_BASE}/api/professors?limit=200&offset=0`, { headers });
+      const professorsResponse = await fetch(`${API_BASE_URL}/professors?limit=200&offset=0`, { headers });
       let professors = [];
       if (professorsResponse.ok) {
         const professorsData = await professorsResponse.json();
         professors = Array.isArray(professorsData.professors) ? professorsData.professors : [];
       }
       
-      // Try to load admin-specific data if we have admin token
+      // Try to load admin-specific data
       let flaggedReviews = [];
       let users = [];
       let pendingApprovalProfs = [];
       
-      if (adminToken) {
-        try {
-          // Load flagged reviews
-          const flaggedResponse = await fetch(`${API_BASE}/api/moderation/reviews`, { headers });
-          if (flaggedResponse.ok) {
-            const flaggedData = await flaggedResponse.json();
-            flaggedReviews = Array.isArray(flaggedData.flagged_reviews) ? flaggedData.flagged_reviews : [];
-            setFlaggedReviews(flaggedReviews);
-          }
-          
-          // Don't load all users here - let the Users tab load them when needed
-          // The stats endpoint provides recent_users which is enough for the dashboard
-          
-          // Load pending professors
-          const pendingResponse = await fetch(`${API_BASE}/api/moderation/professors/pending`, { headers });
-          if (pendingResponse.ok) {
-            const pendingData = await pendingResponse.json();
-            pendingApprovalProfs = Array.isArray(pendingData.professors) ? pendingData.professors : [];
-            setPendingApprovalProfessors(pendingApprovalProfs);
-          }
-        } catch (adminError) {
-          console.log('Admin endpoints not available yet:', adminError);
+      try {
+        // Load flagged reviews
+        const flaggedResponse = await fetch(`${API_BASE_URL}/moderation/reviews`, { headers });
+        if (flaggedResponse.ok) {
+          const flaggedData = await flaggedResponse.json();
+          flaggedReviews = Array.isArray(flaggedData.flagged_reviews) ? flaggedData.flagged_reviews : [];
+          setFlaggedReviews(flaggedReviews);
         }
+        
+        // Load pending professors
+        const pendingResponse = await fetch(`${API_BASE_URL}/moderation/professors/pending`, { headers });
+        if (pendingResponse.ok) {
+          const pendingData = await pendingResponse.json();
+          pendingApprovalProfs = Array.isArray(pendingData.professors) ? pendingData.professors : [];
+          setPendingApprovalProfessors(pendingApprovalProfs);
+        }
+      } catch (adminError) {
+        console.log('Admin endpoints not available yet:', adminError);
       }
       
       // Calculate real stats from actual data
-      // Use the professors array we just fetched (limit=200 should cover all in dev)
       const pendingProfessors = professors.filter((prof: any) => prof.total_reviews === 0);
       const flaggedCount = flaggedReviews.length;
       const pendingApprovalCount = pendingApprovalProfs.length;
       
-      // We'll get these counts from the API metadata instead of loading full data
-      
       // Get total professors count from API metadata
       let totalProfsCount = professors.length;
       try {
-        const countResponse = await fetch(`${API_BASE}/api/professors?limit=1`, { headers });
+        const countResponse = await fetch(`${API_BASE_URL}/professors?limit=1`, { headers });
         if (countResponse.ok) {
           const countData = await countResponse.json();
           totalProfsCount = countData.total || professors.length;
@@ -287,10 +253,18 @@ const AdminPage: NextPage = () => {
   useEffect(() => {
     console.log('Admin page loading...');
     
-    // Skip Supabase user authentication and go directly to admin API authentication
+    // Check for admin token - redirect to login if not found
     const checkAdminAccess = async () => {
+      const adminToken = localStorage.getItem('adminToken');
+      
+      if (!adminToken) {
+        console.log('No admin token found - redirecting to login');
+        router.push('/admin/login');
+        return;
+      }
+      
       try {
-        // Try to load admin data directly
+        // Try to load admin data
         await loadRealTimeStats();
         setIsAdmin(true);
         setIsLoading(false);
@@ -303,12 +277,15 @@ const AdminPage: NextPage = () => {
         }
       } catch (error) {
         console.log('Admin access check failed:', error);
-        setIsLoading(false);
+        // If token is invalid, redirect to login
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminUser');
+        router.push('/admin/login');
       }
     };
     
     checkAdminAccess();
-  }, []);
+  }, [router]);
 
   // Auto-refresh data every 5 minutes
   useEffect(() => {
@@ -345,7 +322,7 @@ const AdminPage: NextPage = () => {
   // Load all users (called when user clicks "Users" tab)
   const loadAllUsers = async () => {
     try {
-      const adminToken = localStorage.getItem('adminSession');
+      const adminToken = localStorage.getItem('adminToken');
       if (!adminToken) {
         console.log('No admin token found');
         return;
@@ -358,7 +335,7 @@ const AdminPage: NextPage = () => {
       };
 
       console.log('Loading all users...');
-      const usersResponse = await fetch(`${API_BASE}/api/moderation/users`, { headers });
+      const usersResponse = await fetch(`${API_BASE_URL}/moderation/users`, { headers });
       
       if (usersResponse.ok) {
         const usersData = await usersResponse.json();
@@ -385,7 +362,7 @@ const AdminPage: NextPage = () => {
     try {
       // Get admin token
       let adminToken = null;
-      const storedSession = localStorage.getItem('adminSession');
+      const storedSession = localStorage.getItem('adminToken');
       if (storedSession) {
         try {
           const sessionData = JSON.parse(storedSession);
@@ -460,7 +437,7 @@ const AdminPage: NextPage = () => {
           // Get the current Supabase session token
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.access_token) {
-            const usersResponse = await fetch(`${API_BASE}/api/moderation/users`, {
+            const usersResponse = await fetch(`${API_BASE_URL}/moderation/users`, {
               headers: {
                 'Authorization': `Bearer ${session.access_token}`,
                 'Content-Type': 'application/json'
@@ -496,7 +473,7 @@ const AdminPage: NextPage = () => {
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.access_token) {
-            const pendingResponse = await fetch(`${API_BASE}/api/moderation/professors/pending`, {
+            const pendingResponse = await fetch(`${API_BASE_URL}/moderation/professors/pending`, {
               headers: {
                 'Authorization': `Bearer ${session.access_token}`,
                 'Content-Type': 'application/json'
@@ -530,7 +507,7 @@ const AdminPage: NextPage = () => {
       try {
         // Get admin token from localStorage or Supabase session
         let authToken = null;
-        const storedSession = localStorage.getItem('adminSession');
+        const storedSession = localStorage.getItem('adminToken');
         if (storedSession) {
           try {
             const sessionData = JSON.parse(storedSession);
@@ -547,7 +524,7 @@ const AdminPage: NextPage = () => {
         }
         
         if (authToken) {
-          const flaggedResponse = await fetch(`${API_BASE}/api/moderation/reviews`, {
+          const flaggedResponse = await fetch(`${API_BASE_URL}/moderation/reviews`, {
             headers: {
               'Authorization': `Bearer ${authToken}`,
               'Content-Type': 'application/json'
@@ -602,27 +579,12 @@ const AdminPage: NextPage = () => {
       'Are you sure you want to delete this professor? This action cannot be undone.',
       async () => {
         try {
-          // First, get admin token
-          const adminLoginResponse = await fetch(`${API_BASE}/api/moderation/admin/login`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              username: 'admin@gmail.com',
-              password: 'gauravnihal123'
-            })
-          });
-
-          if (!adminLoginResponse.ok) {
-            throw new Error('Failed to authenticate as admin');
-          }
-
-          const adminData = await adminLoginResponse.json();
-          const adminToken = adminData.access_token;
+          // Get admin token from localStorage
+          const adminToken = getAdminToken();
+          if (!adminToken) return;
 
           // Now delete the professor with admin token
-          const response = await fetch(`${API_BASE}/api/moderation/professors/${professorId}`, {
+          const response = await fetch(`${API_BASE_URL}/moderation/professors/${professorId}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${adminToken}`,
@@ -658,27 +620,12 @@ const AdminPage: NextPage = () => {
 
   const handleProfessorUpdate = async (updatedData: any) => {
     try {
-      // First, get admin token
-      const adminLoginResponse = await fetch(`${API_BASE}/api/moderation/admin/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: 'admin@gmail.com',
-          password: 'gauravnihal123'
-        })
-      });
-
-      if (!adminLoginResponse.ok) {
-        throw new Error('Failed to authenticate as admin');
-      }
-
-      const adminData = await adminLoginResponse.json();
-      const adminToken = adminData.access_token;
+      // Get admin token from localStorage
+          const adminToken = getAdminToken();
+          if (!adminToken) return;
 
       // Now update the professor with admin token
-      const response = await fetch(`${API_BASE}/api/moderation/professors/${editingProfessor.id}`, {
+      const response = await fetch(`${API_BASE_URL}/moderation/professors/${editingProfessor.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${adminToken}`,
@@ -728,38 +675,11 @@ const AdminPage: NextPage = () => {
   const loadProfessorReviews = async () => {
     setIsLoadingProfessorReviews(true);
     try {
-      // Get admin token (same approach as college reviews)
-      const storedSession = localStorage.getItem('adminSession');
-      let adminToken = null;
-      
-      if (storedSession) {
-        try {
-          const sessionData = JSON.parse(storedSession);
-          adminToken = sessionData.access_token;
-        } catch (e) {
-          console.error('Failed to parse admin session');
-        }
-      }
-
+      // Get admin token from localStorage
+      const adminToken = getAdminToken();
       if (!adminToken) {
-        const adminLoginResponse = await fetch(`${API_BASE}/api/moderation/admin/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: 'admin@gmail.com',
-            password: 'gauravnihal123'
-          })
-        });
-        
-        if (adminLoginResponse.ok) {
-          const adminData = await adminLoginResponse.json();
-          adminToken = adminData.access_token;
-          localStorage.setItem('adminSession', JSON.stringify(adminData));
-        }
-      }
-
-      if (!adminToken) {
-        throw new Error('Failed to get admin token');
+        setIsLoadingProfessorReviews(false);
+        return;
       }
 
       const headers = {
@@ -769,7 +689,7 @@ const AdminPage: NextPage = () => {
 
       // Load professor reviews with current filter
       const reviewsResponse = await fetch(
-        `${API_BASE}/api/moderation/professor-reviews/all?status_filter=${professorReviewStatusFilter || 'all'}&limit=100`,
+        `${API_BASE_URL}/moderation/professor-reviews/all?status_filter=${professorReviewStatusFilter || 'all'}&limit=100`,
         { headers }
       );
 
@@ -782,7 +702,7 @@ const AdminPage: NextPage = () => {
 
       // Load stats
       const statsResponse = await fetch(
-        `${API_BASE}/api/moderation/professor-reviews/stats`,
+        `${API_BASE_URL}/moderation/professor-reviews/stats`,
         { headers }
       );
 
@@ -804,7 +724,7 @@ const AdminPage: NextPage = () => {
   const moderateProfessorReview = async (reviewId: string, action: 'approve' | 'remove', reason: string) => {
     try {
       // Get admin token
-      const storedSession = localStorage.getItem('adminSession');
+      const storedSession = localStorage.getItem('adminToken');
       let adminToken = null;
       
       if (storedSession) {
@@ -822,7 +742,7 @@ const AdminPage: NextPage = () => {
       }
 
       const response = await fetch(
-        `${API_BASE}/api/moderation/reviews/${reviewId}/action`,
+        `${API_BASE_URL}/moderation/reviews/${reviewId}/action`,
         {
           method: 'POST',
           headers: {
@@ -853,7 +773,7 @@ const AdminPage: NextPage = () => {
 
     try {
       // Get admin token
-      const storedSession = localStorage.getItem('adminSession');
+      const storedSession = localStorage.getItem('adminToken');
       let adminToken = null;
       
       if (storedSession) {
@@ -871,7 +791,7 @@ const AdminPage: NextPage = () => {
       }
 
       const response = await fetch(
-        `${API_BASE}/api/moderation/reviews/${reviewId}`,
+        `${API_BASE_URL}/moderation/reviews/${reviewId}`,
         {
           method: 'DELETE',
           headers: {
@@ -898,38 +818,11 @@ const AdminPage: NextPage = () => {
   const loadFlaggedCollegeReviews = async () => {
     setIsLoadingCollegeReviews(true);
     try {
-      // Get admin token
-      const storedSession = localStorage.getItem('adminSession');
-      let adminToken = null;
-      
-      if (storedSession) {
-        try {
-          const sessionData = JSON.parse(storedSession);
-          adminToken = sessionData.access_token;
-        } catch (e) {
-          console.error('Failed to parse admin session');
-        }
-      }
-
+      // Get admin token from localStorage
+      const adminToken = getAdminToken();
       if (!adminToken) {
-        const adminLoginResponse = await fetch(`${API_BASE}/api/moderation/admin/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: 'admin@gmail.com',
-            password: 'gauravnihal123'
-          })
-        });
-        
-        if (adminLoginResponse.ok) {
-          const adminData = await adminLoginResponse.json();
-          adminToken = adminData.access_token;
-          localStorage.setItem('adminSession', JSON.stringify(adminData));
-        }
-      }
-
-      if (!adminToken) {
-        throw new Error('Failed to get admin token');
+        setIsLoadingCollegeReviews(false);
+        return;
       }
 
       const headers = {
@@ -969,20 +862,9 @@ const AdminPage: NextPage = () => {
 
   const loadAllCollegeReviews = async () => {
     try {
-      const storedSession = localStorage.getItem('adminSession');
-      let adminToken = null;
-      
-      if (storedSession) {
-        const sessionData = JSON.parse(storedSession);
-        adminToken = sessionData.access_token;
-      } else if (session?.access_token) {
-        adminToken = session.access_token;
-      }
-
-      if (!adminToken) {
-        console.warn('No admin token available for loading college reviews');
-        return;
-      }
+      // Get admin token from localStorage
+      const adminToken = getAdminToken();
+      if (!adminToken) return;
 
       const headers = {
         'Authorization': `Bearer ${adminToken}`,
@@ -1015,7 +897,7 @@ const AdminPage: NextPage = () => {
 
   const handleCollegeReviewFlagAction = async (flagId: string, action: 'approve_flag' | 'dismiss_flag') => {
     try {
-      const storedSession = localStorage.getItem('adminSession');
+      const storedSession = localStorage.getItem('adminToken');
       let adminToken = null;
       
       if (storedSession) {
@@ -1726,7 +1608,7 @@ const AdminPage: NextPage = () => {
                                   try {
                                     // Get admin token from localStorage
                                     let token = null;
-                                    const storedSession = localStorage.getItem('adminSession');
+                                    const storedSession = localStorage.getItem('adminToken');
                                     if (storedSession) {
                                       try {
                                         const sessionData = JSON.parse(storedSession);
@@ -1741,7 +1623,7 @@ const AdminPage: NextPage = () => {
                                       return;
                                     }
                                     
-                                    const response = await fetch(`${API_BASE}/api/moderation/professors/${professor.id}/verify`, {
+                                    const response = await fetch(`${API_BASE_URL}/moderation/professors/${professor.id}/verify`, {
                                       method: 'POST',
                                       headers: {
                                         'Authorization': `Bearer ${token}`,
@@ -1779,7 +1661,7 @@ const AdminPage: NextPage = () => {
                                   try {
                                     // Get admin token from localStorage
                                     let token = null;
-                                    const storedSession = localStorage.getItem('adminSession');
+                                    const storedSession = localStorage.getItem('adminToken');
                                     if (storedSession) {
                                       try {
                                         const sessionData = JSON.parse(storedSession);
@@ -1794,7 +1676,7 @@ const AdminPage: NextPage = () => {
                                       return;
                                     }
                                     
-                                    const response = await fetch(`${API_BASE}/api/moderation/professors/${professor.id}/verify`, {
+                                    const response = await fetch(`${API_BASE_URL}/moderation/professors/${professor.id}/verify`, {
                                       method: 'POST',
                                       headers: {
                                         'Authorization': `Bearer ${token}`,
@@ -3076,3 +2958,8 @@ const AdminPage: NextPage = () => {
 };
 
 export default AdminPage;
+
+
+
+
+
