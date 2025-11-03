@@ -10,6 +10,7 @@ import os
 
 from src.lib.database import get_supabase
 from src.lib.auth import get_current_user
+from src.lib.cache import cache_response, medium_cache
 
 security = HTTPBearer()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -46,6 +47,7 @@ class ProfessorCreate(BaseModel):
     message: str
 
 @router.get("", response_model=ProfessorsResponse)
+@cache_response(ttl_seconds=300)  # Cache for 5 minutes
 async def search_professors(
     college_id: Optional[str] = Query(None, description="Filter by college ID"),
     q: Optional[str] = Query(None, description="Search by professor name"),

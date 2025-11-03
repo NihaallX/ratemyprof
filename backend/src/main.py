@@ -4,6 +4,7 @@ This module sets up the FastAPI application with all routes, middleware,
 and database configuration for the RateMyProf India platform.
 """
 import os
+import asyncio
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -12,7 +13,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.middleware import Middleware
 from pydantic import ValidationError
+from starlette.middleware.base import BaseHTTPMiddleware
 import uvicorn
 
 from src.lib.database import init_db, close_db
@@ -25,6 +28,38 @@ from src.api.moderation import router as moderation_router
 from src.api.user_limits import router as user_limits_router
 from src.api.college_review_moderation import router as college_review_moderation_router
 from src.routers.notifications import router as notifications_router
+from src.config.security import ALLOWED_ORIGINS, SECURITY_HEADERS, DOCS_ENABLED, AUTO_BAN_ENABLED
+from src.middleware.ip_ban import ip_ban_middleware, cleanup_task, ip_ban_manager
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Add security headers to all responses."""
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        
+        # Add security headers
+        for header, value in SECURITY_HEADERS.items():
+            response.headers[header] = value
+        
+        # Add cache-control headers for static content
+        # Cache API responses for 5 minutes (300 seconds)
+        if request.url.path.startswith('/api/'):
+            # Cache GET requests only
+            if request.method == "GET":
+                # Long cache for static data (colleges, professors)
+                if any(path in request.url.path for path in ['/colleges', '/professors']):
+                    response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=600"
+                # Short cache for dynamic data (reviews, stats)
+                elif any(path in request.url.path for path in ['/reviews', '/stats', '/notifications']):
+                    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=120"
+                # No cache for auth/admin endpoints
+                elif any(path in request.url.path for path in ['/auth', '/admin', '/moderation']):
+                    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+                else:
+                    # Default: 5 minute cache
+                    response.headers["Cache-Control"] = "public, max-age=300"
+        
+        return response
 
 
 @asynccontextmanager
@@ -39,10 +74,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await init_db()
     print("✅ Supabase connection initialized")
     
+    # Start IP ban cleanup background task
+    if AUTO_BAN_ENABLED:
+        print("✅ IP ban system enabled - starting cleanup task")
+        cleanup_job = asyncio.create_task(cleanup_task())
+    
     yield
     
     # Shutdown
     print("🛑 Shutting down RateMyProf API server...")
+    if AUTO_BAN_ENABLED:
+        cleanup_job.cancel()
     await close_db()
     print("✅ Application shutdown complete")
 
@@ -52,16 +94,24 @@ app = FastAPI(
     title="RateMyProf India API",
     description="Backend API for the RateMyProf India platform - helping students find and review professors across Indian colleges and universities.",
     version="1.0.0",
-    docs_url="/docs" if os.getenv("ENVIRONMENT") != "production" else None,
-    redoc_url="/redoc" if os.getenv("ENVIRONMENT") != "production" else None,
+    docs_url="/docs" if DOCS_ENABLED else None,
+    redoc_url="/redoc" if DOCS_ENABLED else None,
     lifespan=lifespan,
 )
 
-# CORS middleware - Allow all origins temporarily for debugging
+# Security headers middleware (applied first)
+app.add_middleware(SecurityHeadersMiddleware)
+
+# IP Ban middleware (blocks banned IPs before any processing)
+if AUTO_BAN_ENABLED:
+    app.middleware("http")(ip_ban_middleware)
+    print("✅ IP ban middleware enabled")
+
+# CORS middleware - Restrict to allowed origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Temporarily allow all origins to debug CORS issue
-    allow_credentials=False,  # Must be False when allow_origins is ["*"]
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["*"],

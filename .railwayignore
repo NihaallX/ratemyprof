@@ -1,0 +1,46 @@
+# Ignore frontend files (served by Vercel)
+frontend/
+node_modules/
+
+# Ignore git files
+.git/
+.github/
+
+# Ignore documentation
+*.md
+README.md
+FIXES_APPLIED.md
+MODERATION_SYSTEM.md
+RAILWAY_ENV_VARS.md
+SECURITY_DEPLOYMENT_GUIDE.md
+SECURITY_ENV_SETUP.md
+
+# Ignore scripts not needed in production
+scripts/
+memory/
+specs/
+templates/
+
+# Ignore test files
+test_*.py
+*_test.py
+tests/
+
+# Ignore development files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore deployment configs
+vercel.json
+.vercel/
+
+# Ignore environment examples
+.env.example
+*.example
+
+# Ignore temp files
+*.log
+*.tmp
+__pycache__/

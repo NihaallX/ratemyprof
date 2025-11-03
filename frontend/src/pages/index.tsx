@@ -658,6 +658,7 @@ export default function HomePage() {
                     <Link
                       key={professor.id}
                       href={`/professors/${professor.id}`}
+                      prefetch={true}
                       className={`block bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group animate-scaleIn stagger-${Math.min(index + 1, 6)}`}
                     >
                       <div className="flex h-full">
@@ -722,6 +723,7 @@ export default function HomePage() {
                     <Link
                       key={college.id}
                       href={`/colleges/${college.id}`}
+                      prefetch={true}
                       className={`block bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group animate-scaleIn stagger-${Math.min(index + 1, 6)}`}
                     >
                       <div className="flex h-full">
@@ -794,6 +796,7 @@ export default function HomePage() {
                   <Link
                     key={professor.id}
                     href={`/professors/${professor.id}`}
+                    prefetch={true}
                     className="block bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group"
                   >
                     <div className="flex h-full">
@@ -856,6 +859,7 @@ export default function HomePage() {
                   <Link
                     key={college.id}
                     href={`/colleges/${college.id}`}
+                    prefetch={true}
                     className="block bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group"
                   >
                     <div className="flex h-full">

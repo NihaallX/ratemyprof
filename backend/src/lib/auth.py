@@ -11,13 +11,10 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from supabase import Client
 
 from src.lib.database import get_supabase, get_supabase_with_token
+from src.config.security import SECRET_KEY, ALGORITHM, ADMIN_USERNAME
 
 # HTTP Bearer token scheme
 security = HTTPBearer(auto_error=False)
-
-# Admin token configuration
-ADMIN_SECRET_KEY = "ratemyprof-admin-secret-key-2025"
-ADMIN_ALGORITHM = "HS256"
 
 
 class AuthError(HTTPException):
@@ -43,20 +40,23 @@ def get_user_from_token(supabase: Client, access_token: str) -> Optional[Dict[st
     """
     # First, try to verify as admin token
     try:
-        payload = jwt.decode(access_token, ADMIN_SECRET_KEY, algorithms=[ADMIN_ALGORITHM])
+        payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
         username = payload.get("sub")
-        if username == "admin@gmail.com":
+        if username == ADMIN_USERNAME:
             print(f"✅ Admin token verified for: {username}")
             return {
                 "id": "admin-user-id",
-                "email": "admin@gmail.com",
-                "username": "admin@gmail.com",
+                "email": username,
+                "username": username,
                 "email_confirmed": True,
                 "created_at": "2025-01-01T00:00:00Z",
                 "updated_at": "2025-01-01T00:00:00Z",
                 "user_metadata": {"role": "admin"},
                 "app_metadata": {"role": "admin"},
             }
+    except jwt.ExpiredSignatureError:
+        print("⚠️ Admin token expired")
+        return None
     except jwt.PyJWTError as e:
         # Not an admin token, continue to Supabase verification
         print(f"⚠️ Not an admin token (JWT error): {str(e)[:100]}")

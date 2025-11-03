@@ -1,10 +1,12 @@
 import type { AppProps } from 'next/app'
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
+import { SWRConfig } from 'swr'
 import { AuthProvider } from '../contexts/AuthContext'
 import { NotificationProvider } from '../contexts/NotificationContext'
 import NotificationContainer from '../components/NotificationContainer'
 import MaintenanceBanner from '../components/MaintenanceBanner'
+import { swrConfig } from '../lib/swr-config'
 import '../styles/globals.css'
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -28,12 +30,14 @@ export default function App({ Component, pageProps }: AppProps) {
   }, [router])
 
   return (
-    <AuthProvider>
-      <NotificationProvider>
-        <MaintenanceBanner />
-        <Component {...pageProps} />
-        <NotificationContainer />
-      </NotificationProvider>
-    </AuthProvider>
+    <SWRConfig value={swrConfig}>
+      <AuthProvider>
+        <NotificationProvider>
+          <MaintenanceBanner />
+          <Component {...pageProps} />
+          <NotificationContainer />
+        </NotificationProvider>
+      </AuthProvider>
+    </SWRConfig>
   )
 }

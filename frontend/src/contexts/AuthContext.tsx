@@ -8,7 +8,7 @@ interface AuthContextType {
   session: Session | null
   loading: boolean
   signUp: (email: string, password: string, name?: string) => Promise<{ error: AuthError | null }>
-  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<{ error: AuthError | null }>  // Added rememberMe
   signOut: () => Promise<{ error: AuthError | null }>
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>
 }
@@ -119,72 +119,45 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return { error: error as AuthError }
       }
     },
-    signIn: async (email: string, password: string) => {
+    signIn: async (email: string, password: string, rememberMe: boolean = false) => {
       try {
-        // Check for admin login first
-        if (email === 'admin@gmail.com') {
-          const response = await fetch(`${API_LEGACY_BASE}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-          })
-          
-          if (response.ok) {
-            const data = await response.json()
-            // Create a mock admin user object
-            const adminUser = {
-              id: 'admin-123',
-              email: 'admin@gmail.com',
-              role: 'admin',
-              aud: 'authenticated',
-              app_metadata: { role: 'admin' },
-              user_metadata: { role: 'admin', name: 'Admin' },
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-              confirmed_at: new Date().toISOString(),
-              email_confirmed_at: new Date().toISOString(),
-              last_sign_in_at: new Date().toISOString()
-            } as User
-            
-            // Create a mock session
-            const adminSession = {
-              access_token: data.access_token,
-              refresh_token: '',
-              expires_in: 3600,
-              expires_at: Date.now() / 1000 + 3600,
-              token_type: 'bearer',
-              user: adminUser
-            } as Session
-            
-            // Store admin session in localStorage for persistence
-            localStorage.setItem('adminSession', JSON.stringify(adminSession))
-            localStorage.setItem('adminUser', JSON.stringify(adminUser))
-            
-            // Set the admin user and session
-            setUser(adminUser)
-            setSession(adminSession)
-            
-            return { error: null }
+        // Regular Supabase authentication (NOT admin)
+        const { data, error } = await auth.signInWithPassword({
+          email,
+          password
+        })
+        
+        if (error) {
+          return { error }
+        }
+        
+        // Store tokens based on remember_me preference
+        if (data.session) {
+          if (rememberMe) {
+            // Store in localStorage (persists across browser sessions - 30 days)
+            localStorage.setItem('supabase_session', JSON.stringify(data.session))
+            console.log('✅ Session saved to localStorage (Remember Me enabled)')
           } else {
-            const errorData = await response.json()
-            return { error: { message: errorData.error || 'Admin login failed' } as AuthError }
+            // Store in sessionStorage (clears when browser closes)
+            sessionStorage.setItem('supabase_session', JSON.stringify(data.session))
+            console.log('✅ Session saved to sessionStorage (temporary)')
           }
         }
         
-        // Regular user login with Supabase
-        const { error } = await auth.signIn(email, password)
-        return { error }
+        return { error: null }
       } catch (error) {
         return { error: error as AuthError }
       }
     },
     signOut: async () => {
       try {
-        // Clear admin session if present
+        // Clear stored sessions (both localStorage and sessionStorage)
+        localStorage.removeItem('supabase_session')
+        sessionStorage.removeItem('supabase_session')
         localStorage.removeItem('adminSession')
         localStorage.removeItem('adminUser')
         
-        // Clear regular session
+        // Regular Supabase signout
         const { error } = await auth.signOut()
         
         // Force clear state

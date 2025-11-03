@@ -6,19 +6,34 @@ from typing import Optional, List, Dict, Any
 from uuid import UUID
 from datetime import datetime, timedelta
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, field_validator
 from supabase import Client
+from collections import defaultdict
+import time
 
 from src.lib.database import get_supabase, get_supabase_admin, get_supabase_service
 from src.lib.auth import get_current_user
 from src.services.auto_flagging import AutoFlaggingSystem
 from src.services.content_filter import content_filter, ContentAnalysis
 from src.services.user_communication import UserCommunicationSystem, NotificationType
+from src.config.security import (
+    ADMIN_USERNAME,
+    verify_admin_password,
+    SECRET_KEY,
+    ALGORITHM,
+    ACCESS_TOKEN_EXPIRE_MINUTES,
+    RATE_LIMIT_LOGIN_ATTEMPTS,
+    RATE_LIMIT_WINDOW_MINUTES
+)
+from src.middleware.ip_ban import ip_ban_manager
 
 router = APIRouter()
 security = HTTPBearer()
+
+# Rate limiting storage (in-memory, should use Redis in production)
+login_attempts = defaultdict(list)
 
 def get_admin_supabase() -> Optional[Client]:
     """Get admin Supabase client for elevated operations."""
@@ -38,13 +53,6 @@ class AdminLoginResponse(BaseModel):
     token_type: str
     expires_in: int
     user: Dict[str, Any]
-
-# Hardcoded admin credentials
-ADMIN_USERNAME = "admin@gmail.com"
-ADMIN_PASSWORD = "gauravnihal123"
-SECRET_KEY = "ratemyprof-admin-secret-key-2025"  # In production, use environment variable
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_HOURS = 24
 
 # Request/Response Models
 class ModerationAction(BaseModel):
@@ -100,14 +108,15 @@ class FlaggedReviewsResponse(BaseModel):
 
 
 def create_admin_token(username: str) -> str:
-    """Create JWT token for admin user."""
-    expire = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
+    """Create JWT token for admin user with expiration."""
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode = {
         "sub": username,
         "username": username,
-        "email": "admin@gmail.com",
+        "email": username,
         "role": "admin",
-        "exp": expire
+        "exp": expire,
+        "iat": datetime.utcnow()
     }
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -158,14 +167,46 @@ async def get_admin_user(
 
 
 @router.post("/admin/login", response_model=AdminLoginResponse)
-async def admin_login(credentials: AdminLogin):
-    """Admin login endpoint with hardcoded credentials."""
-    if credentials.username != ADMIN_USERNAME or credentials.password != ADMIN_PASSWORD:
+async def admin_login(credentials: AdminLogin, request: Request):
+    """
+    Admin login endpoint with secure double-hashed password verification and rate limiting.
+    
+    Rate limit: {RATE_LIMIT_LOGIN_ATTEMPTS} attempts per {RATE_LIMIT_WINDOW_MINUTES} minutes per IP.
+    """
+    client_ip = request.client.host
+    current_time = time.time()
+    
+    # Clean up old attempts (older than rate limit window)
+    cutoff_time = current_time - (RATE_LIMIT_WINDOW_MINUTES * 60)
+    login_attempts[client_ip] = [
+        attempt_time for attempt_time in login_attempts[client_ip]
+        if attempt_time > cutoff_time
+    ]
+    
+    # Check rate limit
+    if len(login_attempts[client_ip]) >= RATE_LIMIT_LOGIN_ATTEMPTS:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Too many login attempts. Please try again in {RATE_LIMIT_WINDOW_MINUTES} minutes.",
+            headers={"Retry-After": str(RATE_LIMIT_WINDOW_MINUTES * 60)}
+        )
+    
+    # Verify credentials using secure bcrypt hashing
+    if credentials.username != ADMIN_USERNAME or not verify_admin_password(credentials.password):
+        # Record failed attempt
+        login_attempts[client_ip].append(current_time)
+        
+        # Record failed login in IP ban manager (smart auto-ban detection)
+        ip_ban_manager.record_failed_login(client_ip)
+        
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid admin credentials",
             headers={"WWW-Authenticate": "Bearer"}
         )
+    
+    # Clear attempts on successful login
+    login_attempts[client_ip] = []
     
     access_token = create_admin_token(credentials.username)
     
@@ -3025,3 +3066,95 @@ async def get_dashboard_stats(
             status_code=500,
             detail=f"Error getting dashboard stats: {str(e)}"
         )
+
+
+# ==========================================
+# IP BAN MANAGEMENT ENDPOINTS
+# ==========================================
+
+@router.get("/ip-bans", response_model=Dict[str, Any])
+async def get_banned_ips(current_user: dict = Depends(get_current_admin_user)):
+    """
+    Get list of all currently banned IPs with expiry times.
+    Admin-only endpoint.
+    """
+    try:
+        banned_ips = ip_ban_manager.get_banned_ips()
+        
+        return {
+            "banned_ips": banned_ips,
+            "total_banned": len(banned_ips),
+            "auto_ban_enabled": ip_ban_manager is not None
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error getting banned IPs: {str(e)}"
+        )
+
+
+class BanIPRequest(BaseModel):
+    ip: str
+    duration_minutes: int = 60
+    reason: str = "Manual ban by admin"
+
+
+@router.post("/ip-bans", response_model=Dict[str, str])
+async def ban_ip_address(
+    ban_request: BanIPRequest,
+    current_user: dict = Depends(get_current_admin_user)
+):
+    """
+    Manually ban an IP address.
+    Admin-only endpoint.
+    """
+    try:
+        ip_ban_manager.ban_ip(
+            ban_request.ip,
+            duration_minutes=ban_request.duration_minutes,
+            reason=ban_request.reason
+        )
+        
+        return {
+            "message": f"IP {ban_request.ip} banned for {ban_request.duration_minutes} minutes",
+            "ip": ban_request.ip,
+            "duration_minutes": str(ban_request.duration_minutes),
+            "reason": ban_request.reason
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error banning IP: {str(e)}"
+        )
+
+
+@router.delete("/ip-bans/{ip}")
+async def unban_ip_address(
+    ip: str,
+    current_user: dict = Depends(get_current_admin_user)
+):
+    """
+    Manually unban an IP address.
+    Admin-only endpoint.
+    """
+    try:
+        success = ip_ban_manager.unban_ip(ip)
+        
+        if success:
+            return {
+                "message": f"IP {ip} has been unbanned",
+                "ip": ip
+            }
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail=f"IP {ip} is not currently banned"
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error unbanning IP: {str(e)}"
+        )
+

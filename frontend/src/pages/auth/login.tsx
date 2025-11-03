@@ -33,6 +33,7 @@ import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react'
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)  // NEW: Remember Me state
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -67,7 +68,7 @@ export default function Login() {
     }
 
     try {
-      const result = await signIn(email, password)
+      const result = await signIn(email, password, rememberMe)  // Pass rememberMe to signIn
       
       if (result.error) {
         setError(result.error.message || 'Invalid login credentials')
@@ -178,6 +179,21 @@ export default function Login() {
                     )}
                   </button>
                 </div>
+              </div>
+
+              {/* Remember Me Checkbox - NEW */}
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
+                />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 cursor-pointer">
+                  Remember me for 30 days
+                </label>
               </div>
 
               {/* Submit Button */}

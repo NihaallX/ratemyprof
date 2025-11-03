@@ -80,6 +80,7 @@ class UserLoginRequest(BaseModel):
     """Request model for user login."""
     email: EmailStr
     password: str
+    remember_me: bool = False  # NEW: Remember me checkbox
     
     @field_validator('email')
     @classmethod
@@ -164,42 +165,15 @@ async def login(
     """Authenticate user and return access tokens.
     
     Validates user credentials and returns JWT tokens for API access.
+    For admin login, use /api/moderation/admin/login endpoint instead.
+    
+    Supports "Remember Me" functionality:
+    - remember_me=False: 1 hour session
+    - remember_me=True: 30 day session
     """
     try:
-        # Check for hardcoded admin credentials first
-        if request.email == "admin@gmail.com" and request.password == "gauravnihal123":
-            # Create admin token using the same JWT system
-            from datetime import datetime, timedelta
-            import jwt
-            
-            SECRET_KEY = "ratemyprof-admin-secret-key-2025"
-            ALGORITHM = "HS256"
-            ACCESS_TOKEN_EXPIRE_HOURS = 24
-            
-            expire = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
-            admin_token_data = {
-                "sub": "admin@gmail.com",
-                "email": "admin@gmail.com",
-                "username": "admin@gmail.com",
-                "role": "admin",
-                "exp": expire
-            }
-            admin_token = jwt.encode(admin_token_data, SECRET_KEY, algorithm=ALGORITHM)
-            
-            admin_user_data = {
-                "id": "admin-user-id",
-                "email": "admin@gmail.com", 
-                "is_verified": True,
-                "is_moderator": True,
-                "name": "Administrator"
-            }
-            
-            return TokenResponse(
-                access_token=admin_token,
-                token_type="bearer",
-                expires_in=ACCESS_TOKEN_EXPIRE_HOURS * 3600,
-                user=admin_user_data
-            )
+        # NOTE: Admin users should use /api/moderation/admin/login
+        # This endpoint is for regular users only
         
         # Regular Supabase authentication
         auth_response = supabase.auth.sign_in_with_password({
@@ -218,7 +192,8 @@ async def login(
             "email": auth_response.user.email,
             "is_verified": auth_response.user.email_confirmed_at is not None,
             "is_moderator": False,  # Default - can be enhanced later
-            "name": auth_response.user.user_metadata.get("name")
+            "name": auth_response.user.user_metadata.get("name"),
+            "remember_me": request.remember_me  # Pass to frontend for token storage
         }
         
         return TokenResponse(
