@@ -201,7 +201,9 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "RateMyProf India API",
-        "version": "1.0.0",
+        "version": "1.0.1",
+        "deployment_time": "2025-11-04T15:00:00Z",
+        "validation_fix": "applied",
         "environment": os.getenv("ENVIRONMENT", "development"),
     }
 
@@ -212,7 +214,8 @@ async def root():
     """Root endpoint with API information."""
     return {
         "message": "Welcome to RateMyProf India API",
-        "version": "1.0.0",
+        "version": "1.0.1",
+        "validation_fix": "applied",
         "docs_url": "/docs",
         "redoc_url": "/redoc",
         "health_url": "/health",
