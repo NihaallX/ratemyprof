@@ -91,13 +91,23 @@ const AdminPage: NextPage = () => {
   // Fetch maintenance mode status from API
   const fetchMaintenanceMode = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/settings/maintenance`);
+      // Use base URL without /v1 for /api routes
+      const apiUrl = API_BASE_URL.replace('/v1', '');
+      const response = await fetch(`${apiUrl}/api/settings/maintenance`);
       if (response.ok) {
         const data = await response.json();
         setMaintenanceModeEnabled(data.maintenance_mode_enabled === true);
+      } else {
+        // Fallback to localStorage if API not available yet
+        console.warn('Maintenance API not available, using localStorage');
+        const localEnabled = localStorage.getItem('maintenanceModeEnabled') === 'true';
+        setMaintenanceModeEnabled(localEnabled);
       }
     } catch (error) {
-      console.error('Error fetching maintenance mode:', error);
+      console.warn('Error fetching maintenance mode, using localStorage:', error);
+      // Fallback to localStorage
+      const localEnabled = localStorage.getItem('maintenanceModeEnabled') === 'true';
+      setMaintenanceModeEnabled(localEnabled);
     } finally {
       setIsLoadingMaintenance(false);
     }
@@ -2498,7 +2508,9 @@ const AdminPage: NextPage = () => {
                       setIsLoadingMaintenance(true);
                       
                       try {
-                        const response = await fetch(`${API_BASE_URL}/api/settings/maintenance`, {
+                        // Use base URL without /v1 for /api routes
+                        const apiUrl = API_BASE_URL.replace('/v1', '');
+                        const response = await fetch(`${apiUrl}/api/settings/maintenance`, {
                           method: 'POST',
                           headers: {
                             'Content-Type': 'application/json',
@@ -2508,6 +2520,35 @@ const AdminPage: NextPage = () => {
                         });
                         
                         if (!response.ok) {
+                          // If API not available, use localStorage fallback
+                          if (response.status === 404) {
+                            console.warn('API not deployed yet, using localStorage fallback');
+                            
+                            // Update localStorage
+                            if (newState) {
+                              localStorage.setItem('maintenanceModeEnabled', 'true');
+                            } else {
+                              localStorage.removeItem('maintenanceModeEnabled');
+                            }
+                            
+                            // Update local state
+                            setMaintenanceModeEnabled(newState);
+                            
+                            // Clear user dismissals
+                            localStorage.removeItem('maintenanceBannerDismissed');
+                            
+                            // Dispatch event
+                            window.dispatchEvent(new CustomEvent('maintenanceModeChanged'));
+                            
+                            showToast(
+                              newState 
+                                ? '⚠️ Maintenance mode enabled (localStorage only - backend not deployed yet)' 
+                                : '⚠️ Maintenance mode disabled (localStorage only)',
+                              'warning'
+                            );
+                            return;
+                          }
+                          
                           const error = await response.json();
                           throw new Error(error.detail || 'Failed to update maintenance mode');
                         }
@@ -2531,7 +2572,34 @@ const AdminPage: NextPage = () => {
                         );
                       } catch (error: any) {
                         console.error('Error updating maintenance mode:', error);
-                        showToast(error.message || 'Failed to update maintenance mode', 'error');
+                        
+                        // If network error, try localStorage fallback
+                        if (error.message.includes('fetch') || error.message.includes('Network')) {
+                          console.warn('Network error, using localStorage fallback');
+                          
+                          // Update localStorage
+                          if (newState) {
+                            localStorage.setItem('maintenanceModeEnabled', 'true');
+                          } else {
+                            localStorage.removeItem('maintenanceModeEnabled');
+                          }
+                          
+                          // Update local state
+                          setMaintenanceModeEnabled(newState);
+                          
+                          // Clear user dismissals
+                          localStorage.removeItem('maintenanceBannerDismissed');
+                          
+                          // Dispatch event
+                          window.dispatchEvent(new CustomEvent('maintenanceModeChanged'));
+                          
+                          showToast(
+                            '⚠️ Backend unavailable, using temporary localStorage mode',
+                            'warning'
+                          );
+                        } else {
+                          showToast(error.message || 'Failed to update maintenance mode', 'error');
+                        }
                       } finally {
                         setIsLoadingMaintenance(false);
                       }

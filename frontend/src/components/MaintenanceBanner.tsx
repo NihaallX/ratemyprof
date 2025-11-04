@@ -8,11 +8,27 @@ export default function MaintenanceBanner() {
     // Function to check maintenance mode status from API
     const checkMaintenanceMode = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/settings/maintenance`)
+        // Use v1 route directly (API_BASE_URL already has /v1)
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/v1', '') || 
+                       (typeof window !== 'undefined' && window.location.hostname !== 'localhost' 
+                         ? 'https://ratemyprof-production.up.railway.app' 
+                         : 'http://localhost:8000');
+        
+        const response = await fetch(`${apiUrl}/api/settings/maintenance`)
         
         if (!response.ok) {
-          console.error('Failed to fetch maintenance mode status')
-          setIsVisible(false)
+          // Fallback to localStorage while backend is deploying
+          console.warn('Maintenance API not available yet, using localStorage fallback')
+          const localEnabled = localStorage.getItem('maintenanceModeEnabled') === 'true'
+          
+          if (localEnabled) {
+            const isDismissed = localStorage.getItem('maintenanceBannerDismissed')
+            if (!isDismissed) {
+              setIsVisible(true)
+            }
+          } else {
+            setIsVisible(false)
+          }
           setIsLoading(false)
           return
         }
@@ -33,8 +49,18 @@ export default function MaintenanceBanner() {
         }
         setIsLoading(false)
       } catch (error) {
-        console.error('Error checking maintenance mode:', error)
-        setIsVisible(false)
+        console.warn('Error checking maintenance mode, using localStorage fallback:', error)
+        // Fallback to localStorage if API fails
+        const localEnabled = localStorage.getItem('maintenanceModeEnabled') === 'true'
+        
+        if (localEnabled) {
+          const isDismissed = localStorage.getItem('maintenanceBannerDismissed')
+          if (!isDismissed) {
+            setIsVisible(true)
+          }
+        } else {
+          setIsVisible(false)
+        }
         setIsLoading(false)
       }
     }
