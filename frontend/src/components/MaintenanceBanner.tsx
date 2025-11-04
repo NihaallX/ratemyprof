@@ -2,20 +2,61 @@ import { useState, useEffect } from 'react'
 
 export default function MaintenanceBanner() {
   const [isVisible, setIsVisible] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Check if maintenance mode is enabled by admin
-    const isMaintenanceEnabled = localStorage.getItem('maintenanceModeEnabled') === 'true'
-    
-    if (!isMaintenanceEnabled) {
-      setIsVisible(false)
-      return
+    // Function to check maintenance mode status from API
+    const checkMaintenanceMode = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/settings/maintenance`)
+        
+        if (!response.ok) {
+          console.error('Failed to fetch maintenance mode status')
+          setIsVisible(false)
+          setIsLoading(false)
+          return
+        }
+        
+        const data = await response.json()
+        const isMaintenanceEnabled = data.maintenance_mode_enabled === true
+        
+        if (!isMaintenanceEnabled) {
+          setIsVisible(false)
+          setIsLoading(false)
+          return
+        }
+
+        // Check if banner was previously dismissed by user
+        const isDismissed = localStorage.getItem('maintenanceBannerDismissed')
+        if (!isDismissed) {
+          setIsVisible(true)
+        }
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Error checking maintenance mode:', error)
+        setIsVisible(false)
+        setIsLoading(false)
+      }
     }
 
-    // Check if banner was previously dismissed by user
-    const isDismissed = localStorage.getItem('maintenanceBannerDismissed')
-    if (!isDismissed) {
-      setIsVisible(true)
+    // Initial check
+    checkMaintenanceMode()
+
+    // Listen for maintenance mode changes (triggered by admin toggle)
+    const handleMaintenanceToggle = () => {
+      // Clear dismissal when admin toggles
+      localStorage.removeItem('maintenanceBannerDismissed')
+      checkMaintenanceMode()
+    }
+
+    window.addEventListener('maintenanceModeChanged', handleMaintenanceToggle)
+
+    // Poll for changes every 30 seconds (in case other admins toggle it)
+    const pollInterval = setInterval(checkMaintenanceMode, 30000)
+
+    return () => {
+      window.removeEventListener('maintenanceModeChanged', handleMaintenanceToggle)
+      clearInterval(pollInterval)
     }
   }, [])
 

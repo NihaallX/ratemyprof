@@ -84,6 +84,30 @@ const AdminPage: NextPage = () => {
   const [collegeReviewStatusFilter, setCollegeReviewStatusFilter] = useState<string>('pending');
   const [isLoadingCollegeReviews, setIsLoadingCollegeReviews] = useState(false);
 
+  // Maintenance mode state
+  const [maintenanceModeEnabled, setMaintenanceModeEnabled] = useState(false);
+  const [isLoadingMaintenance, setIsLoadingMaintenance] = useState(true);
+
+  // Fetch maintenance mode status from API
+  const fetchMaintenanceMode = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/settings/maintenance`);
+      if (response.ok) {
+        const data = await response.json();
+        setMaintenanceModeEnabled(data.maintenance_mode_enabled === true);
+      }
+    } catch (error) {
+      console.error('Error fetching maintenance mode:', error);
+    } finally {
+      setIsLoadingMaintenance(false);
+    }
+  };
+
+  // Initialize maintenance mode state
+  useEffect(() => {
+    fetchMaintenanceMode();
+  }, []);
+
   const showAdminWelcomeNotification = () => {
     setShowWelcomeModal(true);
     setTimeout(() => setShowWelcomeModal(false), 4000);
@@ -2460,46 +2484,77 @@ const AdminPage: NextPage = () => {
                   <div className="flex-1">
                     <p className="font-medium text-gray-900">Maintenance Banner</p>
                     <p className="text-sm text-gray-600">
-                      {typeof window !== 'undefined' && localStorage.getItem('maintenanceModeEnabled') === 'true'
+                      {maintenanceModeEnabled
                         ? 'Currently showing maintenance banner to all users'
                         : 'Maintenance banner is currently hidden'}
                     </p>
                   </div>
                   <button
-                    onClick={() => {
-                      if (typeof window !== 'undefined') {
-                        const isEnabled = localStorage.getItem('maintenanceModeEnabled') === 'true';
-                        if (isEnabled) {
-                          localStorage.removeItem('maintenanceModeEnabled');
-                          // Clear user dismissals so banner shows again when re-enabled
-                          localStorage.removeItem('maintenanceBannerDismissed');
-                          showToast('Maintenance mode disabled', 'success');
-                        } else {
-                          localStorage.setItem('maintenanceModeEnabled', 'true');
-                          // Clear user dismissals so banner shows immediately
-                          localStorage.removeItem('maintenanceBannerDismissed');
-                          showToast('Maintenance mode enabled', 'success');
+                    onClick={async () => {
+                      const adminToken = getAdminToken();
+                      if (!adminToken) return;
+                      
+                      const newState = !maintenanceModeEnabled;
+                      setIsLoadingMaintenance(true);
+                      
+                      try {
+                        const response = await fetch(`${API_BASE_URL}/api/settings/maintenance`, {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${adminToken}`
+                          },
+                          body: JSON.stringify({ enabled: newState })
+                        });
+                        
+                        if (!response.ok) {
+                          const error = await response.json();
+                          throw new Error(error.detail || 'Failed to update maintenance mode');
                         }
-                        // Force page refresh to show/hide banner
-                        window.location.reload();
+                        
+                        const data = await response.json();
+                        
+                        // Update local state
+                        setMaintenanceModeEnabled(data.maintenance_mode_enabled);
+                        
+                        // Clear user dismissals so banner shows/hides immediately
+                        localStorage.removeItem('maintenanceBannerDismissed');
+                        
+                        // Dispatch custom event to update MaintenanceBanner component
+                        window.dispatchEvent(new CustomEvent('maintenanceModeChanged'));
+                        
+                        showToast(
+                          newState 
+                            ? 'Maintenance mode enabled globally for all users' 
+                            : 'Maintenance mode disabled globally',
+                          'success'
+                        );
+                      } catch (error: any) {
+                        console.error('Error updating maintenance mode:', error);
+                        showToast(error.message || 'Failed to update maintenance mode', 'error');
+                      } finally {
+                        setIsLoadingMaintenance(false);
                       }
                     }}
-                    className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                      typeof window !== 'undefined' && localStorage.getItem('maintenanceModeEnabled') === 'true'
+                    disabled={isLoadingMaintenance}
+                    className={`px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                      maintenanceModeEnabled
                         ? 'bg-red-600 hover:bg-red-700 text-white'
                         : 'bg-green-600 hover:bg-green-700 text-white'
                     }`}
                   >
-                    {typeof window !== 'undefined' && localStorage.getItem('maintenanceModeEnabled') === 'true'
-                      ? 'Disable'
-                      : 'Enable'}
+                    {isLoadingMaintenance ? 'Updating...' : (maintenanceModeEnabled ? 'Disable' : 'Enable')}
                   </button>
                 </div>
 
                 <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-900">
-                    <strong>Note:</strong> Users can dismiss the banner individually, but it will persist 
-                    in their browser until they clear it or you disable maintenance mode here.
+                  <p className="text-sm text-blue-900 mb-2">
+                    <strong>✅ Global Control:</strong> This maintenance mode is stored in the database and applies 
+                    to ALL users across the platform instantly. When enabled, every visitor will see the banner.
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    <strong>Note:</strong> Individual users can dismiss the banner in their browser, but it will 
+                    reappear when you disable and re-enable maintenance mode.
                   </p>
                 </div>
               </div>

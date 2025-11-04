@@ -28,6 +28,7 @@ from src.api.moderation import router as moderation_router
 from src.api.user_limits import router as user_limits_router
 from src.api.college_review_moderation import router as college_review_moderation_router
 from src.routers.notifications import router as notifications_router
+from src.routers.settings import router as settings_router
 from src.config.security import ALLOWED_ORIGINS, SECURITY_HEADERS, DOCS_ENABLED, AUTO_BAN_ENABLED
 from src.middleware.ip_ban import ip_ban_middleware, cleanup_task, ip_ban_manager
 
@@ -338,6 +339,18 @@ app.include_router(
     college_review_moderation_router,
     prefix="/api/college-review-moderation",
     tags=["College Review Moderation (Legacy)"]
+)
+
+app.include_router(
+    settings_router,
+    prefix="/v1/settings",
+    tags=["Settings"]
+)
+
+app.include_router(
+    settings_router,
+    prefix="/api/settings",
+    tags=["Settings (Legacy)"]
 )
 
 
