@@ -354,7 +354,7 @@ async def get_all_college_reviews_for_admin(
                 # Get author mapping (just the author_id)
                 mapping_response = admin_client.table("college_review_author_mappings") \
                     .select("author_id") \
-                    .eq("college_review_id", review['id']) \
+                    .eq("review_id", review['id']) \
                     .execute()
                 
                 if mapping_response.data and len(mapping_response.data) > 0:
@@ -529,7 +529,7 @@ async def moderate_college_review(
             
             # Delete author mapping if exists
             try:
-                admin_client.table('college_review_author_mappings').delete().eq('college_review_id', review_id).execute()
+                admin_client.table('college_review_author_mappings').delete().eq('review_id', review_id).execute()
             except:
                 pass  # Mapping might not exist
             
