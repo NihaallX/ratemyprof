@@ -12,9 +12,57 @@ import { API_BASE_URL } from '../../config/api';
 export default function AdminLogin() {
   const router = useRouter();
   const [showModal, setShowModal] = useState(true);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
-  // Don't auto-redirect - let user explicitly login
-  // The admin dashboard will redirect here if token is missing/invalid
+  // Check if already logged in - redirect to dashboard
+  useEffect(() => {
+    const checkExistingAuth = async () => {
+      const adminToken = localStorage.getItem('adminToken');
+      
+      if (adminToken) {
+        // Verify token is valid by checking if we can access admin endpoint
+        try {
+          const response = await fetch(`${API_BASE_URL}/moderation/dashboard/stats`, {
+            headers: {
+              'Authorization': `Bearer ${adminToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (response.ok) {
+            // Token is valid, redirect to dashboard
+            console.log('Already logged in, redirecting to dashboard');
+            router.replace('/admin');
+            return;
+          } else {
+            // Token invalid, clear it
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('adminUser');
+          }
+        } catch (error) {
+          console.log('Token validation failed:', error);
+          localStorage.removeItem('adminToken');
+          localStorage.removeItem('adminUser');
+        }
+      }
+      
+      setIsCheckingAuth(false);
+    };
+    
+    checkExistingAuth();
+  }, [router]);
+
+  // Show loading while checking auth
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleAdminLogin = async (email: string, password: string) => {
     try {
@@ -60,7 +108,10 @@ export default function AdminLogin() {
       </Head>
       <AdminLoginModal
         isOpen={showModal}
-        onClose={() => router.push('/')}
+        onClose={() => {
+          // Redirect to homepage when closing login modal
+          router.push('/');
+        }}
         onLogin={handleAdminLogin}
       />
     </>
