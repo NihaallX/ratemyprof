@@ -334,9 +334,8 @@ const AdminPage: NextPage = () => {
         return;
       }
 
-      const sessionData = JSON.parse(adminToken);
       const headers = {
-        'Authorization': `Bearer ${sessionData.access_token}`,
+        'Authorization': `Bearer ${adminToken}`,
         'Content-Type': 'application/json'
       };
 
@@ -371,8 +370,7 @@ const AdminPage: NextPage = () => {
       const storedSession = localStorage.getItem('adminToken');
       if (storedSession) {
         try {
-          const sessionData = JSON.parse(storedSession);
-          adminToken = sessionData.access_token;
+          adminToken = storedSession;
         } catch (e) {
           console.log('Failed to parse stored session');
         }
@@ -511,22 +509,11 @@ const AdminPage: NextPage = () => {
 
       // Try to fetch flagged reviews (might fail if endpoint has issues)
       try {
-        // Get admin token from localStorage or Supabase session
+        // Get admin token from localStorage
         let authToken = null;
         const storedSession = localStorage.getItem('adminToken');
         if (storedSession) {
-          try {
-            const sessionData = JSON.parse(storedSession);
-            authToken = sessionData.access_token;
-          } catch (e) {
-            console.log('Failed to parse stored admin session');
-          }
-        }
-        
-        // Fallback to Supabase session if no admin token
-        if (!authToken) {
-          const { data: { session } } = await supabase.auth.getSession();
-          authToken = session?.access_token;
+          authToken = storedSession; // Token is stored as plain string, not JSON
         }
         
         if (authToken) {
@@ -735,8 +722,7 @@ const AdminPage: NextPage = () => {
       
       if (storedSession) {
         try {
-          const sessionData = JSON.parse(storedSession);
-          adminToken = sessionData.access_token;
+          adminToken = storedSession;
         } catch (e) {
           console.error('Failed to parse admin session');
         }
@@ -784,8 +770,7 @@ const AdminPage: NextPage = () => {
       
       if (storedSession) {
         try {
-          const sessionData = JSON.parse(storedSession);
-          adminToken = sessionData.access_token;
+          adminToken = storedSession;
         } catch (e) {
           console.error('Failed to parse admin session');
         }
@@ -907,8 +892,7 @@ const AdminPage: NextPage = () => {
       let adminToken = null;
       
       if (storedSession) {
-        const sessionData = JSON.parse(storedSession);
-        adminToken = sessionData.access_token;
+        adminToken = storedSession;
       }
 
       if (!adminToken) {
@@ -1628,8 +1612,8 @@ const AdminPage: NextPage = () => {
                                     const storedSession = localStorage.getItem('adminToken');
                                     if (storedSession) {
                                       try {
-                                        const sessionData = JSON.parse(storedSession);
-                                        token = sessionData.access_token;
+                                        // Token is stored as plain string
+                                        token = storedSession;
                                       } catch (e) {
                                         console.error('Failed to parse admin session');
                                       }
@@ -1681,8 +1665,8 @@ const AdminPage: NextPage = () => {
                                     const storedSession = localStorage.getItem('adminToken');
                                     if (storedSession) {
                                       try {
-                                        const sessionData = JSON.parse(storedSession);
-                                        token = sessionData.access_token;
+                                        // Token is stored as plain string
+                                        token = storedSession;
                                       } catch (e) {
                                         console.error('Failed to parse admin session');
                                       }
@@ -2975,6 +2959,7 @@ const AdminPage: NextPage = () => {
 };
 
 export default AdminPage;
+
 
 
 
