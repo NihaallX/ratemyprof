@@ -33,9 +33,16 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
     count?: number
   } | null>(null)
 
-  // Get auth token from Supabase session or admin session
+  // Get auth token from admin localStorage
   const getAuthToken = async () => {
-    // First check for admin session in localStorage
+    // Check for admin token in localStorage (set by admin login)
+    const adminToken = localStorage.getItem('adminToken')
+    if (adminToken) {
+      console.log('✅ Using admin token from localStorage')
+      return adminToken
+    }
+    
+    // Legacy: Check for admin session
     const adminSessionStr = localStorage.getItem('adminSession')
     if (adminSessionStr) {
       try {
@@ -49,14 +56,7 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
       }
     }
     
-    // Fallback to Supabase session
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session?.access_token) {
-      console.log('✅ Using Supabase session token')
-      return session.access_token
-    }
-    
-    console.error('❌ No auth token available')
+    console.error('❌ No admin token available - please ensure you are logged in as admin')
     return null
   }
 
