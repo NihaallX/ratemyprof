@@ -89,8 +89,8 @@ export default function AdminLogin() {
       localStorage.setItem('adminToken', data.access_token);
       localStorage.setItem('adminUser', JSON.stringify(data.user));
       
-      // Redirect to admin dashboard (admin.tsx is at /admin route)
-      router.push('/admin');
+      // Don't redirect here - let the modal close first, then redirect in useEffect
+      // The checkExistingAuth will run and redirect to /admin
       
       return { success: true };
     } catch (error) {
@@ -109,10 +109,17 @@ export default function AdminLogin() {
       <AdminLoginModal
         isOpen={showModal}
         onClose={() => {
-          // Redirect to homepage when closing login modal
+          // When modal is closed (X button clicked), go to homepage
           router.push('/');
         }}
-        onLogin={handleAdminLogin}
+        onLogin={async (email, password) => {
+          const result = await handleAdminLogin(email, password);
+          if (result.success) {
+            // Login successful - redirect to dashboard immediately
+            router.replace('/admin');
+          }
+          return result;
+        }}
       />
     </>
   );
