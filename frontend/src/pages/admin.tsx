@@ -259,13 +259,18 @@ const AdminPage: NextPage = () => {
       
       if (!adminToken) {
         console.log('No admin token found - redirecting to login');
-        router.push('/admin/login');
+        setIsLoading(false);
+        router.replace('/admin/login');
         return;
       }
       
+      console.log('Using stored admin token');
+      
       try {
-        // Try to load admin data
+        // Try to load admin data to verify token is valid
         await loadRealTimeStats();
+        
+        // If we got here, token is valid
         setIsAdmin(true);
         setIsLoading(false);
         
@@ -276,11 +281,12 @@ const AdminPage: NextPage = () => {
           sessionStorage.setItem('adminWelcomeShown', 'true');
         }
       } catch (error) {
-        console.log('Admin access check failed:', error);
-        // If token is invalid, redirect to login
+        console.error('Admin access check failed - token may be invalid:', error);
+        // If token is invalid, clear it and redirect to login
         localStorage.removeItem('adminToken');
         localStorage.removeItem('adminUser');
-        router.push('/admin/login');
+        setIsLoading(false);
+        router.replace('/admin/login');
       }
     };
     
@@ -1084,8 +1090,19 @@ const AdminPage: NextPage = () => {
                 >
                   Refresh Data
                 </button>
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('adminToken');
+                    localStorage.removeItem('adminUser');
+                    sessionStorage.removeItem('adminWelcomeShown');
+                    router.push('/admin/login');
+                  }}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm"
+                >
+                  Sign Out
+                </button>
                 <div className="text-sm text-gray-600">
-                  Welcome, {user?.email}
+                  Welcome, Admin
                 </div>
               </div>
             </div>
