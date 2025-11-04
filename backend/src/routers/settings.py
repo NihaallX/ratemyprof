@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from typing import Optional
 from pydantic import BaseModel
 from datetime import datetime
-from ..lib.database import get_supabase
+from ..lib.database import get_supabase, get_supabase_admin
 from ..lib.auth import verify_admin_token
 
 router = APIRouter(tags=["settings"])
@@ -106,7 +106,11 @@ async def update_maintenance_mode(
         raise HTTPException(status_code=401, detail=f"Invalid admin token: {str(e)}")
     
     try:
-        supabase = get_supabase()
+        # Use admin client to bypass RLS
+        supabase = get_supabase_admin()
+        
+        if not supabase:
+            raise HTTPException(status_code=500, detail="Database admin access not configured")
         
         # Check if setting exists
         existing = supabase.table('site_settings') \
