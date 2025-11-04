@@ -8,23 +8,21 @@ import { API_BASE_URL } from '../../config/api';
 /**
  * Secure Admin Login Page
  * This is the gateway to the admin dashboard. All admin routes redirect here if not authenticated.
+ * Updated: Removed admin/index.tsx conflict - admin.tsx now serves /admin directly
  */
 export default function AdminLogin() {
   const router = useRouter();
   const { user, signIn } = useAuth();
   const [showModal, setShowModal] = useState(true);
 
-  // If user is already logged in and is admin, redirect to admin dashboard
+  // Check if there's already an admin token
   useEffect(() => {
-    if (user) {
-      const isAdmin = user.email === 'admin@ratemyprof.in' || user.email?.endsWith('@ratemyprof.in');
-      if (isAdmin) {
-        router.push('/admin/dashboard');
-      } else {
-        router.push('/');
-      }
+    const adminToken = localStorage.getItem('adminToken');
+    if (adminToken) {
+      // Already logged in, go to dashboard
+      router.push('/admin');
     }
-  }, [user, router]);
+  }, [router]);
 
   const handleAdminLogin = async (email: string, password: string) => {
     try {
