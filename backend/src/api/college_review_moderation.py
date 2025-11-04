@@ -464,6 +464,8 @@ async def moderate_college_review(
         
         review = review_response.data
         admin_id = current_user['id']
+        # Admin ID needs to be None if it's the hardcoded admin-user-id (not a real UUID)
+        moderated_by_id = None if admin_id == 'admin-user-id' else admin_id
         now = admin_client.postgrest.auth.now() if hasattr(admin_client.postgrest.auth, 'now') else None
         
         # Perform action
@@ -471,7 +473,7 @@ async def moderate_college_review(
             # Approve review - make visible to public
             admin_client.table('college_reviews').update({
                 'status': 'approved',
-                'moderated_by': admin_id,
+                'moderated_by': moderated_by_id,
                 'moderated_at': now,
                 'moderation_reason': action_data.reason or 'Approved by moderator',
                 'is_flagged': False
@@ -487,7 +489,7 @@ async def moderate_college_review(
             # Reject review - hide from public
             admin_client.table('college_reviews').update({
                 'status': 'rejected',
-                'moderated_by': admin_id,
+                'moderated_by': moderated_by_id,
                 'moderated_at': now,
                 'moderation_reason': action_data.reason or 'Rejected by moderator',
                 'is_flagged': True

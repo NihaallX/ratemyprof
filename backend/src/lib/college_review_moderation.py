@@ -156,10 +156,12 @@ def review_college_review_flag(
             raise Exception(f"Flag has already been reviewed (current status: {flag.get('status')})")
         
         # Update flag status
+        # Note: reviewed_by is set to None for admin users (who don't have real UUID)
+        # In the future, consider creating a proper admin user in the users table
         update_data = {
             'status': 'reviewed',
-            'reviewed_by': admin_id,
-            'admin_notes': admin_notes,
+            'reviewed_by': None if admin_id == 'admin-user-id' else admin_id,
+            'admin_notes': admin_notes or f"Reviewed by admin - {action}",
             'reviewed_at': now,
             'updated_at': now
         }
@@ -279,7 +281,7 @@ def log_moderation_action(
         'updated_at': datetime.utcnow().isoformat()
     }
     
-    result = supabase.table('moderation_logs').insert(log_data).execute()
+    result = supabase.table('moderation_log').insert(log_data).execute()
     return result.data[0] if result.data else log_data
 
 

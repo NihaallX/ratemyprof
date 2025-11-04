@@ -330,7 +330,7 @@ RateMyProf Moderation Team""",
                 'created_at': datetime.utcnow().isoformat()
             }
             
-            result = self.supabase.table('user_notifications').insert(notification_data).execute()
+            result = self.supabase.table('notifications').insert(notification_data).execute()
             
             if result.data:
                 logger.info(f"Notification sent to user {user_id}: {notification_type.value}")
@@ -361,7 +361,7 @@ RateMyProf Moderation Team""",
             List of notification dictionaries
         """
         try:
-            query = self.supabase.table('user_notifications').select(
+            query = self.supabase.table('notifications').select(
                 'id, notification_type, subject, body, action_required, '
                 'appeal_allowed, read, created_at'
             ).eq('user_id', user_id)
@@ -380,7 +380,7 @@ RateMyProf Moderation Team""",
     async def mark_notification_read(self, notification_id: str, user_id: str) -> bool:
         """Mark a notification as read."""
         try:
-            result = self.supabase.table('user_notifications').update({
+            result = self.supabase.table('notifications').update({
                 'read': True,
                 'read_at': datetime.utcnow().isoformat()
             }).eq('id', notification_id).eq('user_id', user_id).execute()
@@ -516,7 +516,7 @@ RateMyProf Moderation Team""",
         """Get statistics about notifications and appeals."""
         try:
             # Get notification counts
-            notifications_result = self.supabase.table('user_notifications').select(
+            notifications_result = self.supabase.table('notifications').select(
                 'notification_type, read'
             ).execute()
             

@@ -635,7 +635,7 @@ async def moderate_review(
                 'reason': request.reason,
                 'previous_status': review_data['status']
             }
-            supabase.table('moderation_logs').insert(log_data).execute()
+            supabase.table('moderation_log').insert(log_data).execute()
         except Exception as log_error:
             print(f"⚠️ Could not log moderation action: {log_error}")
         
@@ -1415,7 +1415,7 @@ async def verify_professor(
                 'notes': request.verification_notes,
                 'created_at': 'now()'
             }
-            supabase.table('moderation_logs').insert(log_data).execute()
+            supabase.table('moderation_log').insert(log_data).execute()
         except:
             # Logging is optional, don't fail if table doesn't exist
             pass
@@ -1522,7 +1522,7 @@ async def update_professor(
                 'details': f"Updated fields: {', '.join(update_data.keys())}",
                 'created_at': 'now()'
             }
-            supabase.table('moderation_logs').insert(log_data).execute()
+            supabase.table('moderation_log').insert(log_data).execute()
         except:
             # Logging is optional
             pass
@@ -1596,7 +1596,7 @@ async def delete_professor(
                 'details': f"Deleted professor: {professor_name}",
                 'created_at': 'now()'
             }
-            supabase.table('moderation_logs').insert(log_data).execute()
+            supabase.table('moderation_log').insert(log_data).execute()
         except:
             # Logging is optional
             pass
@@ -1975,7 +1975,7 @@ async def bulk_moderate_reviews(
                         'details': f"Bulk {request.action} on review {review_id}",
                         'created_at': datetime.utcnow().isoformat()
                     }
-                    supabase.table('moderation_logs').insert(log_data).execute()
+                    supabase.table('moderation_log').insert(log_data).execute()
                 except:
                     # Logging is optional
                     pass
@@ -2096,7 +2096,7 @@ async def bulk_moderate_college_reviews(
                         'details': f"Bulk {request.action} on college review {review_id}",
                         'created_at': datetime.utcnow().isoformat()
                     }
-                    supabase.table('moderation_logs').insert(log_data).execute()
+                    supabase.table('moderation_log').insert(log_data).execute()
                 except:
                     # Logging is optional
                     pass
@@ -2217,7 +2217,7 @@ async def bulk_user_action(
                         'duration_days': request.duration_days,
                         'created_at': datetime.utcnow().isoformat()
                     }
-                    supabase.table('moderation_logs').insert(log_data).execute()
+                    supabase.table('moderation_log').insert(log_data).execute()
                 except:
                     # Logging is optional
                     pass
@@ -2344,7 +2344,7 @@ async def bulk_professor_action(
                         'details': f"Bulk {action_name} professor: {professor['name']}",
                         'created_at': datetime.utcnow().isoformat()
                     }
-                    supabase.table('moderation_logs').insert(log_data).execute()
+                    supabase.table('moderation_log').insert(log_data).execute()
                 except:
                     # Logging is optional
                     pass
