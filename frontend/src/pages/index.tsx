@@ -372,15 +372,15 @@ export default function HomePage() {
               <span className="ml-2 sm:ml-3 text-xs sm:text-sm text-gray-500 font-sans">Beta</span>
             </div>
 
-            {/* Desktop Navigation */}
+            {/* Desktop Navigation - Always visible on desktop */}
             <div className="hidden lg:flex items-center space-x-6">
               <div className="text-sm text-gray-600">
                 Vishwakarma University Pilot
               </div>
               
-              {/* Navigation Links */}
+              {/* Navigation Links - Only for logged in users */}
               {user && (
-                <div className="flex items-center space-x-4">
+                <>
                   <Link
                     href="/professors/add"
                     className="text-sm text-white px-4 py-2 rounded-md font-medium hover:opacity-90 transition-opacity"
@@ -396,13 +396,12 @@ export default function HomePage() {
                       Admin
                     </Link>
                   )}
-                </div>
+                  {/* Notification Inbox */}
+                  <NotificationInbox />
+                </>
               )}
               
-              {/* Notification Inbox */}
-              {user && <NotificationInbox />}
-              
-              {/* User Dropdown */}
+              {/* User Dropdown - Always show (has Sign In/Sign Up for non-logged users) */}
               <UserDropdown />
             </div>
 
