@@ -379,7 +379,7 @@ export default function HomePage() {
               </div>
               
               {/* Navigation Links - Only for logged in users */}
-              {user && (
+              {user ? (
                 <>
                   <Link
                     href="/professors/add"
@@ -398,11 +398,27 @@ export default function HomePage() {
                   )}
                   {/* Notification Inbox */}
                   <NotificationInbox />
+                  {/* User Dropdown for logged in users */}
+                  <UserDropdown />
+                </>
+              ) : (
+                <>
+                  {/* Sign In / Sign Up buttons for non-logged users */}
+                  <Link
+                    href="/auth/login"
+                    className="text-sm text-gray-700 hover:text-gray-900 font-medium"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/auth/signup"
+                    className="text-sm text-white px-4 py-2 rounded-md font-medium hover:opacity-90 transition-opacity"
+                    style={{ backgroundColor: '#4e46e5' }}
+                  >
+                    Sign Up
+                  </Link>
                 </>
               )}
-              
-              {/* User Dropdown - Always show (has Sign In/Sign Up for non-logged users) */}
-              <UserDropdown />
             </div>
 
             {/* Mobile Menu Button */}
