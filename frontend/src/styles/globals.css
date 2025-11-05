@@ -228,3 +228,96 @@ body:has(.maintenance-banner) {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* ==================== MOBILE RESPONSIVENESS ==================== */
+
+/* Base mobile optimizations */
+@media (max-width: 640px) {
+  /* Better text sizing on mobile */
+  html {
+    font-size: 14px;
+  }
+  
+  /* Optimize touch targets */
+  button, a, input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Prevent horizontal overflow */
+  body {
+    overflow-x: hidden;
+  }
+  
+  /* Better spacing on mobile */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Make cards stack on mobile */
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Adjust modals for mobile */
+  .modal-content {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    margin: 1rem;
+  }
+  
+  /* Better button sizing */
+  .btn-primary, .btn-secondary {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+  }
+  
+  /* Optimize forms */
+  input, textarea, select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Stack horizontal layouts */
+  .flex-row {
+    flex-direction: column;
+  }
+  
+  /* Hide less critical content on mobile */
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .grid-2-tablet {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Touch-friendly hover states */
+@media (hover: none) {
+  .card-hover:hover {
+    transform: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  
+  button:hover {
+    opacity: 0.9;
+  }
+}
+
+/* Improve tap highlighting */
+* {
+  -webkit-tap-highlight-color: rgba(79, 70, 229, 0.1);
+  -webkit-touch-callout: none;
+}
+
+/* Better safe area handling for mobile notches */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}

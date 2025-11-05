@@ -6,7 +6,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { Star, Search, ChevronDown, MapPin, Award, Users, Calendar } from 'lucide-react';
+import { Star, Search, ChevronDown, MapPin, Award, Users, Calendar, Menu, X } from 'lucide-react';
 import { RateMyProfAPI, Professor, College } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import CompareColleges from '../components/CompareColleges';
@@ -36,6 +36,7 @@ export default function HomePage() {
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
   const [topRatedProfessors, setTopRatedProfessors] = useState<Professor[]>([]);
   const [topRatedColleges, setTopRatedColleges] = useState<College[]>([]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const searchInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
@@ -360,16 +361,19 @@ export default function HomePage() {
       </Head>
 
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
+            {/* Logo */}
             <div className="flex items-center">
-              <h1 className="text-3xl font-logo text-indigo-600" style={{ letterSpacing: '0.02em' }}>
+              <h1 className="text-2xl sm:text-3xl font-logo text-indigo-600" style={{ letterSpacing: '0.02em' }}>
                 RateMyProf
               </h1>
-              <span className="ml-3 text-sm text-gray-500 font-sans">Beta</span>
+              <span className="ml-2 sm:ml-3 text-xs sm:text-sm text-gray-500 font-sans">Beta</span>
             </div>
-            <div className="flex items-center space-x-6">
+
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center space-x-6">
               <div className="text-sm text-gray-600">
                 Vishwakarma University Pilot
               </div>
@@ -395,44 +399,115 @@ export default function HomePage() {
                 </div>
               )}
               
-              {/* Notification Inbox - Between User and Add Professor */}
+              {/* Notification Inbox */}
               {user && <NotificationInbox />}
               
-              {/* Authentication UI */}
-              {authLoading ? (
-                <div className="text-sm text-gray-400">Loading...</div>
-              ) : user ? (
-                <UserDropdown />
-              ) : (
-                <div className="flex items-center space-x-3">
-                  <Link
-                    href="/auth/login"
-                    className="text-sm text-indigo-600 hover:text-indigo-700"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    href="/auth/signup"
-                    className="text-sm bg-indigo-600 text-white px-3 py-1 rounded-md hover:bg-indigo-700"
-                  >
-                    Sign Up
-                  </Link>
-                </div>
-              )}
+              {/* User Dropdown */}
+              <UserDropdown />
+            </div>
+
+            {/* Mobile Menu Button */}
+            <div className="lg:hidden flex items-center space-x-2">
+              {user && <NotificationInbox />}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 rounded-md text-gray-600 hover:bg-gray-100 transition-colors"
+                aria-label="Toggle menu"
+              >
+                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
             </div>
           </div>
+
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <div className="lg:hidden mt-4 pb-4 border-t border-gray-200">
+              <nav className="flex flex-col space-y-3 pt-4">
+                <div className="text-sm text-gray-600 px-2">
+                  Vishwakarma University Pilot
+                </div>
+                
+                {user ? (
+                  <>
+                    <Link
+                      href="/professors/add"
+                      className="text-sm text-white px-4 py-3 rounded-md font-medium hover:opacity-90 transition-opacity text-center"
+                      style={{ backgroundColor: '#4e46e5' }}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Add Professor
+                    </Link>
+                    
+                    {user.email?.endsWith('@ratemyprof.in') && (
+                      <Link
+                        href="/admin"
+                        className="text-sm text-indigo-600 hover:text-indigo-700 font-medium px-4 py-2 hover:bg-indigo-50 rounded-md transition-colors"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Admin Panel
+                      </Link>
+                    )}
+                    
+                    <Link
+                      href="/my-reviews"
+                      className="text-sm text-gray-700 hover:text-gray-900 px-4 py-2 hover:bg-gray-50 rounded-md transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      My Reviews
+                    </Link>
+                    
+                    <Link
+                      href="/profile"
+                      className="text-sm text-gray-700 hover:text-gray-900 px-4 py-2 hover:bg-gray-50 rounded-md transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Profile
+                    </Link>
+                    
+                    <button
+                      onClick={() => {
+                        signOut();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="text-sm text-red-600 hover:text-red-700 px-4 py-2 hover:bg-red-50 rounded-md transition-colors text-left"
+                    >
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href="/auth/login"
+                      className="text-sm text-indigo-600 hover:text-indigo-700 font-medium px-4 py-2 hover:bg-indigo-50 rounded-md transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Sign In
+                    </Link>
+                    <Link
+                      href="/auth/signup"
+                      className="text-sm text-white px-4 py-3 rounded-md font-medium hover:opacity-90 transition-opacity text-center"
+                      style={{ backgroundColor: '#4e46e5' }}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Sign Up
+                    </Link>
+                  </>
+                )}
+              </nav>
+            </div>
+          )}
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         
         {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4 px-4">
             Find Your Perfect Professor
           </h2>
-          <p className="text-xl text-gray-600 mb-8">
+          <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 px-4">
             Search and discover professors at Vishwakarma University
           </p>
 
@@ -440,8 +515,8 @@ export default function HomePage() {
           <div className="max-w-2xl mx-auto">
             
             {/* Search Type Tabs - Enhanced with smooth animation */}
-            <div className="flex justify-center mb-6">
-              <div className="relative bg-white rounded-lg p-1 shadow-md">
+            <div className="flex justify-center mb-4 sm:mb-6 px-4">
+              <div className="relative bg-white rounded-lg p-1 shadow-md w-full sm:w-auto">
                 {/* Background slider for smooth animation */}
                 <div 
                   className="absolute top-1 bottom-1 bg-indigo-600 rounded-md transition-all duration-300 ease-in-out"
@@ -452,7 +527,7 @@ export default function HomePage() {
                 />
                 <button
                   onClick={() => handleSearchTypeChange('professors')}
-                  className={`relative z-10 px-6 py-2 rounded-md font-medium transition-colors duration-300 ${
+                  className={`relative z-10 w-1/2 sm:w-auto sm:px-6 py-2 sm:py-2 rounded-md font-medium transition-colors duration-300 text-sm sm:text-base ${
                     searchType === 'professors'
                       ? 'text-white'
                       : 'text-gray-600 hover:text-indigo-600'
@@ -462,7 +537,7 @@ export default function HomePage() {
                 </button>
                 <button
                   onClick={() => handleSearchTypeChange('colleges')}
-                  className={`relative z-10 px-6 py-2 rounded-md font-medium transition-colors duration-300 ${
+                  className={`relative z-10 w-1/2 sm:w-auto sm:px-6 py-2 sm:py-2 rounded-md font-medium transition-colors duration-300 text-sm sm:text-base ${
                     searchType === 'colleges'
                       ? 'text-white'
                       : 'text-gray-600 hover:text-indigo-600'
@@ -474,11 +549,11 @@ export default function HomePage() {
             </div>
 
             {/* Search Box with Auto-suggestions */}
-            <div className="relative max-w-2xl mx-auto">
+            <div className="relative max-w-2xl mx-auto px-4">
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400" />
+                    <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
                   </div>
                   <input
                     ref={searchInputRef}
@@ -489,8 +564,8 @@ export default function HomePage() {
                     onFocus={() => {
                       if (suggestions.length > 0) setShowSuggestions(true);
                     }}
-                    placeholder={`Search for ${searchType === 'professors' ? 'professors by name, department...' : 'colleges by name, city...'}`}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg shadow-sm transition-all duration-200"
+                    placeholder={`Search for ${searchType === 'professors' ? 'professors...' : 'colleges...'}`}
+                    className="w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base sm:text-lg shadow-sm transition-all duration-200"
                     autoComplete="off"
                   />
                   
@@ -498,7 +573,7 @@ export default function HomePage() {
                   {searchQuery && (
                     <div className="absolute inset-y-0 right-3 flex items-center">
                       {suggestions.length > 0 ? (
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded hidden sm:inline">
                           {suggestions.length} results
                         </span>
                       ) : searchQuery.length >= 1 ? (
@@ -511,7 +586,7 @@ export default function HomePage() {
                   {showSuggestions && suggestions.length > 0 && (
                     <div 
                       ref={suggestionsRef}
-                      className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-2xl max-h-96 overflow-y-auto animate-fadeIn"
+                      className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-2xl max-h-72 sm:max-h-96 overflow-y-auto animate-fadeIn"
                       style={{
                         animation: 'fadeIn 0.2s ease-out'
                       }}
@@ -520,7 +595,7 @@ export default function HomePage() {
                         {suggestions.map((suggestion, index) => (
                           <div
                             key={`${suggestion.type}-${suggestion.id}`}
-                            className={`px-4 py-3 cursor-pointer transition-all duration-150 ${
+                            className={`px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer transition-all duration-150 ${
                               index === selectedSuggestionIndex 
                                 ? 'bg-indigo-50 border-l-4 border-indigo-600' 
                                 : 'hover:bg-gray-50 border-l-4 border-transparent'
