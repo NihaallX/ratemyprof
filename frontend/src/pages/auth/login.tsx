@@ -47,7 +47,8 @@ export default function Login() {
   useEffect(() => {
     if (user) {
       // Regular users only - admins must use /admin-login
-      const redirectUrl = (redirect as string) || '/'
+      // Validate redirect URL to prevent open redirect attacks
+      const redirectUrl = (typeof redirect === "string" && redirect.startsWith('/') && !redirect.startsWith('//')) ? redirect : '/'
       router.push(redirectUrl)
     }
   }, [user, router, redirect])
@@ -71,7 +72,8 @@ export default function Login() {
         setLoading(false)
       } else {
         // Successful login - regular users only (admins use /admin-login)
-        const redirectUrl = (redirect as string) || '/'
+        // Validate redirect URL to prevent open redirect attacks
+        const redirectUrl = (typeof redirect === "string" && redirect.startsWith('/') && !redirect.startsWith('//')) ? redirect : '/'
         router.push(redirectUrl)
       }
     } catch (err) {
