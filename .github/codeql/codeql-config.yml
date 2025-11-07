@@ -1,0 +1,20 @@
+name: "CodeQL Config"
+
+# Paths to ignore during analysis
+paths-ignore:
+  - '**/tests/**'
+  - '**/test/**'
+  - '**/*.test.js'
+  - '**/*.test.ts'
+  - '**/*.test.tsx'
+  - '**/out/**'
+  - '**/dist/**'
+  - '**/build/**'
+  - '**/node_modules/**'
+  - '**/.next/**'
+
+# Only analyze source code, not test files
+paths:
+  - 'frontend/src/**'
+  - 'backend/src/**'
+  - 'backend/scripts/**'
