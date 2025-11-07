@@ -330,13 +330,33 @@ const AdminPage: NextPage = () => {
         return;
       }
       
-      console.log('Using stored admin token');
+      console.log('Verifying admin token...');
       
       try {
-        // Try to load admin data to verify token is valid
+        // Verify the admin token is valid by making a test request
+        const headers = {
+          'Authorization': `Bearer ${adminToken}`,
+          'Content-Type': 'application/json'
+        };
+        
+        const testResponse = await fetch(`${API_BASE_URL}/moderation/dashboard/stats`, { headers });
+        
+        if (testResponse.status === 401) {
+          console.warn('Admin token is invalid or expired');
+          handleUnauthorized();
+          return;
+        }
+        
+        if (!testResponse.ok) {
+          console.warn('Admin verification failed');
+          handleUnauthorized();
+          return;
+        }
+        
+        // Token is valid - proceed with loading admin data
+        console.log('Admin token verified successfully');
         await loadRealTimeStats();
         
-        // If we got here, token is valid
         setIsAdmin(true);
         setIsLoading(false);
         
@@ -347,12 +367,8 @@ const AdminPage: NextPage = () => {
           sessionStorage.setItem('adminWelcomeShown', 'true');
         }
       } catch (error) {
-        console.error('Admin access check failed - token may be invalid:', error);
-        // If token is invalid, clear it and redirect to login
-        localStorage.removeItem('adminToken');
-        localStorage.removeItem('adminUser');
-        setIsLoading(false);
-        router.replace('/admin/login');
+        console.error('Admin access check failed:', error);
+        handleUnauthorized();
       }
     };
     
