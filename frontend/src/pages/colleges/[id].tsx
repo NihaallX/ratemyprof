@@ -76,12 +76,15 @@ export default function CollegeDetail() {
       return;
     }
 
-    const fetchData = async () => {
+    // ID is validated - safe to use in API calls
+    const validatedId = id as string;
+
+    const fetchData = async (collegeId: string) => {
       try {
         setIsLoading(true);
         
-        // Fetch college details
-        const collegeUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1'}/colleges/${id}`;
+        // Fetch college details - using validated ID parameter
+        const collegeUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1'}/colleges/${collegeId}`;
         console.log('🔍 Fetching college from:', collegeUrl);
         const collegeResponse = await fetch(collegeUrl);
         console.log('📡 College response status:', collegeResponse.status);
@@ -96,8 +99,8 @@ export default function CollegeDetail() {
         console.log('✅ College data:', collegeData);
         setCollege(collegeData);
         
-        // Fetch ALL professors for this college (backend max limit is 200)
-        const professorsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1'}/professors?college_id=${id}&limit=200`);
+        // Fetch ALL professors for this college (backend max limit is 200) - using validated ID
+        const professorsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1'}/professors?college_id=${collegeId}&limit=200`);
         
         if (professorsResponse.ok) {
           const professorsData = await professorsResponse.json();
@@ -122,7 +125,8 @@ export default function CollegeDetail() {
       }
     };
 
-    fetchData();
+    // Call fetchData with the validated ID
+    fetchData(validatedId);
   }, [id]);
 
   // Filter professors when department selection changes
