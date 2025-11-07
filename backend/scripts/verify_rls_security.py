@@ -26,9 +26,9 @@ API_BASE_URL = os.getenv('API_URL', 'http://localhost:8000/v1')
 SUPABASE_URL = os.getenv('SUPABASE_URL', 'https://xgnewppqxqkyeabtmenf.supabase.co')
 SUPABASE_ANON_KEY = os.getenv('SUPABASE_ANON_KEY', '')
 
-# Test credentials (create these test users in Supabase Auth first)
-TEST_USER_EMAIL = "test_user@example.com"
-TEST_USER_PASSWORD = "TestPassword123!"
+# Test credentials (load from environment variables for security)
+TEST_USER_EMAIL = os.getenv('TEST_USER_EMAIL', 'test_user@example.com')
+TEST_USER_PASSWORD = os.getenv('TEST_USER_PASSWORD', 'TestPassword123!')  # Should be set via env var
 
 # Colors for terminal output
 GREEN = '\033[92m'
@@ -434,7 +434,7 @@ def main():
     print(f"{YELLOW}2. RLS policies must be applied in Supabase{RESET}")
     print(f"{YELLOW}3. Test user must exist in Supabase Auth:{RESET}")
     print(f"{YELLOW}   Email: {TEST_USER_EMAIL}{RESET}")
-    print(f"{YELLOW}   Password: {TEST_USER_PASSWORD}{RESET}")
+    print(f"{YELLOW}   Password: (configured via environment variable){RESET}")
     print(f"{YELLOW}{'='*80}{RESET}\n")
     
     input("Press Enter to continue with tests...")
