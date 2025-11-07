@@ -117,13 +117,13 @@ ADMIN_USERNAME=admin
 
 ADMIN_PASSWORD_HASH=$2b$12$lfZ5l8wNvIAuxiGqDG8cF.8NM43xVHFX8AcNj0Z35kFTRfG3YNpoe
 
-JWT_SECRET_KEY=jqVcjfb0k8_vVHVLrEEhB0OoMBGllh1rCyq6KlFt75p8kG9138ybecyK-uIe1Yml8pk_wkfp95h2w6Jb8d0apw
+JWT_SECRET_KEY=your-jwt-secret-key-here
 
-SUPABASE_URL=https://xgnewppqxqkyeabtmenf.supabase.co
+SUPABASE_URL=https://your-project.supabase.co
 
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhnbmV3cHBxeHFreWVhYnRtZW5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5NDEyOTQsImV4cCI6MjA3MzUxNzI5NH0.bQE3Pc4pdaRfv1YWeK-6q_osSc8eLnJuQh5nJDarDCk
+SUPABASE_ANON_KEY=your-supabase-anon-key-here
 
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhnbmV3cHBxeHFreWVhYnRtZW5mIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Nzk0MTI5NCwiZXhwIjoyMDczNTE3Mjk0fQ.zXqhq-2wWioFz6jMGcL_hVmsuuqxbPQbxiImFjGvZzk
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key-here
 
 ALLOWED_ORIGINS=https://ratemyprof.me,https://www.ratemyprof.me,http://localhost:3000
 
