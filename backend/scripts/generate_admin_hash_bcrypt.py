@@ -1,11 +1,21 @@
 #!/usr/bin/env python3
 """
 Generate bcrypt-hashed admin password for RateMyProf
-Usage: python generate_admin_hash_bcrypt.py "YourSecurePassword"
+
+SECURITY NOTICE: 
+This script accepts password input to prevent exposure in shell history.
+
+Usage: 
+  python generate_admin_hash_bcrypt.py
+  (You'll be prompted to enter password securely)
+  
+Legacy usage (NOT RECOMMENDED - exposes password in shell history):
+  python generate_admin_hash_bcrypt.py "YourSecurePassword"
 """
 import sys
 import re
 import bcrypt
+import getpass
 
 
 def validate_password_strength(password: str) -> tuple:
@@ -50,27 +60,57 @@ def generate_admin_password_hash(password: str) -> str:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python generate_admin_hash_bcrypt.py \"YourSecurePassword\"")
-        print("\nPassword Requirements:")
+    # Check if password provided as argument (legacy, less secure)
+    if len(sys.argv) > 2:
+        print("❌ Error: Too many arguments")
+        print("\n⚠️  SECURITY WARNING: Passing passwords as command-line arguments")
+        print("   exposes them in shell history and process listings.")
+        print("\nRecommended usage:")
+        print("  python generate_admin_hash_bcrypt.py")
+        print("  (You'll be prompted to enter password securely)")
+        sys.exit(1)
+    
+    if len(sys.argv) == 2:
+        print("\n⚠️  SECURITY WARNING:")
+        print("   You're passing the password as a command-line argument.")
+        print("   This exposes it in your shell history and process listings.")
+        print("   Consider running without arguments for secure input.\n")
+        password = sys.argv[1]
+    else:
+        # Secure method: Use getpass to hide password input
+        print("Password Requirements:")
         print("  • Minimum 12 characters")
         print("  • At least 1 uppercase letter")
         print("  • At least 1 lowercase letter")
         print("  • At least 1 digit")
-        print("  • At least 1 special character (!@#$%^&*)")
-        sys.exit(1)
-    
-    password = sys.argv[1]
+        print("  • At least 1 special character (!@#$%^&*)\n")
+        
+        try:
+            password = getpass.getpass("Enter admin password: ")
+            password_confirm = getpass.getpass("Confirm password: ")
+            
+            if password != password_confirm:
+                print("❌ Error: Passwords do not match")
+                sys.exit(1)
+        except KeyboardInterrupt:
+            print("\n\n❌ Operation cancelled")
+            sys.exit(1)
     
     # Validate password strength
     is_valid, error_msg = validate_password_strength(password)
     if not is_valid:
-        print(f"❌ Error: {error_msg}")
+        # Security: Don't log the actual password or password details that might expose it
+        print(f"❌ Password validation failed: {error_msg}")
+        # Clear password from memory
+        password = None
         sys.exit(1)
     
     # Generate hash
     print("✅ Generating bcrypt hash...")
     hashed = generate_admin_password_hash(password)
+    
+    # Security: Clear password from memory immediately after use
+    password = None
     
     print("\n" + "="*70)
     print("ADMIN PASSWORD HASH GENERATED")
