@@ -123,6 +123,14 @@ const AdminPage: NextPage = () => {
     setTimeout(() => setShowWelcomeModal(false), 4000);
   };
 
+  // Helper function to handle 401 errors and clear invalid tokens
+  const handleUnauthorized = () => {
+    console.warn('Unauthorized access - clearing admin token and redirecting to login');
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminSession');
+    router.push('/admin/login');
+  };
+
   // Helper function to get admin token from localStorage
   const getAdminToken = (): string | null => {
     const token = localStorage.getItem('adminToken');
@@ -176,6 +184,12 @@ const AdminPage: NextPage = () => {
       // Use single optimized endpoint for all dashboard stats
       try {
         const statsResponse = await fetch(`${API_BASE_URL}/moderation/dashboard/stats`, { headers });
+        
+        if (statsResponse.status === 401) {
+          handleUnauthorized();
+          return;
+        }
+        
         if (statsResponse.ok) {
           const stats = await statsResponse.json();
           
@@ -204,6 +218,12 @@ const AdminPage: NextPage = () => {
       // Just get counts, don't load full datasets
       // Fetch enough professors to calculate "no reviews" count accurately
       const professorsResponse = await fetch(`${API_BASE_URL}/professors?limit=200&offset=0`, { headers });
+      
+      if (professorsResponse.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+      
       let professors = [];
       if (professorsResponse.ok) {
         const professorsData = await professorsResponse.json();
@@ -218,6 +238,12 @@ const AdminPage: NextPage = () => {
       try {
         // Load flagged reviews
         const flaggedResponse = await fetch(`${API_BASE_URL}/moderation/reviews`, { headers });
+        
+        if (flaggedResponse.status === 401) {
+          handleUnauthorized();
+          return;
+        }
+        
         if (flaggedResponse.ok) {
           const flaggedData = await flaggedResponse.json();
           flaggedReviews = Array.isArray(flaggedData.flagged_reviews) ? flaggedData.flagged_reviews : [];
@@ -226,6 +252,12 @@ const AdminPage: NextPage = () => {
         
         // Load pending professors
         const pendingResponse = await fetch(`${API_BASE_URL}/moderation/professors/pending`, { headers });
+        
+        if (pendingResponse.status === 401) {
+          handleUnauthorized();
+          return;
+        }
+        
         if (pendingResponse.ok) {
           const pendingData = await pendingResponse.json();
           pendingApprovalProfs = Array.isArray(pendingData.professors) ? pendingData.professors : [];
@@ -376,13 +408,25 @@ const AdminPage: NextPage = () => {
       console.log('Loading all users...');
       const usersResponse = await fetch(`${API_BASE_URL}/moderation/users`, { headers });
       
+      if (usersResponse.status === 401) {
+        handleUnauthorized();
+        return;
+      }
+      
       if (usersResponse.ok) {
         const usersData = await usersResponse.json();
         console.log('All users loaded:', usersData.length);
         setUsers(Array.isArray(usersData) ? usersData : []);
         setUsersLoaded(true);
       } else {
-        console.log('Failed to load users:', await usersResponse.text());
+        const errorText = await usersResponse.text();
+        console.log('Failed to load users:', errorText);
+        try {
+          const errorJson = JSON.parse(errorText);
+          console.error('Failed to load users:', errorJson);
+        } catch {
+          console.error('Failed to load users:', errorText);
+        }
       }
     } catch (error) {
       console.error('Error loading all users:', error);
