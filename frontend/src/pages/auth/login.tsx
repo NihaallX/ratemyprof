@@ -33,22 +33,25 @@ import { Mail, Lock, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react'
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [rememberMe, setRememberMe] = useState(false)  // NEW: Remember Me state
+  const [error, setError] = useState<string | null>(null)
+  const [rememberMe, setRememberMe] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   
   const { signIn, user } = useAuth()
   const { showToast } = useNotification()
   const router = useRouter()
   const { redirect } = router.query
 
+  // Whitelist of safe paths for redirection (add/update as needed)
+  const SAFE_REDIRECTS = ['/', '/dashboard', '/profile', '/settings', '/courses']
+
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
       // Regular users only - admins must use /admin-login
-      // Validate redirect URL to prevent open redirect attacks
-      const redirectUrl = (typeof redirect === "string" && redirect.startsWith('/') && !redirect.startsWith('//')) ? redirect : '/'
+      // Only allow redirecting to whitelisted paths
+      const redirectUrl = (typeof redirect === "string" && SAFE_REDIRECTS.includes(redirect)) ? redirect : '/'
       router.push(redirectUrl)
     }
   }, [user, router, redirect])
@@ -72,8 +75,8 @@ export default function Login() {
         setLoading(false)
       } else {
         // Successful login - regular users only (admins use /admin-login)
-        // Validate redirect URL to prevent open redirect attacks
-        const redirectUrl = (typeof redirect === "string" && redirect.startsWith('/') && !redirect.startsWith('//')) ? redirect : '/'
+        // Only allow redirecting to whitelisted paths
+        const redirectUrl = (typeof redirect === "string" && SAFE_REDIRECTS.includes(redirect)) ? redirect : '/'
         router.push(redirectUrl)
       }
     } catch (err) {

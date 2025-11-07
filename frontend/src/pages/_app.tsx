@@ -12,14 +12,36 @@ import '../styles/globals.css'
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter()
 
+  // Helper function to validate redirect URLs
+  const isValidRedirect = (url: string | null | undefined): boolean => {
+    if (!url || typeof url !== 'string') return false
+    
+    // Must start with / (relative path)
+    if (!url.startsWith('/')) return false
+    
+    // Must NOT start with // (protocol-relative URL like //evil.com)
+    if (url.startsWith('//')) return false
+    
+    // Block any absolute URLs or dangerous protocols
+    const dangerousPatterns = [
+      /^https?:\/\//i,      // http:// or https://
+      /^javascript:/i,      // javascript:
+      /^data:/i,            // data:
+      /^file:/i,            // file:
+      /^vbscript:/i,        // vbscript:
+      /^ftp:/i              // ftp:
+    ]
+    
+    return !dangerousPatterns.some(pattern => pattern.test(url))
+  }
+
   useEffect(() => {
     // Handle GitHub Pages SPA redirect from 404 page
     const redirect = sessionStorage.getItem('redirect')
     if (redirect) {
       sessionStorage.removeItem('redirect')
       // Validate redirect URL to prevent open redirect attacks
-      // Only allow relative paths starting with '/' but not '//' (protocol-relative URLs)
-      const validatedRedirect = (typeof redirect === "string" && redirect.startsWith('/') && !redirect.startsWith('//')) ? redirect : '/'
+      const validatedRedirect = isValidRedirect(redirect) ? redirect : '/'
       router.replace(validatedRedirect)
       return
     }
@@ -29,8 +51,7 @@ export default function App({ Component, pageProps }: AppProps) {
     const redirectParam = urlParams.get('redirect')
     if (redirectParam) {
       // Validate redirect URL to prevent open redirect attacks
-      // Only allow relative paths starting with '/' but not '//' (protocol-relative URLs)
-      const validatedRedirect = (typeof redirectParam === "string" && redirectParam.startsWith('/') && !redirectParam.startsWith('//')) ? redirectParam : '/'
+      const validatedRedirect = isValidRedirect(redirectParam) ? redirectParam : '/'
       router.replace(validatedRedirect)
     }
   }, [router])
