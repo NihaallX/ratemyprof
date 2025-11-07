@@ -753,6 +753,31 @@ export default function HomePage() {
         {/* Top Rated Section (when no search is active) */}
         {!searchQuery && professors.length === 0 && colleges.length === 0 && (
           <div className="mt-16">
+            {/* Request Your College CTA Banner - Compact Version */}
+            <div className="mb-10">
+              <div className="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg shadow-lg overflow-hidden">
+                <div className="px-4 py-5 sm:px-6 sm:py-6">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="text-center sm:text-left">
+                      <h3 className="text-lg sm:text-xl font-bold text-white mb-1">
+                        Can't find your college?
+                      </h3>
+                      <p className="text-sm text-indigo-100">
+                        Request it and we'll prioritize adding it to the platform
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowRequestCollegeForm(true)}
+                      className="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-indigo-600 bg-white rounded-lg hover:bg-indigo-50 transition-all shadow-md hover:shadow-lg whitespace-nowrap"
+                    >
+                      <MapPin className="w-4 h-4 mr-2" />
+                      Request College
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Top Rated Professors - Only show when Professors tab is active */}
             {searchType === 'professors' && topRatedProfessors.length > 0 && (
               <div className="mb-12">
@@ -881,31 +906,6 @@ export default function HomePage() {
                 </div>
               </div>
             )}
-
-            {/* Request Your College CTA Banner - Compact Version */}
-            <div className="mt-8 sm:mt-10">
-              <div className="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg shadow-lg overflow-hidden">
-                <div className="px-4 py-5 sm:px-6 sm:py-6">
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="text-center sm:text-left">
-                      <h3 className="text-lg sm:text-xl font-bold text-white mb-1">
-                        Can't find your college?
-                      </h3>
-                      <p className="text-sm text-indigo-100">
-                        Request it and we'll prioritize adding it to the platform
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setShowRequestCollegeForm(true)}
-                      className="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-indigo-600 bg-white rounded-lg hover:bg-indigo-50 transition-all shadow-md hover:shadow-lg whitespace-nowrap"
-                    >
-                      <MapPin className="w-4 h-4 mr-2" />
-                      Request College
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         )}
 
