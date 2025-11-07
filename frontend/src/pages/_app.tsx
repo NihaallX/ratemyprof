@@ -21,7 +21,7 @@ export default function App({ Component, pageProps }: AppProps) {
     '/login',
     '/signup',
     '/admin-login',
-    '/search',
+    // Removed /search - search pages shouldn't be redirect targets (query params complicate validation)
     '/about',
     '/contact',
     '/privacy',
@@ -34,7 +34,7 @@ export default function App({ Component, pageProps }: AppProps) {
     /^\/colleges\/[a-f0-9-]{36}$/,             // /colleges/:uuid
     /^\/professors\/[a-f0-9-]{36}\/reviews$/,  // /professors/:uuid/reviews
     /^\/colleges\/[a-f0-9-]{36}\/professors$/, // /colleges/:uuid/professors
-    /^\/search\?[a-zA-Z0-9=&%-]+$/             // /search?q=...
+    // Removed overly broad /search pattern - use exact path instead
   ]
 
   // Helper function to validate redirect URLs with strict whitelist checking
@@ -46,6 +46,10 @@ export default function App({ Component, pageProps }: AppProps) {
     
     // Must NOT start with // (protocol-relative URL like //evil.com)
     if (url.startsWith('//')) return false
+    
+    // Explicitly reject suspicious characters that could be used for XSS
+    // Block: < > " ' and fragments (#)
+    if (/[<>"'#]/.test(url)) return false
     
     // Check if it's an exact match in the whitelist
     if (ALLOWED_EXACT_PATHS.includes(url)) return true
