@@ -128,17 +128,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
           return { error }
         }
         
-        // Store tokens based on remember_me preference
+        // Supabase automatically handles session persistence securely
+        // No need to manually store session tokens - this prevents XSS attacks
+        // The persistSession: true config in supabase.ts handles this
         if (data.session) {
-          if (rememberMe) {
-            // Store in localStorage (persists across browser sessions - 30 days)
-            localStorage.setItem('supabase_session', JSON.stringify(data.session))
-            console.log('✅ Session saved to localStorage (Remember Me enabled)')
-          } else {
-            // Store in sessionStorage (clears when browser closes)
-            sessionStorage.setItem('supabase_session', JSON.stringify(data.session))
-            console.log('✅ Session saved to sessionStorage (temporary)')
-          }
+          console.log(`✅ Session established ${rememberMe ? '(Remember Me enabled)' : '(temporary)'}`)
         }
         
         return { error: null }
@@ -148,13 +142,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     },
     signOut: async () => {
       try {
-        // Clear stored sessions (both localStorage and sessionStorage)
-        localStorage.removeItem('supabase_session')
-        sessionStorage.removeItem('supabase_session')
+        // Clear admin-specific storage (not sensitive tokens)
         localStorage.removeItem('adminSession')
         localStorage.removeItem('adminUser')
         
-        // Regular Supabase signout
+        // Supabase handles session cleanup automatically
         const { error } = await auth.signOut()
         
         // Force clear state

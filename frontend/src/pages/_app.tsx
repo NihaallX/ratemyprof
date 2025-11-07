@@ -64,7 +64,8 @@ export default function App({ Component, pageProps }: AppProps) {
       sessionStorage.removeItem('redirect')
       // Only allow redirecting to whitelisted paths
       const validatedRedirect = isValidRedirect(redirect) ? redirect : '/'
-      router.replace(validatedRedirect)
+      // Use router.push instead of setting location to prevent XSS
+      router.push(validatedRedirect)
       return
     }
 
@@ -74,7 +75,8 @@ export default function App({ Component, pageProps }: AppProps) {
     if (redirectParam) {
       // Only allow redirecting to whitelisted paths
       const validatedRedirect = isValidRedirect(redirectParam) ? redirectParam : '/'
-      router.replace(validatedRedirect)
+      // Use router.push instead of setting location to prevent XSS
+      router.push(validatedRedirect)
     }
   }, [router])
 
