@@ -45,7 +45,7 @@ export default async function handler(
 
     // Send email to backend API
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1'
-    const apiUrl = backendUrl.replace('/v1', '')
+    const apiUrl = backendUrl.replaceAll('/v1', '')
     
     const response = await fetch(`${apiUrl}/api/request-college`, {
       method: 'POST',

@@ -92,7 +92,7 @@ const AdminPage: NextPage = () => {
   const fetchMaintenanceMode = async () => {
     try {
       // Use base URL without /v1 for /api routes
-      const apiUrl = API_BASE_URL.replace('/v1', '');
+      const apiUrl = API_BASE_URL.replaceAll('/v1', '');
       const response = await fetch(`${apiUrl}/api/settings/maintenance`);
       if (response.ok) {
         const data = await response.json();
@@ -2569,7 +2569,7 @@ const AdminPage: NextPage = () => {
                       
                       try {
                         // Use base URL without /v1 for /api routes
-                        const apiUrl = API_BASE_URL.replace('/v1', '');
+                        const apiUrl = API_BASE_URL.replaceAll('/v1', '');
                         const response = await fetch(`${apiUrl}/api/settings/maintenance`, {
                           method: 'POST',
                           headers: {

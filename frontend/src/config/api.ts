@@ -11,7 +11,7 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ||
                               : 'http://localhost:8000/v1');
 
 // API base without /v1 suffix for endpoints that don't use it
-export const API_BASE = API_BASE_URL.replace('/v1', '');
+export const API_BASE = API_BASE_URL.replaceAll('/v1', '');
 
 // Legacy API paths (without /v1 prefix)
 export const API_LEGACY_BASE = API_BASE + '/api';

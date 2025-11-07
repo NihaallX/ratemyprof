@@ -9,7 +9,7 @@ export default function MaintenanceBanner() {
     const checkMaintenanceMode = async () => {
       try {
         // Use v1 route directly (API_BASE_URL already has /v1)
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/v1', '') || 
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replaceAll('/v1', '') || 
                        (typeof window !== 'undefined' && window.location.hostname !== 'localhost' 
                          ? 'https://ratemyprof-production.up.railway.app' 
                          : 'http://localhost:8000');

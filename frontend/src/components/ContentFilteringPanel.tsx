@@ -258,7 +258,7 @@ const ContentFilteringPanel: React.FC = () => {
                 <div className="space-y-2">
                   {Object.entries(filterStats.flag_type_distribution).map(([type, count]) => (
                     <div key={type} className="flex justify-between items-center">
-                      <span className="capitalize">{type.replace('_', ' ')}</span>
+                      <span className="capitalize">{type.replaceAll('_', ' ')}</span>
                       <Badge variant="outline">{count}</Badge>
                     </div>
                   ))}

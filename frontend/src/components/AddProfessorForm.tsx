@@ -162,7 +162,7 @@ const AddProfessorForm: React.FC = () => {
     
     for (const field of requiredFields) {
       if (!formData[field as keyof AddProfessorFormData]) {
-        setMessage(`${field.replace('_', ' ')} is required.`);
+        setMessage(`${field.replaceAll('_', ' ')} is required.`);
         return false;
       }
     }
