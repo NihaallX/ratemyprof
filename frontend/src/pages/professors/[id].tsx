@@ -26,6 +26,22 @@ import {
   Calendar
 } from 'lucide-react';
 
+/**
+ * Validates if the provided ID is a valid UUID v4 format
+ * Prevents SSRF/injection attacks by ensuring only valid UUIDs are used in API calls
+ */
+function isValidProfessorId(id: string | string[] | undefined): id is string {
+  if (!id || typeof id !== 'string') {
+    return false;
+  }
+  
+  // UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+  // where x is any hexadecimal digit and y is one of 8, 9, A, or B
+  const uuidV4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  
+  return uuidV4Regex.test(id);
+}
+
 interface Review {
   id: string
   overall_rating: number
@@ -89,16 +105,29 @@ export default function ProfessorProfile() {
 
 
   useEffect(() => {
-    if (id && typeof id === 'string') {
-      fetchProfessor(id);
-      fetchReviews(id);
-      fetchSimilarProfessors(id);
+    // Validate professor ID before making any API calls
+    if (!isValidProfessorId(id)) {
+      if (id) {
+        // ID exists but is invalid - show error
+        setError('Invalid professor ID format');
+        setLoading(false);
+      }
+      return;
     }
+    
+    // ID is valid - proceed with API calls
+    fetchProfessor(id);
+    fetchReviews(id);
+    fetchSimilarProfessors(id);
   }, [id]);
 
   // Fetch more professors after professor data is loaded
   useEffect(() => {
-    if (professor && id && typeof id === 'string') {
+    if (!isValidProfessorId(id)) {
+      return;
+    }
+    
+    if (professor) {
       fetchMoreProfessors(id);
     }
   }, [professor, id]);
@@ -699,8 +728,8 @@ export default function ProfessorProfile() {
                         onCancel={() => setShowReviewForm(false)}
                         onSubmit={() => {
                           setShowReviewForm(false)
-                          // Refresh reviews after submission
-                          if (id && typeof id === 'string') {
+                          // Refresh reviews after submission (with validation)
+                          if (isValidProfessorId(id)) {
                             fetchReviews(id)
                             fetchProfessor(id) // Also refresh professor data to update review count
                           }
