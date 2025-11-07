@@ -17,7 +17,8 @@ export default function AdminLogin() {
   // Check if already logged in - redirect to dashboard
   useEffect(() => {
     const checkExistingAuth = async () => {
-      const adminToken = localStorage.getItem('adminToken');
+      // Check sessionStorage first (new secure method), then localStorage (legacy)
+      const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
       
       if (adminToken) {
         // Verify token is valid by checking if we can access admin endpoint
@@ -85,9 +86,10 @@ export default function AdminLogin() {
         return { success: false, error: data.detail || data.error || 'Invalid credentials' };
       }
 
-      // Store admin token in localStorage
-      localStorage.setItem('adminToken', data.access_token);
-      localStorage.setItem('adminUser', JSON.stringify(data.user));
+      // Store admin token in sessionStorage (clears when browser closes)
+      // More secure than localStorage - reduces risk if device is left unattended
+      sessionStorage.setItem('adminToken', data.access_token);
+      sessionStorage.setItem('adminUser', JSON.stringify(data.user));
       
       // Don't redirect here - let the modal close first, then redirect in useEffect
       // The checkExistingAuth will run and redirect to /admin

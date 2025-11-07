@@ -128,12 +128,15 @@ const AdminPage: NextPage = () => {
     console.warn('Unauthorized access - clearing admin token and redirecting to login');
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminSession');
+    sessionStorage.removeItem('adminToken');
+    sessionStorage.removeItem('adminSession');
     router.push('/admin/login');
   };
 
-  // Helper function to get admin token from localStorage
+  // Helper function to get admin token from storage
+  // Checks sessionStorage first (new secure method), then localStorage (legacy)
   const getAdminToken = (): string | null => {
-    const token = localStorage.getItem('adminToken');
+    const token = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
     if (!token) {
       console.log('No admin token found - redirecting to login');
       router.push('/admin/login');

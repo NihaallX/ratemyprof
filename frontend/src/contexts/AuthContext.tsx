@@ -27,8 +27,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     // Check for stored admin session first
     const checkStoredAdminSession = () => {
-      const storedAdminSession = localStorage.getItem('adminSession')
-      const storedAdminUser = localStorage.getItem('adminUser')
+      // Check sessionStorage first (new secure method), then localStorage (legacy)
+      const storedAdminSession = sessionStorage.getItem('adminSession') || localStorage.getItem('adminSession')
+      const storedAdminUser = sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser')
       
       if (storedAdminSession && storedAdminUser) {
         try {
@@ -142,9 +143,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     },
     signOut: async () => {
       try {
-        // Clear admin-specific storage (not sensitive tokens)
+        // Clear admin-specific storage from both storages
         localStorage.removeItem('adminSession')
         localStorage.removeItem('adminUser')
+        localStorage.removeItem('adminToken')
+        sessionStorage.removeItem('adminSession')
+        sessionStorage.removeItem('adminUser')
+        sessionStorage.removeItem('adminToken')
         
         // Supabase handles session cleanup automatically
         const { error } = await auth.signOut()
