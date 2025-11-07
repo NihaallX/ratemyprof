@@ -1024,6 +1024,44 @@ export default function HomePage() {
           </div>
         )}
 
+        {/* Request Your College CTA Banner - Prominent Section */}
+        <div className="mt-12 sm:mt-16 mb-8">
+          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl shadow-2xl overflow-hidden">
+            <div className="px-6 py-8 sm:p-10 lg:p-12">
+              <div className="max-w-3xl mx-auto text-center">
+                {/* Icon */}
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-6">
+                  <MapPin className="w-8 h-8 text-white" />
+                </div>
+                
+                {/* Heading */}
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
+                  Can't Find Your College?
+                </h2>
+                
+                {/* Subheading */}
+                <p className="text-base sm:text-lg text-indigo-100 mb-8 max-w-2xl mx-auto">
+                  Help us prioritize which colleges to add next! Request your college and we'll work on adding it to the platform as soon as possible.
+                </p>
+                
+                {/* CTA Button */}
+                <button
+                  onClick={() => setShowRequestCollegeForm(true)}
+                  className="inline-flex items-center px-8 py-4 text-lg font-semibold text-indigo-600 bg-white rounded-xl hover:bg-indigo-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  <MapPin className="w-5 h-5 mr-2" />
+                  Request Your College
+                </button>
+                
+                {/* Supporting Text */}
+                <p className="mt-6 text-sm text-indigo-200">
+                  We add colleges based on demand. The more requests we get, the faster we'll add it! 🚀
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </main>
       
       {/* Request College Form Modal */}
