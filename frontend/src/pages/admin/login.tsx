@@ -36,12 +36,16 @@ export default function AdminLogin() {
             router.replace('/admin');
             return;
           } else {
-            // Token invalid, clear it
+            // Token invalid, clear it from both storages
+            sessionStorage.removeItem('adminToken');
+            sessionStorage.removeItem('adminUser');
             localStorage.removeItem('adminToken');
             localStorage.removeItem('adminUser');
           }
         } catch (error) {
           console.log('Token validation failed:', error);
+          sessionStorage.removeItem('adminToken');
+          sessionStorage.removeItem('adminUser');
           localStorage.removeItem('adminToken');
           localStorage.removeItem('adminUser');
         }
@@ -86,13 +90,13 @@ export default function AdminLogin() {
         return { success: false, error: data.detail || data.error || 'Invalid credentials' };
       }
 
-      // Store admin token in sessionStorage (clears when browser closes)
-      // More secure than localStorage - reduces risk if device is left unattended
+      // Store admin token in BOTH sessionStorage and localStorage for compatibility
+      // sessionStorage clears when browser closes (more secure)
+      // localStorage persists across sessions (fallback for compatibility)
       sessionStorage.setItem('adminToken', data.access_token);
       sessionStorage.setItem('adminUser', JSON.stringify(data.user));
-      
-      // Don't redirect here - let the modal close first, then redirect in useEffect
-      // The checkExistingAuth will run and redirect to /admin
+      localStorage.setItem('adminToken', data.access_token);
+      localStorage.setItem('adminUser', JSON.stringify(data.user));
       
       return { success: true };
     } catch (error) {

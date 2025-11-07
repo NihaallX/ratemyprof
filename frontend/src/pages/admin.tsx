@@ -170,8 +170,8 @@ const AdminPage: NextPage = () => {
     try {
       console.log('Loading admin dashboard stats (lightweight)...');
       
-      // Get admin token from localStorage (set by admin login)
-      const adminToken = localStorage.getItem('adminToken');
+      // Get admin token - check sessionStorage first (new secure method), then localStorage (legacy)
+      const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
       if (!adminToken) {
         console.log('No admin token found - user needs to login');
         return;
@@ -324,7 +324,8 @@ const AdminPage: NextPage = () => {
     
     // Check for admin token - redirect to login if not found
     const checkAdminAccess = async () => {
-      const adminToken = localStorage.getItem('adminToken');
+      // Check sessionStorage first (new secure method), then localStorage (legacy)
+      const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
       
       if (!adminToken) {
         console.log('No admin token found - redirecting to login');
@@ -413,7 +414,8 @@ const AdminPage: NextPage = () => {
   // Load all users (called when user clicks "Users" tab)
   const loadAllUsers = async () => {
     try {
-      const adminToken = localStorage.getItem('adminToken');
+      // Get admin token - check sessionStorage first (new secure method), then localStorage (legacy)
+      const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
       if (!adminToken) {
         console.log('No admin token found');
         return;
@@ -462,16 +464,8 @@ const AdminPage: NextPage = () => {
     console.log('Loading all professors...');
 
     try {
-      // Get admin token
-      let adminToken = null;
-      const storedSession = localStorage.getItem('adminToken');
-      if (storedSession) {
-        try {
-          adminToken = storedSession;
-        } catch (e) {
-          console.log('Failed to parse stored session');
-        }
-      }
+      // Get admin token - check sessionStorage first (new secure method), then localStorage (legacy)
+      const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
 
       const headers = adminToken ? {
         'Authorization': `Bearer ${adminToken}`,
@@ -985,12 +979,8 @@ const AdminPage: NextPage = () => {
 
   const handleCollegeReviewFlagAction = async (flagId: string, action: 'approve_flag' | 'dismiss_flag') => {
     try {
-      const storedSession = localStorage.getItem('adminToken');
-      let adminToken = null;
-      
-      if (storedSession) {
-        adminToken = storedSession;
-      }
+      // Get admin token - check sessionStorage first (new secure method), then localStorage (legacy)
+      const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
 
       if (!adminToken) {
         showToast('Admin authentication required', 'error');
@@ -1173,8 +1163,11 @@ const AdminPage: NextPage = () => {
                 </button>
                 <button
                   onClick={() => {
+                    // Clear admin tokens and data from both storages
                     localStorage.removeItem('adminToken');
                     localStorage.removeItem('adminUser');
+                    sessionStorage.removeItem('adminToken');
+                    sessionStorage.removeItem('adminUser');
                     sessionStorage.removeItem('adminWelcomeShown');
                     router.push('/admin/login');
                   }}
