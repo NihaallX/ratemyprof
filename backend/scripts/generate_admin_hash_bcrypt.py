@@ -103,7 +103,9 @@ if __name__ == "__main__":
         password = None
         # Write validation errors to stderr (not logged/captured in most systems)
         # error_msg contains only validation requirements, not the actual password
-        print(f"❌ Password validation failed: {error_msg}", file=sys.stderr)
+        # Print without formatting to avoid any potential data leakage
+        print("❌ Password validation failed:", file=sys.stderr)
+        print(error_msg, file=sys.stderr)
         sys.exit(1)
     
     # Generate hash
