@@ -30,30 +30,36 @@ export default function RequestCollegeForm({ isOpen, onClose }: RequestCollegeFo
     setError(null)
 
     try {
-      // Using Formspree for simple, reliable form submission
-      // Replace 'YOUR_FORM_ID' with your actual Formspree form ID
-      // Create free account at https://formspree.io and get your form endpoint
-      const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mvgozbpl' // You'll need to replace this
-      
-      const response = await fetch(FORMSPREE_ENDPOINT, {
+      // Using Web3Forms - simple and free, no account needed
+      // Get your access key from: https://web3forms.com
+      const response = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          collegeName: formData.collegeName,
-          city: formData.city,
-          state: formData.state,
-          requesterName: formData.yourName,
-          requesterEmail: formData.yourEmail,
-          additionalInfo: formData.additionalInfo,
-          _subject: `New College Request: ${formData.collegeName}`,
-          _replyto: formData.yourEmail
+          access_key: '9c0f2f7c-8e5b-4a6c-b3d1-2a8f9e6c4b5a', // Replace with your Web3Forms access key
+          from_name: formData.yourName,
+          email: formData.yourEmail,
+          subject: `New College Request: ${formData.collegeName}`,
+          message: `
+College/University: ${formData.collegeName}
+City: ${formData.city}
+State: ${formData.state}
+
+Requester: ${formData.yourName}
+Email: ${formData.yourEmail}
+
+${formData.additionalInfo ? `Additional Information:\n${formData.additionalInfo}` : ''}
+          `.trim(),
+          to: 'ratemyprofgn@gmail.com'
         })
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to submit request')
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to submit request')
       }
 
       setSubmitted(true)
