@@ -376,10 +376,6 @@ export default function HomePage() {
 
             {/* Desktop Navigation - Always visible on desktop */}
             <div className="hidden lg:flex items-center space-x-6">
-              <div className="text-sm text-gray-600">
-                Vishwakarma University Pilot
-              </div>
-              
               {/* Navigation Links - Only for logged in users */}
               {user ? (
                 <>
@@ -440,10 +436,6 @@ export default function HomePage() {
           {mobileMenuOpen && (
             <div className="lg:hidden mt-4 pb-4 border-t border-gray-200">
               <nav className="flex flex-col space-y-3 pt-4">
-                <div className="text-sm text-gray-600 px-2">
-                  Vishwakarma University Pilot
-                </div>
-                
                 {user ? (
                   <>
                     <Link
@@ -525,7 +517,7 @@ export default function HomePage() {
             Find Your Perfect Professor
           </h2>
           <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 px-4">
-            Search and discover professors at Vishwakarma University
+            Discover and rate professors at colleges across India
           </p>
 
           {/* Search Interface */}
@@ -730,19 +722,28 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* Request College Button */}
+              {/* Request College Banner - More Prominent */}
               {searchType === 'colleges' && (
-                <div className="mt-6 text-center">
-                  <p className="text-sm text-gray-600 mb-3">
-                    Can't find your college or university?
-                  </p>
-                  <button
-                    onClick={() => setShowRequestCollegeForm(true)}
-                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
-                  >
-                    <MapPin className="w-4 h-4 mr-2" />
-                    Request Your College
-                  </button>
+                <div className="mt-6">
+                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="text-center sm:text-left">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">
+                          Can't find your college?
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          Let us know and we'll add it to our platform
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setShowRequestCollegeForm(true)}
+                        className="inline-flex items-center px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg whitespace-nowrap"
+                      >
+                        <MapPin className="w-4 h-4 mr-2" />
+                        Request College
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -785,11 +786,8 @@ export default function HomePage() {
                             <h4 className="text-base sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
                               {professor.name}
                             </h4>
-                            <p className="text-xs sm:text-sm text-gray-600 mb-1 line-clamp-1">
+                            <p className="text-xs sm:text-sm text-gray-600 mb-2 line-clamp-1">
                               {professor.department}
-                            </p>
-                            <p className="text-xs sm:text-sm text-gray-500 line-clamp-1 mb-2">
-                              Vishwakarma University
                             </p>
                             {/* Teaching Style Tags */}
                             <div className="flex flex-wrap gap-1 mb-2">
@@ -929,11 +927,8 @@ export default function HomePage() {
                           <h4 className="text-base sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
                             {professor.name}
                           </h4>
-                          <p className="text-xs sm:text-sm text-gray-600 mb-1 line-clamp-1">
+                          <p className="text-xs sm:text-sm text-gray-600 mb-2 line-clamp-1">
                             {professor.department}
-                          </p>
-                          <p className="text-xs sm:text-sm text-gray-500 line-clamp-1 mb-2">
-                            Vishwakarma University
                           </p>
                           {/* Teaching Style Tags */}
                           <div className="flex flex-wrap gap-1 mb-2">

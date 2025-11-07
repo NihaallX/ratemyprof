@@ -30,12 +30,26 @@ export default function RequestCollegeForm({ isOpen, onClose }: RequestCollegeFo
     setError(null)
 
     try {
-      const response = await fetch('/api/request-college', {
+      // Using Formspree for simple, reliable form submission
+      // Replace 'YOUR_FORM_ID' with your actual Formspree form ID
+      // Create free account at https://formspree.io and get your form endpoint
+      const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mvgozbpl' // You'll need to replace this
+      
+      const response = await fetch(FORMSPREE_ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          collegeName: formData.collegeName,
+          city: formData.city,
+          state: formData.state,
+          requesterName: formData.yourName,
+          requesterEmail: formData.yourEmail,
+          additionalInfo: formData.additionalInfo,
+          _subject: `New College Request: ${formData.collegeName}`,
+          _replyto: formData.yourEmail
+        })
       })
 
       if (!response.ok) {
