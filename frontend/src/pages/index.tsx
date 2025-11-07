@@ -12,6 +12,7 @@ import { useAuth } from '../contexts/AuthContext';
 import CompareColleges from '../components/CompareColleges';
 import UserDropdown from '../components/UserDropdown';
 import NotificationInbox from '../components/NotificationInbox';
+import RequestCollegeForm from '../components/RequestCollegeForm';
 import Footer from '../components/Footer';
 
 interface SearchSuggestion {
@@ -37,6 +38,7 @@ export default function HomePage() {
   const [topRatedProfessors, setTopRatedProfessors] = useState<Professor[]>([]);
   const [topRatedColleges, setTopRatedColleges] = useState<College[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showRequestCollegeForm, setShowRequestCollegeForm] = useState(false);
   
   const searchInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
@@ -727,6 +729,22 @@ export default function HomePage() {
                   </div>
                 </div>
               )}
+
+              {/* Request College Button */}
+              {searchType === 'colleges' && (
+                <div className="mt-6 text-center">
+                  <p className="text-sm text-gray-600 mb-3">
+                    Can't find your college or university?
+                  </p>
+                  <button
+                    onClick={() => setShowRequestCollegeForm(true)}
+                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+                  >
+                    <MapPin className="w-4 h-4 mr-2" />
+                    Request Your College
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1012,6 +1030,12 @@ export default function HomePage() {
         )}
 
       </main>
+      
+      {/* Request College Form Modal */}
+      <RequestCollegeForm 
+        isOpen={showRequestCollegeForm}
+        onClose={() => setShowRequestCollegeForm(false)}
+      />
       
       {/* Footer */}
       <Footer />
