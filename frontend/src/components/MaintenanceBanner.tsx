@@ -128,7 +128,7 @@ export default function MaintenanceBanner() {
       >
         <span role="img" aria-label="maintenance">⚙️</span>
         <span>
-          <strong>RateMyProf.me</strong> is currently under maintenance — some features may be temporarily unavailable.
+          <strong>RateMyProf.me</strong> is currently under maintenance — some features may be temporarily unavailable. Sorry for the inconvenience!
         </span>
       </span>
       <button
