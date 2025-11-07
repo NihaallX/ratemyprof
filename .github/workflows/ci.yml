@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+# Default permissions for all jobs (principle of least privilege)
+permissions:
+  contents: read
+
 env:
   DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ratemyprof_test
   SECRET_KEY: test-secret-key-for-ci
@@ -14,6 +18,9 @@ env:
 jobs:
   backend-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read  # Read code
+      checks: write   # Write test results
     
     services:
       postgres:
@@ -74,6 +81,9 @@ jobs:
         
   frontend-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read  # Read code
+      checks: write   # Write test results
     
     steps:
     - uses: actions/checkout@v4
@@ -114,6 +124,10 @@ jobs:
   e2e-test:
     runs-on: ubuntu-latest
     needs: [backend-test, frontend-test]
+    permissions:
+      contents: read    # Read code
+      checks: write     # Write test results
+      actions: read     # Read artifacts from previous jobs
     
     services:
       postgres:
@@ -180,6 +194,9 @@ jobs:
 
   security-scan:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read          # Read code to scan
+      security-events: write  # Upload security scan results to CodeQL
     
     steps:
     - uses: actions/checkout@v4
@@ -201,6 +218,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [backend-test, frontend-test, e2e-test]
     if: github.ref == 'refs/heads/develop'
+    permissions:
+      contents: read  # Read code for deployment
     
     steps:
     - uses: actions/checkout@v4
@@ -214,6 +233,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [backend-test, frontend-test, e2e-test, security-scan]
     if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read  # Read code for deployment
     
     steps:
     - uses: actions/checkout@v4
