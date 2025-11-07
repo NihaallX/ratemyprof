@@ -127,13 +127,16 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
     }
 
     // Replace placeholders in title and message with actual data
+    // Using replaceAll() to replace ALL occurrences, not just the first one
+    // This prevents incomplete string escaping/encoding (CWE-116, CWE-20, CWE-80)
     let previewTitle = selectedTemplate.title
     let previewMessage = selectedTemplate.message
 
     Object.keys(templateData).forEach(field => {
       const value = templateData[field] || `{${field}}`
-      previewTitle = previewTitle.replace(`{${field}}`, value)
-      previewMessage = previewMessage.replace(`{${field}}`, value)
+      // Use replaceAll() instead of replace() to ensure ALL placeholders are replaced
+      previewTitle = previewTitle.replaceAll(`{${field}}`, value)
+      previewMessage = previewMessage.replaceAll(`{${field}}`, value)
     })
 
     return (
