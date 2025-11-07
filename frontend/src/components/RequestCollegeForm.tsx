@@ -38,7 +38,7 @@ export default function RequestCollegeForm({ isOpen, onClose }: RequestCollegeFo
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          access_key: '9c0f2f7c-8e5b-4a6c-b3d1-2a8f9e6c4b5a', // Replace with your Web3Forms access key
+          access_key: 'fda969e0-0d39-4aaa-a06a-425e99005ce0', // Replace with your Web3Forms access key
           from_name: formData.yourName,
           email: formData.yourEmail,
           subject: `New College Request: ${formData.collegeName}`,
