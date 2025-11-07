@@ -6,6 +6,21 @@ import { ArrowLeft, Globe, MapPin, Calendar, Users, GraduationCap, Search } from
 import CollegeReviews from '../../components/CollegeReviews';
 import CompareColleges from '../../components/CompareColleges';
 
+/**
+ * Validates if the provided ID is a valid UUID v4 format
+ * Prevents SSRF/injection attacks by ensuring only valid UUIDs are used in API calls
+ */
+function isValidCollegeId(id: string | string[] | undefined): id is string {
+  if (!id || typeof id !== 'string') {
+    return false;
+  }
+  
+  // UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+  const uuidV4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  
+  return uuidV4Regex.test(id);
+}
+
 interface College {
   id: string;
   name: string;
@@ -51,7 +66,15 @@ export default function CollegeDetail() {
   }, []);
 
   useEffect(() => {
-    if (!id) return;
+    // Validate college ID before making any API calls
+    if (!isValidCollegeId(id)) {
+      if (id) {
+        // ID exists but is invalid
+        console.error('Invalid college ID format:', id);
+        setIsLoading(false);
+      }
+      return;
+    }
 
     const fetchData = async () => {
       try {
