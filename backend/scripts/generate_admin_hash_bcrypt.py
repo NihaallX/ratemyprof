@@ -99,10 +99,10 @@ if __name__ == "__main__":
     # Validate password strength
     is_valid, error_msg = validate_password_strength(password)
     if not is_valid:
-        # Security: Don't log the actual password or password details that might expose it
-        print(f"❌ Password validation failed: {error_msg}")
-        # Clear password from memory
+        # Security: Clear password from memory immediately
         password = None
+        # error_msg contains only validation requirements, not the actual password
+        print(f"❌ Password validation failed: {error_msg}")
         sys.exit(1)
     
     # Generate hash
