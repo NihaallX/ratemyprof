@@ -17,7 +17,10 @@ export default function App({ Component, pageProps }: AppProps) {
     const redirect = sessionStorage.getItem('redirect')
     if (redirect) {
       sessionStorage.removeItem('redirect')
-      router.replace(redirect)
+      // Validate redirect URL to prevent open redirect attacks
+      // Only allow relative paths starting with '/' but not '//' (protocol-relative URLs)
+      const validatedRedirect = (typeof redirect === "string" && redirect.startsWith('/') && !redirect.startsWith('//')) ? redirect : '/'
+      router.replace(validatedRedirect)
       return
     }
 
@@ -25,7 +28,10 @@ export default function App({ Component, pageProps }: AppProps) {
     const urlParams = new URLSearchParams(window.location.search)
     const redirectParam = urlParams.get('redirect')
     if (redirectParam) {
-      router.replace(redirectParam)
+      // Validate redirect URL to prevent open redirect attacks
+      // Only allow relative paths starting with '/' but not '//' (protocol-relative URLs)
+      const validatedRedirect = (typeof redirectParam === "string" && redirectParam.startsWith('/') && !redirectParam.startsWith('//')) ? redirectParam : '/'
+      router.replace(validatedRedirect)
     }
   }, [router])
 
