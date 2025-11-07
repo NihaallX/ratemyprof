@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react'
-import { Building2, X, Mail, MapPin, User, Loader2, CheckCircle } from 'lucide-react'
+import { Building2, X, Mail, MapPin, User, Loader2, CheckCircle, Instagram } from 'lucide-react'
 
 interface RequestCollegeFormProps {
   isOpen: boolean
@@ -18,6 +18,7 @@ export default function RequestCollegeForm({ isOpen, onClose }: RequestCollegeFo
     state: '',
     yourName: '',
     yourEmail: '',
+    instagramId: '',
     additionalInfo: ''
   })
   const [loading, setLoading] = useState(false)
@@ -49,6 +50,7 @@ State: ${formData.state}
 
 Requester: ${formData.yourName}
 Email: ${formData.yourEmail}
+${formData.instagramId ? `Instagram: @${formData.instagramId}` : ''}
 
 ${formData.additionalInfo ? `Additional Information:\n${formData.additionalInfo}` : ''}
           `.trim(),
@@ -80,6 +82,7 @@ ${formData.additionalInfo ? `Additional Information:\n${formData.additionalInfo}
       state: '',
       yourName: '',
       yourEmail: '',
+      instagramId: '',
       additionalInfo: ''
     })
     setSubmitted(false)
@@ -230,6 +233,30 @@ ${formData.additionalInfo ? `Additional Information:\n${formData.additionalInfo}
                       placeholder="your.email@example.com"
                     />
                   </div>
+                </div>
+
+                {/* Instagram ID */}
+                <div>
+                  <label htmlFor="instagramId" className="block text-sm font-medium text-gray-700 mb-1">
+                    Instagram Handle (Optional)
+                  </label>
+                  <div className="relative">
+                    <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <div className="absolute left-10 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
+                      @
+                    </div>
+                    <input
+                      type="text"
+                      id="instagramId"
+                      value={formData.instagramId}
+                      onChange={(e) => setFormData({ ...formData, instagramId: e.target.value.replace('@', '') })}
+                      className="w-full pl-14 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="your_instagram"
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    We'd love to thank you personally when we add your college! 🎉
+                  </p>
                 </div>
 
                 {/* Additional Info */}
