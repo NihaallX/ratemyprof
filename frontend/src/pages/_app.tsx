@@ -12,7 +12,7 @@ import '../styles/globals.css'
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter()
 
-  // Helper function to validate redirect URLs
+  // Helper function to validate redirect URLs with strict URL-safe character checking
   const isValidRedirect = (url: string | null | undefined): boolean => {
     if (!url || typeof url !== 'string') return false
     
@@ -32,7 +32,20 @@ export default function App({ Component, pageProps }: AppProps) {
       /^ftp:/i              // ftp:
     ]
     
-    return !dangerousPatterns.some(pattern => pattern.test(url))
+    if (dangerousPatterns.some(pattern => pattern.test(url))) return false
+    
+    // Block encoded slashes and other suspicious encoded characters
+    // %2f = /, %5c = \, %00 = null byte
+    const suspiciousEncoded = /%2f|%5c|%00|%0d|%0a/i
+    if (suspiciousEncoded.test(url)) return false
+    
+    // Only allow URL-safe path characters: alphanumeric, dash, underscore, slash, 
+    // question mark (for query params), hash (for fragments), equals, ampersand, dot, percent (for safe encoding)
+    // This regex ensures only safe characters are present
+    const safePathRegex = /^\/[a-zA-Z0-9\-_\/.?#=&%]*$/
+    if (!safePathRegex.test(url)) return false
+    
+    return true
   }
 
   useEffect(() => {
