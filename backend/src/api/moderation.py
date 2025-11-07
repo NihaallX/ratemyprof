@@ -6,6 +6,7 @@ from typing import Optional, List, Dict, Any
 from uuid import UUID
 from datetime import datetime, timedelta
 import jwt
+import logging
 from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, field_validator
@@ -855,15 +856,15 @@ async def test_users_endpoint(
                     }
                     
             except Exception as admin_error:
-                print(f"⚠️ Admin client error: {admin_error}")
+                # Log full error details server-side for debugging
+                logging.exception("Admin client error")
                 
                 # Fallback: Get user IDs from reviews and try to get their details
                 reviews_result = supabase.table('reviews').select('student_id').not_.is_('student_id', 'null').limit(10).execute()
                 student_ids = list(set([r['student_id'] for r in reviews_result.data])) if reviews_result.data else []
                 
                 return {
-                    "message": "Admin client failed, found user IDs from reviews", 
-                    "admin_error": str(admin_error),
+                    "message": "Internal server error", 
                     "users_count": len(student_ids),
                     "user_ids": student_ids
                 }
@@ -879,9 +880,10 @@ async def test_users_endpoint(
             }
             
     except Exception as e:
+        # Log full error details server-side for debugging
+        logging.exception("Test endpoint - all methods failed")
         return {
-            "message": "Test endpoint - all methods failed", 
-            "error": str(e),
+            "message": "Internal server error", 
             "users": []
         }
 
@@ -1989,9 +1991,11 @@ async def bulk_moderate_reviews(
                 })
                 failed_count += 1
             except Exception as e:
+                # Log full error details server-side for debugging
+                logging.exception(f"Error processing review {review_id}")
                 failed_items.append({
                     "id": review_id,
-                    "error": str(e)
+                    "error": "Internal server error"
                 })
                 failed_count += 1
         
@@ -2110,9 +2114,11 @@ async def bulk_moderate_college_reviews(
                 })
                 failed_count += 1
             except Exception as e:
+                # Log full error details server-side for debugging
+                logging.exception(f"Error processing college review {review_id}")
                 failed_items.append({
                     "id": review_id,
-                    "error": str(e)
+                    "error": "Internal server error"
                 })
                 failed_count += 1
         
@@ -2231,9 +2237,11 @@ async def bulk_user_action(
                 })
                 failed_count += 1
             except Exception as e:
+                # Log full error details server-side for debugging
+                logging.exception(f"Error processing user {user_id}")
                 failed_items.append({
                     "id": user_id,
-                    "error": str(e)
+                    "error": "Internal server error"
                 })
                 failed_count += 1
         
@@ -2358,9 +2366,11 @@ async def bulk_professor_action(
                 })
                 failed_count += 1
             except Exception as e:
+                # Log full error details server-side for debugging
+                logging.exception(f"Error processing professor {professor_id}")
                 failed_items.append({
                     "id": professor_id,
-                    "error": str(e)
+                    "error": "Internal server error"
                 })
                 failed_count += 1
         
