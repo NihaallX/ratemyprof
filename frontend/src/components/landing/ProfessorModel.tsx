@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
-import { trackEvent } from '../utils/helpers';
+import { trackEvent } from '../../utils/landing/helpers';
 
 interface ProfessorModelProps {
   scrollProgress: number;

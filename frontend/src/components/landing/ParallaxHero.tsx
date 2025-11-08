@@ -1,7 +1,7 @@
 import { useRef, useEffect, useMemo } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { trackEvent, prefersReducedMotion, lerp, clamp } from '../utils/helpers';
+import { trackEvent, prefersReducedMotion, lerp, clamp } from '../../utils/landing/helpers';
 
 interface ParallaxHeroProps {
   scrollProgress: number;
