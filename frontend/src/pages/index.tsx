@@ -14,6 +14,7 @@ import UserDropdown from '../components/UserDropdown';
 import NotificationInbox from '../components/NotificationInbox';
 import RequestCollegeForm from '../components/RequestCollegeForm';
 import Footer from '../components/Footer';
+import DarkModeToggle from '../components/DarkModeToggle';
 import dynamic from 'next/dynamic';
 
 // Dynamically import landing page (with 3D components) to reduce initial bundle size
@@ -419,6 +420,8 @@ function AuthenticatedHomePage() {
                       Admin
                     </Link>
                   )}
+                  {/* Dark Mode Toggle */}
+                  <DarkModeToggle />
                   {/* Notification Inbox */}
                   <NotificationInbox />
                   {/* User Dropdown for logged in users */}
@@ -446,6 +449,7 @@ function AuthenticatedHomePage() {
 
             {/* Mobile Menu Button */}
             <div className="lg:hidden flex items-center space-x-2">
+              {user && <DarkModeToggle />}
               {user && <NotificationInbox />}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

@@ -4,6 +4,17 @@
 
 /* Custom styles for RateMyProf India */
 
+/* Landing Page Gradient Text */
+.text-gradient {
+  @apply bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent;
+}
+
+/* Logo specific styling */
+.font-logo {
+  font-family: 'Pacifico', cursive;
+  letter-spacing: 0.02em;
+}
+
 /* Hide scrollbar globally while keeping scroll functionality */
 * {
   scrollbar-width: none; /* Firefox */

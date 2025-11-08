@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import ParallaxHero from '../../components/landing/ParallaxHero';
 import AnimatedText, { AnimatedWord } from '../../components/landing/AnimatedText';
 import ProfessorCard, { Professor } from '../../components/landing/ProfessorCard';
+import DarkModeToggle from '../../components/DarkModeToggle';
 import { throttle, prefersReducedMotion, isLowPowerMode } from '../../utils/landing/helpers';
 
 // Use Next.js environment variable for API URL
@@ -324,7 +325,10 @@ export default function EnhancedLandingPage() {
             RateMyProf
           </motion.div>
           
-          <div className="flex gap-4">
+          <div className="flex gap-4 items-center">
+            {/* Dark Mode Toggle */}
+            <DarkModeToggle />
+            
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
