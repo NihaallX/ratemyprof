@@ -2,6 +2,8 @@
 
 This module sets up the FastAPI application with all routes, middleware,
 and database configuration for the RateMyProf India platform.
+
+Updated: Fixed TrustedHostMiddleware to allow ratemyprof.me domain.
 """
 import os
 import asyncio
@@ -72,7 +74,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     Initializes Supabase connection and performs cleanup.
     """
     # Startup
-    print("🚀 Starting RateMyProf API server...")
+    print("🚀 Starting RateMyProf API server v1.0.1...")
     await init_db()
     print("✅ Supabase connection initialized")
     
@@ -101,7 +103,21 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Security headers middleware (applied first)
+# Trusted host middleware for production (MUST BE FIRST)
+# This validates the Host header before any other processing
+if os.getenv("ENVIRONMENT") == "production":
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=[
+            "*.railway.app",  # Railway deployment URL  
+            "ratemyprof-production.up.railway.app",  # Specific Railway URL
+            "ratemyprof.me",  # Production domain (main)
+            "www.ratemyprof.me",  # Production domain (www)
+            "localhost",  # Allow localhost for testing
+        ]
+    )
+
+# Security headers middleware
 app.add_middleware(SecurityHeadersMiddleware)
 
 # IP Ban middleware (blocks banned IPs before any processing)
@@ -119,18 +135,6 @@ app.add_middleware(
     expose_headers=["*"],
     max_age=3600,  # Cache preflight requests for 1 hour
 )
-
-# Trusted host middleware for production
-if os.getenv("ENVIRONMENT") == "production":
-    app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=[
-            "*.railway.app",  # Railway deployment URL
-            "ratemyprof.me",  # Production domain (main)
-            "www.ratemyprof.me",  # Production domain (www)
-            "localhost",  # Allow localhost for testing
-        ]
-    )
 
 
 # Global exception handler
