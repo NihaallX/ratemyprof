@@ -34,8 +34,22 @@ interface SearchSuggestion {
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth();
   
-  // Show landing page for unauthenticated users
-  if (!authLoading && !user) {
+  // Check if user explicitly wants to browse the app (coming from landing page "Get Started")
+  const [wantsToBrowse, setWantsToBrowse] = useState(false);
+  
+  useEffect(() => {
+    // Check if user clicked "Get Started" from landing page
+    const fromLanding = sessionStorage.getItem('browse_app');
+    if (fromLanding === 'true') {
+      setWantsToBrowse(true);
+      sessionStorage.removeItem('browse_app'); // Clear flag
+    }
+  }, []);
+  
+  // Show landing page ONLY if:
+  // 1. Not authenticated AND
+  // 2. User hasn't explicitly clicked "Get Started" to browse
+  if (!authLoading && !user && !wantsToBrowse) {
     return <LandingPage />;
   }
   
@@ -48,7 +62,9 @@ export default function HomePage() {
     );
   }
   
-  // Authenticated users see the main app below
+  // Show main app for:
+  // 1. Authenticated users, OR
+  // 2. Unauthenticated users who clicked "Get Started" (browse mode)
   return <AuthenticatedHomePage />;
 }
 

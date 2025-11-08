@@ -370,8 +370,9 @@ export default function EnhancedLandingPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => {
-                sessionStorage.setItem('from_landing', 'true');
-                goToApp('/auth/signup');
+                // Set flag to show main app (browse mode)
+                sessionStorage.setItem('browse_app', 'true');
+                window.location.href = '/';
               }}
               className="px-12 py-5 text-lg bg-gradient-to-r from-primary to-secondary rounded-full font-bold text-white shadow-2xl"
             >
@@ -381,8 +382,8 @@ export default function EnhancedLandingPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => {
-                sessionStorage.setItem('from_landing', 'true');
-                goToApp('/auth/login');
+                // Redirect to login page
+                window.location.href = '/auth/login';
               }}
               className="px-12 py-5 text-lg bg-white/10 backdrop-blur-md border-2 border-white/30 rounded-full font-bold text-white hover:bg-white/20 transition-all"
             >
@@ -579,8 +580,8 @@ export default function EnhancedLandingPage() {
               whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(99, 102, 241, 0.5)' }}
               whileTap={{ scale: 0.95 }}
               onClick={() => {
-                sessionStorage.setItem('from_landing', 'true');
-                goToApp('/auth/signup');
+                sessionStorage.setItem('browse_app', 'true');
+                window.location.href = '/';
               }}
               className="px-10 py-4 bg-primary text-white font-semibold rounded-full text-lg"
             >
@@ -590,8 +591,8 @@ export default function EnhancedLandingPage() {
               whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(139, 92, 246, 0.5)' }}
               whileTap={{ scale: 0.95 }}
               onClick={() => {
-                sessionStorage.setItem('from_landing', 'true');
-                goToApp('/auth/signup');
+                sessionStorage.setItem('browse_app', 'true');
+                window.location.href = '/';
               }}
               className="px-10 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold rounded-full text-lg"
             >
