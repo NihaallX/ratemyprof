@@ -97,44 +97,24 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 app = FastAPI(
     title="RateMyProf India API",
     description="Backend API for the RateMyProf India platform - helping students find and review professors across Indian colleges and universities.",
-    version="1.0.0",
+    version="1.0.1",
     docs_url="/docs" if DOCS_ENABLED else None,
     redoc_url="/redoc" if DOCS_ENABLED else None,
     lifespan=lifespan,
 )
 
-# Trusted host middleware for production (TEMPORARILY DISABLED FOR DEBUGGING)
-# This validates the Host header before any other processing
-# DISABLED: Testing if this is causing 502 errors
-# if os.getenv("ENVIRONMENT") == "production":
-#     app.add_middleware(
-#         TrustedHostMiddleware,
-#         allowed_hosts=[
-#             "*.railway.app",  # Railway deployment URL  
-#             "ratemyprof-production.up.railway.app",  # Specific Railway URL
-#             "ratemyprof.me",  # Production domain (main)
-#             "www.ratemyprof.me",  # Production domain (www)
-#             "localhost",  # Allow localhost for testing
-#         ]
-#     )
+# DEBUGGING: Temporarily disable ALL middleware to test basic connectivity
+print("⚠️ WARNING: ALL MIDDLEWARE DISABLED FOR DEBUGGING")
 
-# Security headers middleware
-app.add_middleware(SecurityHeadersMiddleware)
-
-# IP Ban middleware (blocks banned IPs before any processing)
-if AUTO_BAN_ENABLED:
-    app.middleware("http")(ip_ban_middleware)
-    print("✅ IP ban middleware enabled")
-
-# CORS middleware - Restrict to allowed origins
+# CORS middleware - ONLY THIS ONE for now
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=["*"],  # Allow all origins temporarily for debugging
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["*"],
-    max_age=3600,  # Cache preflight requests for 1 hour
+    max_age=3600,
 )
 
 
