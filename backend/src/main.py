@@ -103,19 +103,20 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Trusted host middleware for production (MUST BE FIRST)
+# Trusted host middleware for production (TEMPORARILY DISABLED FOR DEBUGGING)
 # This validates the Host header before any other processing
-if os.getenv("ENVIRONMENT") == "production":
-    app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=[
-            "*.railway.app",  # Railway deployment URL  
-            "ratemyprof-production.up.railway.app",  # Specific Railway URL
-            "ratemyprof.me",  # Production domain (main)
-            "www.ratemyprof.me",  # Production domain (www)
-            "localhost",  # Allow localhost for testing
-        ]
-    )
+# DISABLED: Testing if this is causing 502 errors
+# if os.getenv("ENVIRONMENT") == "production":
+#     app.add_middleware(
+#         TrustedHostMiddleware,
+#         allowed_hosts=[
+#             "*.railway.app",  # Railway deployment URL  
+#             "ratemyprof-production.up.railway.app",  # Specific Railway URL
+#             "ratemyprof.me",  # Production domain (main)
+#             "www.ratemyprof.me",  # Production domain (www)
+#             "localhost",  # Allow localhost for testing
+#         ]
+#     )
 
 # Security headers middleware
 app.add_middleware(SecurityHeadersMiddleware)
