@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import { SWRConfig } from 'swr'
 import { AuthProvider } from '../contexts/AuthContext'
 import { NotificationProvider } from '../contexts/NotificationContext'
+import { ThemeProvider } from '../contexts/ThemeContext'
 import NotificationContainer from '../components/NotificationContainer'
 import MaintenanceBanner from '../components/MaintenanceBanner'
 import { swrConfig } from '../lib/swr-config'
@@ -85,14 +86,16 @@ export default function App({ Component, pageProps }: AppProps) {
   }, [router])
 
   return (
-    <SWRConfig value={swrConfig}>
-      <AuthProvider>
-        <NotificationProvider>
-          <MaintenanceBanner />
-          <Component {...pageProps} />
-          <NotificationContainer />
-        </NotificationProvider>
-      </AuthProvider>
-    </SWRConfig>
+    <ThemeProvider>
+      <SWRConfig value={swrConfig}>
+        <AuthProvider>
+          <NotificationProvider>
+            <MaintenanceBanner />
+            <Component {...pageProps} />
+            <NotificationContainer />
+          </NotificationProvider>
+        </AuthProvider>
+      </SWRConfig>
+    </ThemeProvider>
   )
 }

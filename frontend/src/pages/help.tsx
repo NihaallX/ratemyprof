@@ -53,20 +53,20 @@ export default function HelpPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors duration-200">
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 transition-colors duration-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => router.back()}
-                className="text-gray-600 hover:text-gray-900 transition-colors"
+                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
                 <Home className="w-5 h-5" />
               </button>
-              <h1 className="text-2xl font-bold text-gray-900">Help Center</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Help Center</h1>
             </div>
-            <Link href="/" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+            <Link href="/" className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium transition-colors">
               Back to Home
             </Link>
           </div>
@@ -75,27 +75,27 @@ export default function HelpPage() {
 
       <main className="flex-1 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center mb-8">
-          <HelpCircle className="w-16 h-16 text-indigo-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">How can we help you?</h2>
-          <p className="text-gray-600">Find answers to common questions below</p>
+          <HelpCircle className="w-16 h-16 text-indigo-600 dark:text-indigo-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">How can we help you?</h2>
+          <p className="text-gray-600 dark:text-gray-300">Find answers to common questions below</p>
         </div>
 
         {faqs.map((section, idx) => (
-          <div key={idx} className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">{section.category}</h3>
+          <div key={idx} className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 p-6 mb-6 border dark:border-gray-700">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{section.category}</h3>
             <div className="space-y-4">
               {section.questions.map((item, qIdx) => (
-                <div key={qIdx} className="border-b border-gray-200 last:border-0 pb-4 last:pb-0">
-                  <h4 className="font-medium text-gray-900 mb-2">{item.q}</h4>
-                  <p className="text-gray-700 text-sm">{item.a}</p>
+                <div key={qIdx} className="border-b border-gray-200 dark:border-gray-700 last:border-0 pb-4 last:pb-0">
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">{item.q}</h4>
+                  <p className="text-gray-700 dark:text-gray-300 text-sm">{item.a}</p>
                 </div>
               ))}
             </div>
           </div>
         ))}
 
-        <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-6 text-center">
-          <p className="text-gray-700 mb-4">Can't find what you're looking for?</p>
+        <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-6 text-center transition-colors duration-200">
+          <p className="text-gray-700 dark:text-gray-300 mb-4">Can't find what you're looking for?</p>
           <Link
             href="/contact"
             className="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"

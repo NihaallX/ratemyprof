@@ -117,7 +117,7 @@ const ReviewVoting: React.FC<ReviewVotingProps> = ({
 
   return (
     <div className="flex items-center space-x-4 text-sm">
-      <span className="text-gray-600">Was this review helpful?</span>
+      <span className="text-gray-600 dark:text-gray-400">Was this review helpful?</span>
       
       <div className="flex items-center space-x-2">
         <button
@@ -125,8 +125,8 @@ const ReviewVoting: React.FC<ReviewVotingProps> = ({
           disabled={isSubmitting}
           className={`inline-flex items-center px-3 py-1 rounded border transition-all duration-200 relative ${
             currentVote === 'helpful'
-              ? 'bg-green-100 text-green-700 border-green-300'
-              : 'text-gray-600 border-gray-300 hover:bg-green-50 hover:text-green-600'
+              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-300 dark:border-green-600'
+              : 'text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-600 dark:hover:text-green-400 hover:border-green-300 dark:hover:border-green-600'
           } disabled:opacity-50`}
         >
           <ThumbsUp 
@@ -144,8 +144,8 @@ const ReviewVoting: React.FC<ReviewVotingProps> = ({
           disabled={isSubmitting}
           className={`inline-flex items-center px-3 py-1 rounded border transition-all duration-200 relative ${
             currentVote === 'not_helpful'
-              ? 'bg-red-100 text-red-700 border-red-300'
-              : 'text-gray-600 border-gray-300 hover:bg-red-50 hover:text-red-600'
+              ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-300 dark:border-red-600'
+              : 'text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 hover:border-red-300 dark:hover:border-red-600'
           } disabled:opacity-50`}
         >
           <ThumbsDown 

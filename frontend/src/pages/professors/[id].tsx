@@ -307,10 +307,10 @@ export default function ProfessorProfile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center transition-colors duration-200">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading professor information...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400 mx-auto"></div>
+          <p className="mt-2 text-gray-600 dark:text-gray-300">Loading professor information...</p>
         </div>
       </div>
     );
@@ -318,11 +318,11 @@ export default function ProfessorProfile() {
 
   if (error || !professor) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center transition-colors duration-200">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Professor Not Found</h2>
-          <p className="text-gray-600 mb-4">{error || 'The professor you are looking for does not exist.'}</p>
-          <Link href="/" className="text-indigo-600 hover:text-indigo-700">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Professor Not Found</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">{error || 'The professor you are looking for does not exist.'}</p>
+          <Link href="/" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
             ← Back to Search
           </Link>
         </div>
@@ -359,11 +359,11 @@ export default function ProfessorProfile() {
         </div>
       )}
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <Link href="/" className="flex items-center text-gray-600 hover:text-gray-800 mb-4">
+            <Link href="/" className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white mb-4 transition-colors">
               <ArrowLeft className="w-5 h-5 mr-2" />
               Back to Search
             </Link>
@@ -374,16 +374,16 @@ export default function ProfessorProfile() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Professor Info - Left Column */}
             <div className="lg:col-span-2">
-              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl dark:shadow-gray-900/50 dark:hover:shadow-indigo-500/30 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600 p-6 mb-6">
                 {/* Professor Header */}
                 <div className="flex items-start justify-between mb-6">
                   <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center">
-                      <User className="w-8 h-8 text-indigo-600" />
+                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/40 rounded-full flex items-center justify-center transition-all duration-200 shadow-md dark:shadow-indigo-500/20">
+                      <User className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
                     </div>
                     <div>
-                      <h1 className="text-3xl font-bold text-gray-900 mb-1">{professor.name}</h1>
-                      <div className="flex flex-wrap items-center gap-4 text-gray-600">
+                      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{professor.name}</h1>
+                      <div className="flex flex-wrap items-center gap-4 text-gray-600 dark:text-gray-300">
                         <div className="flex items-center">
                           <Building className="w-4 h-4 mr-1" />
                           {professor.department}
@@ -402,8 +402,8 @@ export default function ProfessorProfile() {
                 </div>
 
                 {/* Overall Rating */}
-                <div className="border-t border-gray-200 pt-6 mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Overall Rating</h3>
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6 transition-colors duration-200">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Overall Rating</h3>
                   <div className="flex items-center space-x-4">
                     {/* Colored Pill Badge */}
                     <div className={`inline-flex items-center px-4 py-2 rounded-full font-bold text-lg ${
@@ -415,20 +415,20 @@ export default function ProfessorProfile() {
                     }`}>
                       ★ {(professor.average_rating || 0).toFixed(1)}
                     </div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
                       Based on {professor.total_reviews} review{professor.total_reviews !== 1 ? 's' : ''}
                     </p>
                   </div>
                 </div>
 
                 {/* Compare and Similar Professors Section */}
-                <div className="border-t border-gray-200 pt-6 mb-6">
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6 transition-colors duration-200">
                   <div className="mb-6">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900">Compare & Explore</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Compare & Explore</h3>
                       <button
                         onClick={() => setShowCompareModal(true)}
-                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                        className="px-4 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-colors text-sm font-medium shadow-md hover:shadow-lg"
                       >
                         Compare Professors
                       </button>
@@ -438,24 +438,24 @@ export default function ProfessorProfile() {
 
                 {/* Similar Professors Section */}
                 {similarProfessors.length > 0 && (
-                  <div className="border-t border-gray-200 pt-6 mb-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Similar Professors</h3>
-                    <p className="text-sm text-gray-600 mb-4">Professors from the same department at {professor.department}</p>
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mb-6 transition-colors duration-200">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Similar Professors</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Professors from the same department at {professor.department}</p>
                     <div className="grid grid-cols-1 gap-3">
                       {similarProfessors.map((prof, index) => (
                         <Link
                           key={prof.id}
                           href={`/professors/${prof.id}`}
-                          className={`p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg hover:shadow-md transition-all border border-indigo-100 animate-slideInUp stagger-${Math.min(index + 1, 6)}`}
+                          className={`p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg hover:shadow-md transition-all duration-200 border border-indigo-100 dark:border-indigo-800 animate-slideInUp stagger-${Math.min(index + 1, 6)}`}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
-                              <h5 className="font-semibold text-gray-900">{prof.name}</h5>
-                              <p className="text-sm text-gray-600">{prof.department}</p>
+                              <h5 className="font-semibold text-gray-900 dark:text-white">{prof.name}</h5>
+                              <p className="text-sm text-gray-600 dark:text-gray-300">{prof.department}</p>
                               {prof.subjects && prof.subjects.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mt-2">
                                   {prof.subjects.slice(0, 3).map((subject, idx) => (
-                                    <span key={idx} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs">
+                                    <span key={idx} className="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 rounded text-xs transition-colors duration-200">
                                       {subject}
                                     </span>
                                   ))}
@@ -466,7 +466,7 @@ export default function ProfessorProfile() {
                               <div className={`inline-flex items-center px-3 py-1 rounded-full font-bold text-sm ${getRatingColorClasses(prof.average_rating)}`}>
                                 ★ {prof.average_rating.toFixed(1)}
                               </div>
-                              <p className="text-xs text-gray-500 mt-1">{prof.total_reviews} reviews</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{prof.total_reviews} reviews</p>
                             </div>
                           </div>
                         </Link>
@@ -477,8 +477,8 @@ export default function ProfessorProfile() {
 
                 {/* Subjects Taught */}
                 {professor.subjects && professor.subjects.length > 0 && (
-                  <div className="border-t border-gray-200 pt-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6 transition-colors duration-200">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
                       <BookOpen className="w-5 h-5 mr-2" />
                       Subjects Taught
                     </h3>
@@ -486,7 +486,7 @@ export default function ProfessorProfile() {
                       {professor.subjects.map((subject, index) => (
                         <span
                           key={index}
-                          className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium"
+                          className="px-3 py-1 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-300 rounded-full text-sm font-medium transition-colors duration-200"
                         >
                           {subject}
                         </span>
@@ -497,9 +497,9 @@ export default function ProfessorProfile() {
               </div>
 
               {/* Reviews Section */}
-              <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl dark:shadow-gray-900/50 dark:hover:shadow-indigo-500/30 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Student Reviews ({filteredReviews.length})</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Student Reviews ({filteredReviews.length})</h3>
                   
                   {/* Filter Controls */}
                   {reviews.length > 0 && (
@@ -508,7 +508,7 @@ export default function ProfessorProfile() {
                       <select
                         value={selectedYear}
                         onChange={(e) => setSelectedYear(e.target.value)}
-                        className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-colors duration-200"
                       >
                         <option value="all">All Years</option>
                         {availableYears.map(({ value, count }) => (
@@ -520,7 +520,7 @@ export default function ProfessorProfile() {
                       <select
                         value={selectedSubject}
                         onChange={(e) => setSelectedSubject(e.target.value)}
-                        className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-colors duration-200"
                       >
                         <option value="all">All Subjects</option>
                         {availableSubjects.map(({ value, count }) => (
@@ -579,9 +579,9 @@ export default function ProfessorProfile() {
                         <div className="space-y-3 mb-3 text-sm">
                           {/* Clarity */}
                           <div className="flex items-center gap-3">
-                            <span className="text-gray-700 font-medium w-24">Clarity:</span>
+                            <span className="text-gray-700 dark:text-gray-300 font-medium w-24">Clarity:</span>
                             <div className="flex-1 flex items-center gap-2">
-                              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                 <div 
                                   className={`h-full rounded-full animate-barGrow ${
                                     review.clarity_rating >= 4 ? 'bg-green-500' :
@@ -591,8 +591,8 @@ export default function ProfessorProfile() {
                                 />
                               </div>
                               <span className={`font-semibold w-8 ${
-                                review.clarity_rating >= 4 ? 'text-green-600' :
-                                review.clarity_rating >= 3 ? 'text-yellow-600' : 'text-red-600'
+                                review.clarity_rating >= 4 ? 'text-green-600 dark:text-green-400' :
+                                review.clarity_rating >= 3 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
                               }`}>
                                 {review.clarity_rating.toFixed(1)}
                               </span>
@@ -601,9 +601,9 @@ export default function ProfessorProfile() {
 
                           {/* Helpfulness */}
                           <div className="flex items-center gap-3">
-                            <span className="text-gray-700 font-medium w-24">Helpfulness:</span>
+                            <span className="text-gray-700 dark:text-gray-300 font-medium w-24">Helpfulness:</span>
                             <div className="flex-1 flex items-center gap-2">
-                              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                 <div 
                                   className={`h-full rounded-full animate-barGrow animate-delay-100 ${
                                     review.helpfulness_rating >= 4 ? 'bg-green-500' :
@@ -613,8 +613,8 @@ export default function ProfessorProfile() {
                                 />
                               </div>
                               <span className={`font-semibold w-8 ${
-                                review.helpfulness_rating >= 4 ? 'text-green-600' :
-                                review.helpfulness_rating >= 3 ? 'text-yellow-600' : 'text-red-600'
+                                review.helpfulness_rating >= 4 ? 'text-green-600 dark:text-green-400' :
+                                review.helpfulness_rating >= 3 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
                               }`}>
                                 {review.helpfulness_rating.toFixed(1)}
                               </span>
@@ -623,9 +623,9 @@ export default function ProfessorProfile() {
 
                           {/* Overall */}
                           <div className="flex items-center gap-3">
-                            <span className="text-gray-700 font-medium w-24">Overall:</span>
+                            <span className="text-gray-700 dark:text-gray-300 font-medium w-24">Overall:</span>
                             <div className="flex-1 flex items-center gap-2">
-                              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                 <div 
                                   className={`h-full rounded-full animate-barGrow animate-delay-200 ${
                                     review.overall_rating >= 4 ? 'bg-green-500' :
@@ -635,8 +635,8 @@ export default function ProfessorProfile() {
                                 />
                               </div>
                               <span className={`font-semibold w-8 ${
-                                review.overall_rating >= 4 ? 'text-green-600' :
-                                review.overall_rating >= 3 ? 'text-yellow-600' : 'text-red-600'
+                                review.overall_rating >= 4 ? 'text-green-600 dark:text-green-400' :
+                                review.overall_rating >= 3 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
                               }`}>
                                 {review.overall_rating.toFixed(1)}
                               </span>
@@ -645,9 +645,9 @@ export default function ProfessorProfile() {
 
                           {/* Difficulty */}
                           <div className="flex items-center gap-3">
-                            <span className="text-gray-700 font-medium w-24">Difficulty:</span>
+                            <span className="text-gray-700 dark:text-gray-300 font-medium w-24">Difficulty:</span>
                             <div className="flex-1 flex items-center gap-2">
-                              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                 <div 
                                   className={`h-full rounded-full animate-barGrow animate-delay-300 ${
                                     review.difficulty_rating <= 2 ? 'bg-green-500' :
@@ -657,8 +657,8 @@ export default function ProfessorProfile() {
                                 />
                               </div>
                               <span className={`font-semibold w-8 ${
-                                review.difficulty_rating <= 2 ? 'text-green-600' :
-                                review.difficulty_rating <= 3 ? 'text-yellow-600' : 'text-red-600'
+                                review.difficulty_rating <= 2 ? 'text-green-600 dark:text-green-400' :
+                                review.difficulty_rating <= 3 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400'
                               }`}>
                                 {review.difficulty_rating.toFixed(1)}
                               </span>
@@ -667,13 +667,13 @@ export default function ProfessorProfile() {
                         </div>
 
                         {review.review_text && (
-                          <div className="text-gray-700 bg-gray-50 p-3 rounded-lg mb-4">
+                          <div className="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg mb-4 border dark:border-gray-700">
                             <p>"{review.review_text}"</p>
                           </div>
                         )}
                         
                         {/* Review Actions */}
-                        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                        <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
                           <ReviewVoting 
                             reviewId={review.id}
                             initialHelpfulCount={review.helpful_count || 0}

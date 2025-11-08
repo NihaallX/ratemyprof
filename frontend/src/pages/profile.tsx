@@ -146,10 +146,10 @@ export default function ProfilePage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center transition-colors duration-200">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 dark:border-indigo-400 mx-auto"></div>
+          <p className="mt-2 text-gray-600 dark:text-gray-300">Loading...</p>
         </div>
       </div>
     )
@@ -162,42 +162,42 @@ export default function ProfilePage() {
         <meta name="description" content="Manage your profile and account settings" />
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <Link href="/" className="flex items-center text-gray-600 hover:text-gray-800">
+                <Link href="/" className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white transition-colors">
                   <ArrowLeft className="w-5 h-5 mr-2" />
                   Back to Home
                 </Link>
               </div>
-              <h1 className="text-xl font-semibold text-gray-900">My Profile</h1>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">My Profile</h1>
             </div>
           </div>
         </div>
 
         {/* Main Content */}
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white rounded-lg shadow">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-xl transition-all duration-300 border dark:border-gray-700">
             {/* Profile Header */}
-            <div className="px-6 py-8 border-b border-gray-200">
+            <div className="px-6 py-8 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center">
-                    <User className="w-8 h-8 text-indigo-600" />
+                  <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center transition-colors duration-200">
+                    <User className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                       {profile.name || 'Set up your profile'}
                     </h2>
-                    <p className="text-gray-600">{profile.email}</p>
+                    <p className="text-gray-600 dark:text-gray-300">{profile.email}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setIsEditing(!isEditing)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:ring-offset-2 shadow-md hover:shadow-lg transition-all duration-200"
                 >
                   <Edit3 className="w-4 h-4" />
                   <span>{isEditing ? 'Cancel' : 'Edit Profile'}</span>
@@ -210,7 +210,7 @@ export default function ProfilePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     <User className="w-4 h-4 inline mr-2" />
                     Full Name
                   </label>
@@ -219,29 +219,29 @@ export default function ProfilePage() {
                       type="text"
                       value={profile.name}
                       onChange={(e) => handleInputChange('name', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200"
                       placeholder="Enter your full name"
                     />
                   ) : (
-                    <p className="text-gray-900 py-2">{profile.name || 'Not set'}</p>
+                    <p className="text-gray-900 dark:text-white py-2">{profile.name || 'Not set'}</p>
                   )}
                 </div>
 
                 {/* Email (read-only) */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     <Mail className="w-4 h-4 inline mr-2" />
                     Email Address
                   </label>
-                  <p className="text-gray-600 py-2 text-sm">
+                  <p className="text-gray-600 dark:text-gray-300 py-2 text-sm">
                     {profile.email}
-                    <span className="ml-2 text-xs text-gray-500">(verified)</span>
+                    <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">(verified)</span>
                   </p>
                 </div>
 
                 {/* College */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     <Building className="w-4 h-4 inline mr-2" />
                     College/University
                   </label>
@@ -250,17 +250,17 @@ export default function ProfilePage() {
                       type="text"
                       value={profile.college}
                       onChange={(e) => handleInputChange('college', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200"
                       placeholder="e.g., Vishwakarma University"
                     />
                   ) : (
-                    <p className="text-gray-900 py-2">{profile.college || 'Not set'}</p>
+                    <p className="text-gray-900 dark:text-white py-2">{profile.college || 'Not set'}</p>
                   )}
                 </div>
 
                 {/* Degree */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     <GraduationCap className="w-4 h-4 inline mr-2" />
                     Degree/Program
                   </label>
@@ -269,17 +269,17 @@ export default function ProfilePage() {
                       type="text"
                       value={profile.degree}
                       onChange={(e) => handleInputChange('degree', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200"
                       placeholder="e.g., B.Tech Computer Science"
                     />
                   ) : (
-                    <p className="text-gray-900 py-2">{profile.degree || 'Not set'}</p>
+                    <p className="text-gray-900 dark:text-white py-2">{profile.degree || 'Not set'}</p>
                   )}
                 </div>
 
                 {/* LinkedIn */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     <LinkIcon className="w-4 h-4 inline mr-2" />
                     LinkedIn Profile
                   </label>
@@ -288,7 +288,7 @@ export default function ProfilePage() {
                       type="url"
                       value={profile.linkedIn}
                       onChange={(e) => handleInputChange('linkedIn', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200"
                       placeholder="https://linkedin.com/in/username"
                     />
                   ) : (
@@ -298,12 +298,12 @@ export default function ProfilePage() {
                           href={profile.linkedIn}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-indigo-600 hover:text-indigo-700"
+                          className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
                         >
                           View LinkedIn Profile →
                         </a>
                       ) : (
-                        <p className="text-gray-900">Not set</p>
+                        <p className="text-gray-900 dark:text-white">Not set</p>
                       )}
                     </div>
                   )}
@@ -311,7 +311,7 @@ export default function ProfilePage() {
 
                 {/* Portfolio */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     <LinkIcon className="w-4 h-4 inline mr-2" />
                     Portfolio/Website
                   </label>
@@ -320,7 +320,7 @@ export default function ProfilePage() {
                       type="url"
                       value={profile.portfolio}
                       onChange={(e) => handleInputChange('portfolio', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-colors duration-200"
                       placeholder="https://yourwebsite.com"
                     />
                   ) : (
@@ -330,12 +330,12 @@ export default function ProfilePage() {
                           href={profile.portfolio}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-indigo-600 hover:text-indigo-700"
+                          className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
                         >
                           Visit Website →
                         </a>
                       ) : (
-                        <p className="text-gray-900">Not set</p>
+                        <p className="text-gray-900 dark:text-white">Not set</p>
                       )}
                     </div>
                   )}
@@ -344,7 +344,7 @@ export default function ProfilePage() {
 
               {/* Save Button */}
               {isEditing && (
-                <div className="mt-8 pt-6 border-t border-gray-200">
+                <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 transition-colors duration-200">
                   <div className="flex justify-end space-x-4">
                     <button
                       onClick={() => setIsEditing(false)}

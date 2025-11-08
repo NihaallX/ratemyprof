@@ -23,23 +23,23 @@ export default function GuidelinesPage() {
   const router = useRouter()
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 transition-colors duration-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => router.back()}
-                className="text-gray-600 hover:text-gray-900 transition-colors"
+                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
                 <Home className="w-5 h-5" />
               </button>
-              <h1 className="text-2xl font-bold text-gray-900">Community Guidelines</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Community Guidelines</h1>
             </div>
             <Link
               href="/"
-              className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+              className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium transition-colors"
             >
               Back to Home
             </Link>
@@ -50,47 +50,47 @@ export default function GuidelinesPage() {
       {/* Main Content */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Introduction */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <p className="text-gray-700 leading-relaxed">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 border dark:border-gray-700 p-6 mb-6">
+          <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
             Welcome to RateMyProf India! Our platform is built on trust, honesty, and respect. 
             These guidelines help ensure that reviews are helpful, fair, and constructive for all students.
           </p>
         </div>
 
         {/* Site Guidelines */}
-        <section className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <section className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 border dark:border-gray-700 p-6 mb-6">
           <div className="flex items-center mb-4">
-            <Shield className="w-6 h-6 text-indigo-600 mr-3" />
-            <h2 className="text-xl font-bold text-gray-900">Site Guidelines</h2>
+            <Shield className="w-6 h-6 text-indigo-600 dark:text-indigo-400 mr-3" />
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Site Guidelines</h2>
           </div>
 
           <div className="space-y-6">
             {/* What to Do */}
             <div>
-              <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-                <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mr-2" />
                 ✅ Do's - Write Helpful Reviews
               </h3>
               <ul className="space-y-2 ml-7">
-                <li className="text-gray-700">
+                <li className="text-gray-700 dark:text-gray-300">
                   <strong>Be honest and constructive:</strong> Share your genuine experience to help fellow students make informed decisions.
                 </li>
-                <li className="text-gray-700">
+                <li className="text-gray-700 dark:text-gray-300">
                   <strong>Focus on teaching quality:</strong> Comment on teaching style, clarity, helpfulness, and course organization.
                 </li>
-                <li className="text-gray-700">
+                <li className="text-gray-700 dark:text-gray-300">
                   <strong>Provide context:</strong> Mention the course, semester, and academic year for relevance.
                 </li>
-                <li className="text-gray-700">
+                <li className="text-gray-700 dark:text-gray-300">
                   <strong>Be specific:</strong> Use examples to illustrate your points (e.g., "Professor explained complex topics with real-world examples").
                 </li>
-                <li className="text-gray-700">
+                <li className="text-gray-700 dark:text-gray-300">
                   <strong>Maintain balance:</strong> Mention both strengths and areas for improvement.
                 </li>
-                <li className="text-gray-700">
+                <li className="text-gray-700 dark:text-gray-300">
                   <strong>Proof-read:</strong> Check your review for clarity and errors before submitting.
                 </li>
-                <li className="text-gray-700">
+                <li className="text-gray-700 dark:text-gray-300">
                   <strong>Respect anonymity:</strong> Use anonymous posting if you prefer privacy.
                 </li>
               </ul>
@@ -98,49 +98,49 @@ export default function GuidelinesPage() {
 
             {/* What Not to Do */}
             <div>
-              <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-                <XCircle className="w-5 h-5 text-red-600 mr-2" />
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                <XCircle className="w-5 h-5 text-red-600 dark:text-red-400 mr-2" />
                 ❌ Don'ts - Prohibited Content
               </h3>
               <ul className="space-y-2 ml-7">
-                <li className="text-gray-700">
+                <li className="text-gray-700 dark:text-gray-300">
                   <strong>No profanity or vulgar language:</strong> Reviews with offensive language will be removed immediately.
                 </li>
-                <li className="text-gray-700">
+                <li className="text-gray-700 dark:text-gray-300">
                   <strong>No personal attacks:</strong> Focus on professional teaching abilities, not personal characteristics.
                 </li>
-                <li className="text-gray-700">
+                <li className="text-gray-700 dark:text-gray-300">
                   <strong>No comments on appearance:</strong> Comments about physical appearance or personal life are strictly prohibited.
                 </li>
-                <li className="text-gray-700">
+                <li className="text-gray-700 dark:text-gray-300">
                   <strong>No bias claims:</strong> Don't claim the professor shows bias or favoritism based on caste, religion, gender, or any other factor.
                 </li>
-                <li className="text-gray-700">
+                <li className="text-gray-700 dark:text-gray-300">
                   <strong>No hate speech or discrimination:</strong> Content that discriminates based on caste, religion, gender, region, or any protected characteristic will result in immediate account suspension.
                 </li>
-                <li className="text-gray-700">
+                <li className="text-gray-700 dark:text-gray-300">
                   <strong>No fake reviews:</strong> Reviews must be based on actual classroom experience. Fake reviews will lead to account termination.
                 </li>
-                <li className="text-gray-700">
+                <li className="text-gray-700 dark:text-gray-300">
                   <strong>No spam or promotional content:</strong> Don't use reviews for advertising or promoting other services.
                 </li>
-                <li className="text-gray-700">
+                <li className="text-gray-700 dark:text-gray-300">
                   <strong>No personal information:</strong> Don't share personal contact information (yours or the professor's).
                 </li>
-                <li className="text-gray-700">
+                <li className="text-gray-700 dark:text-gray-300">
                   <strong>No revenge reviews:</strong> Reviews written out of personal vendetta will be removed.
                 </li>
               </ul>
             </div>
 
             {/* Examples */}
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <h3 className="font-semibold text-gray-900 mb-3">Examples</h3>
+            <div className="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg p-4 transition-colors duration-200">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Examples</h3>
               
               <div className="space-y-4">
-                <div className="border-l-4 border-green-500 pl-4">
-                  <p className="text-sm font-medium text-green-800 mb-1">✅ Good Review</p>
-                  <p className="text-sm text-gray-700 italic">
+                <div className="border-l-4 border-green-500 dark:border-green-400 pl-4">
+                  <p className="text-sm font-medium text-green-800 dark:text-green-300 mb-1">✅ Good Review</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 italic">
                     "Professor taught Data Structures in Fall 2024. Lectures were well-organized and concepts were explained with practical examples. 
                     Always available during office hours to help with doubts. Assignments were challenging but fair. 
                     Tests required understanding, not just memorization. Would recommend for students serious about learning."

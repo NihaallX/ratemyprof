@@ -162,10 +162,10 @@ export default function CollegeDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center transition-colors duration-200">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading college details...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Loading college details...</p>
         </div>
       </div>
     );
@@ -173,11 +173,11 @@ export default function CollegeDetail() {
 
   if (!college) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center transition-colors duration-200">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">College Not Found</h1>
-          <p className="text-gray-600 mb-4">The college you're looking for doesn't exist.</p>
-          <Link href="/" className="text-blue-600 hover:underline">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">College Not Found</h1>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">The college you're looking for doesn't exist.</p>
+          <Link href="/" className="text-blue-600 dark:text-blue-400 hover:underline">
             Return to Home
           </Link>
         </div>
@@ -192,19 +192,19 @@ export default function CollegeDetail() {
         <meta name="description" content={`Learn about ${college.name} in ${college.city}, ${college.state}. Find professors, reviews, and more.`} />
       </Head>
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
         {/* Header */}
-        <div className="bg-white shadow-sm border-b">
+        <div className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 transition-colors duration-200">
           <div className="max-w-6xl mx-auto px-4 py-4">
-            <Link href="/" className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-4">
+            <Link href="/" className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mb-4 transition-colors">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Search
             </Link>
             
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">{college.name}</h1>
-                <div className="flex items-center gap-4 text-gray-600 mb-4">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{college.name}</h1>
+                <div className="flex items-center gap-4 text-gray-600 dark:text-gray-300 mb-4">
                   <div className="flex items-center gap-1">
                     <MapPin className="w-4 h-4" />
                     <span>{college.city}, {college.state}</span>
@@ -239,9 +239,9 @@ export default function CollegeDetail() {
 
         <div className="max-w-6xl mx-auto px-4 py-8">
           {/* Compare & Explore Section */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg hover:shadow-xl dark:shadow-gray-900/50 dark:hover:shadow-indigo-500/30 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600 mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Compare & Explore</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Compare & Explore</h2>
               <button
                 onClick={() => setShowCompareModal(true)}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
@@ -253,13 +253,13 @@ export default function CollegeDetail() {
 
           {/* Compare Modal */}
           {showCompareModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
-                <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-gray-900">Compare Colleges</h2>
+            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 animate-backdropFadeIn">
+              <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden animate-modalFadeIn">
+                <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Compare Colleges</h2>
                   <button
                     onClick={() => setShowCompareModal(false)}
-                    className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                    className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-2xl font-bold transition-colors"
                   >
                     ×
                   </button>
@@ -290,41 +290,41 @@ export default function CollegeDetail() {
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-lg p-6 shadow-sm border animate-scaleIn stagger-1">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg hover:shadow-xl dark:shadow-gray-900/50 dark:hover:shadow-blue-500/30 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 animate-scaleIn stagger-1 hover:-translate-y-1">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Users className="w-6 h-6 text-blue-600" />
+                <div className="p-2 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/40 dark:to-indigo-900/40 rounded-lg shadow-sm">
+                  <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900">{college.total_professors}</h3>
-                  <p className="text-gray-600">Professors</p>
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{college.total_professors}</h3>
+                  <p className="text-gray-600 dark:text-gray-300">Professors</p>
                 </div>
               </div>
             </div>
             
-            <div className="bg-white rounded-lg p-6 shadow-sm border animate-scaleIn stagger-2">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg hover:shadow-xl dark:shadow-gray-900/50 dark:hover:shadow-green-500/30 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-600 animate-scaleIn stagger-2 hover:-translate-y-1">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <GraduationCap className="w-6 h-6 text-green-600" />
+                <div className="p-2 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/40 dark:to-emerald-900/40 rounded-lg shadow-sm">
+                  <GraduationCap className="w-6 h-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900">{college.college_type}</h3>
-                  <p className="text-gray-600">Institution Type</p>
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{college.college_type}</h3>
+                  <p className="text-gray-600 dark:text-gray-300">Institution Type</p>
                 </div>
               </div>
             </div>
             
             {college.established_year && (
-              <div className="bg-white rounded-lg p-6 shadow-sm border animate-scaleIn stagger-3">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg hover:shadow-xl dark:shadow-gray-900/50 dark:hover:shadow-purple-500/30 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600 animate-scaleIn stagger-3 hover:-translate-y-1">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <Calendar className="w-6 h-6 text-purple-600" />
+                  <div className="p-2 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/40 dark:to-pink-900/40 rounded-lg shadow-sm">
+                    <Calendar className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                       {new Date().getFullYear() - college.established_year} Years
                     </h3>
-                    <p className="text-gray-600">Experience</p>
+                    <p className="text-gray-600 dark:text-gray-300">Experience</p>
                   </div>
                 </div>
               </div>
@@ -332,8 +332,9 @@ export default function CollegeDetail() {
           </div>
 
           {/* College Information */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">College Information</h2>
+                    {/* Category Ratings */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg hover:shadow-xl dark:shadow-gray-900/50 dark:hover:shadow-indigo-500/30 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600 mb-8">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">College Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
@@ -376,9 +377,9 @@ export default function CollegeDetail() {
           </div>
 
           {/* Professors */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md border dark:border-gray-700 transition-colors duration-200">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 Professors ({filteredProfessors.length})
               </h2>
               <Link
@@ -393,18 +394,18 @@ export default function CollegeDetail() {
             {/* Search Bar */}
             <div className="mb-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
                 <input
                   type="text"
                   placeholder="Search professors by name, department, or specialization..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 transition-colors"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   >
                     ✕
                   </button>
@@ -415,14 +416,14 @@ export default function CollegeDetail() {
             {/* Department Filter */}
             {departments.length > 1 && (
               <div className="mb-4">
-                <label htmlFor="department-filter" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="department-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Filter by Department
                 </label>
                 <select
                   id="department-filter"
                   value={selectedDepartment}
                   onChange={(e) => setSelectedDepartment(e.target.value)}
-                  className="w-full md:w-64 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full md:w-64 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors"
                 >
                   <option value="all">All Departments ({professors.length})</option>
                   {departments.map((dept) => (
@@ -435,7 +436,7 @@ export default function CollegeDetail() {
             )}
             
             {filteredProfessors.length === 0 ? (
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-300">
                 {searchQuery || selectedDepartment !== 'all'
                   ? 'No professors found matching your search criteria.' 
                   : 'No professors found for this college.'}
@@ -446,20 +447,20 @@ export default function CollegeDetail() {
                   <Link
                     key={professor.id}
                     href={`/professors/${professor.id}`}
-                    className={`block p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all animate-fadeSlideUp stagger-${Math.min(index + 1, 6)}`}
+                    className={`block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-300 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 animate-fadeSlideUp stagger-${Math.min(index + 1, 6)} shadow-sm hover:shadow-md`}
                   >
-                    <h3 className="font-semibold text-gray-900 mb-1">{professor.name}</h3>
-                    <p className="text-sm text-gray-600 mb-2">{professor.department}</p>
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{professor.name}</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{professor.department}</p>
                     {professor.specialization && (
-                      <p className="text-xs text-gray-500 mb-2">{professor.specialization}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{professor.specialization}</p>
                     )}
                     {professor.average_rating && (
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-yellow-600">
+                        <span className="text-sm font-medium text-yellow-600 dark:text-yellow-400">
                           ⭐ {professor.average_rating.toFixed(1)}
                         </span>
                         {professor.total_reviews && (
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
                             ({professor.total_reviews} reviews)
                           </span>
                         )}

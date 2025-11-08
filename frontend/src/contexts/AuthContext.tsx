@@ -158,6 +158,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(null)
         setSession(null)
         
+        // Set flag to prevent redirect loop when landing page loads
+        sessionStorage.setItem('from_app', 'true');
+        
+        // Redirect to landing page after sign out
+        const isProduction = typeof window !== 'undefined' && window.location.hostname !== 'localhost';
+        const landingUrl = isProduction ? 'https://ratemyprof.me' : 'http://localhost:3001';
+        
+        // Use setTimeout to allow state to clear first
+        setTimeout(() => {
+          window.location.href = landingUrl;
+        }, 100);
+        
         return { error }
       } catch (error) {
         return { error: error as AuthError }

@@ -90,7 +90,7 @@ const FlagReviewButton: React.FC<FlagReviewButtonProps> = ({
     return (
       <button 
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center px-3 py-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded border border-red-300"
+        className="inline-flex items-center px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded border border-red-300 dark:border-red-600 hover:border-red-400 dark:hover:border-red-500"
       >
         <Flag className="w-4 h-4 mr-1" />
         Flag

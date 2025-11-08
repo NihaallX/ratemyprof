@@ -46,6 +46,52 @@ class ProfessorCreate(BaseModel):
     subjects: List[str] = []
     message: str
 
+class StatsResponse(BaseModel):
+    professors: int
+    reviews: int
+    colleges: int
+
+@router.get("/top-rated")
+@cache_response(ttl_seconds=300)  # Cache for 5 minutes
+async def get_top_rated_professors(
+    limit: int = Query(6, ge=1, le=50, description="Number of top professors to return"),
+    supabase: Client = Depends(get_supabase)
+):
+    """Get top-rated professors for landing page showcase."""
+    try:
+        # Get top professors with highest average rating and minimum reviews
+        query = (
+            supabase.table('professors')
+            .select('id, name, department, college_id, average_rating, total_reviews')
+            .gte('total_reviews', 1)  # At least 1 review to be considered
+            .order('average_rating', desc=True)
+            .order('total_reviews', desc=True)
+            .limit(limit)
+        )
+        
+        result = query.execute()
+        
+        # Transform data
+        professors = []
+        for prof in result.data:
+            professors.append({
+                'id': prof['id'],
+                'name': prof['name'],
+                'department': prof.get('department', 'N/A'),
+                'college_id': prof['college_id'],
+                'rating': round(float(prof.get('average_rating', 0.0)), 1),
+                'reviews': int(prof.get('total_reviews', 0))
+            })
+        
+        return JSONResponse(content=professors)
+        
+    except Exception as e:
+        print(f"Error fetching top-rated professors: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch top-rated professors: {str(e)}"
+        )
+
 @router.get("", response_model=ProfessorsResponse)
 @cache_response(ttl_seconds=300)  # Cache for 5 minutes
 async def search_professors(

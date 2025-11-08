@@ -128,8 +128,9 @@ if os.getenv("ENVIRONMENT") == "production":
             "api.ratemyprof-india.com",
             "*.railway.app",  # Railway deployment
             "*.render.com",   # Render deployment
-            "ratemyprof.me",  # Production frontend domain
-            "www.ratemyprof.me",  # Production with www
+            "ratemyprof.me",  # Production landing page
+            "www.ratemyprof.me",  # Production landing with www
+            "app.ratemyprof.me",  # Production main app
         ]
     )
 
@@ -359,6 +360,33 @@ app.include_router(
     prefix="/api",
     tags=["College Requests"]
 )
+
+
+# Landing Page Stats Endpoint
+@app.get("/api/stats")
+async def get_stats():
+    """Get platform statistics for landing page."""
+    from src.lib.database import supabase
+    
+    try:
+        # Get counts from database
+        professors_count = supabase.table('professors').select('id', count='exact').execute()
+        reviews_count = supabase.table('reviews').select('id', count='exact').execute()
+        colleges_count = supabase.table('colleges').select('id', count='exact').execute()
+        
+        return {
+            "professors": professors_count.count or 0,
+            "reviews": reviews_count.count or 0,
+            "colleges": colleges_count.count or 0
+        }
+    except Exception as e:
+        print(f"Error fetching stats: {e}")
+        # Return fallback data
+        return {
+            "professors": 10000,
+            "reviews": 250000,
+            "colleges": 500
+        }
 
 
 # Development server
