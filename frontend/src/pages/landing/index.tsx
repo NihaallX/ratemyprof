@@ -10,6 +10,8 @@ import { throttle, prefersReducedMotion, isLowPowerMode } from '../../utils/land
 // Use Next.js environment variable for API URL
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1';
 
+console.log('Landing Page - Using API URL:', API_URL);
+
 export default function EnhancedLandingPage() {
   const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 });
   const [gyroData, setGyroData] = useState({ beta: 0, gamma: 0 });
@@ -21,6 +23,7 @@ export default function EnhancedLandingPage() {
   const [showAuthIframe, setShowAuthIframe] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [stats, setStats] = useState({ professors: 0, reviews: 0, colleges: 0 });
+  const [statsLoading, setStatsLoading] = useState(true);
   const [topProfessors, setTopProfessors] = useState<Professor[]>([]);
   
   const containerRef = useRef<HTMLDivElement>(null);
@@ -77,6 +80,7 @@ export default function EnhancedLandingPage() {
     // Fetch platform stats from the main backend API (parallel requests for speed)
     const fetchStats = async () => {
       try {
+        setStatsLoading(true);
         console.log('Fetching stats from backend...');
         
         // Fetch all three endpoints in parallel for faster loading
@@ -122,6 +126,9 @@ export default function EnhancedLandingPage() {
         console.error('Failed to fetch stats:', error);
         // Keep stats at 0 if fetch fails
         setStats({ professors: 0, reviews: 0, colleges: 0 });
+      } finally {
+        setStatsLoading(false);
+      }
       }
     };
 
@@ -182,8 +189,11 @@ export default function EnhancedLandingPage() {
 
   // Check for performance constraints
   useEffect(() => {
-    const shouldDisable3D = prefersReducedMotion() || isLowPowerMode();
+    // Only disable 3D if user explicitly prefers reduced motion
+    // Don't auto-disable based on device specs to avoid breaking the landing page
+    const shouldDisable3D = prefersReducedMotion();
     setEnable3D(!shouldDisable3D);
+    console.log('3D enabled:', !shouldDisable3D);
   }, []);
 
   // Mouse tracking
@@ -471,7 +481,11 @@ export default function EnhancedLandingPage() {
       >
         {enable3D ? (
           <div className="absolute inset-0">
-            <Canvas camera={{ position: [0, 0, 5], fov: 75 }} gl={{ alpha: true, antialias: true }}>
+            <Canvas 
+              camera={{ position: [0, 0, 5], fov: 75 }} 
+              gl={{ alpha: true, antialias: true }}
+              onCreated={() => console.log('✅ Canvas created successfully!')}
+            >
               <ambientLight intensity={0.5} />
               <directionalLight position={[10, 10, 5]} intensity={1} />
               <ParallaxHero
@@ -555,9 +569,9 @@ export default function EnhancedLandingPage() {
           >
             <div className="flex justify-center gap-12 flex-wrap">
               {[
-                { label: 'Professors', value: `${stats.professors}` },
-                { label: 'Reviews', value: `${stats.reviews}` },
-                { label: 'Colleges', value: `${stats.colleges}` },
+                { label: 'Professors', value: statsLoading ? '...' : `${stats.professors}` },
+                { label: 'Reviews', value: statsLoading ? '...' : `${stats.reviews}` },
+                { label: 'Colleges', value: statsLoading ? '...' : `${stats.colleges}` },
               ].map((stat) => (
                 <motion.div
                   key={stat.label}
