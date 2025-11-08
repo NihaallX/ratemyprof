@@ -125,12 +125,10 @@ if os.getenv("ENVIRONMENT") == "production":
     app.add_middleware(
         TrustedHostMiddleware,
         allowed_hosts=[
-            "api.ratemyprof-india.com",
-            "*.railway.app",  # Railway deployment
-            "*.render.com",   # Render deployment
-            "ratemyprof.me",  # Production landing page
-            "www.ratemyprof.me",  # Production landing with www
-            "app.ratemyprof.me",  # Production main app
+            "*.railway.app",  # Railway deployment URL
+            "ratemyprof.me",  # Production domain (main)
+            "www.ratemyprof.me",  # Production domain (www)
+            "localhost",  # Allow localhost for testing
         ]
     )
 
