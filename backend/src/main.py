@@ -103,18 +103,23 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# DEBUGGING: Temporarily disable ALL middleware to test basic connectivity
-print("⚠️ WARNING: ALL MIDDLEWARE DISABLED FOR DEBUGGING")
+# Security headers middleware (applied first)
+app.add_middleware(SecurityHeadersMiddleware)
 
-# CORS middleware - ONLY THIS ONE for now
+# IP Ban middleware (blocks banned IPs before any processing)
+if AUTO_BAN_ENABLED:
+    app.middleware("http")(ip_ban_middleware)
+    print("✅ IP ban middleware enabled")
+
+# CORS middleware - Restrict to allowed origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins temporarily for debugging
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["*"],
-    max_age=3600,
+    max_age=3600,  # Cache preflight requests for 1 hour
 )
 
 
