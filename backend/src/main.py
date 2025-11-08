@@ -205,31 +205,43 @@ async def general_exception_handler(request: Request, exc: Exception):
     )
 
 
-# Health check endpoint
-@app.get("/health", tags=["Health"])
-async def health_check():
-    """Health check endpoint for monitoring and load balancers."""
+# Health check endpoint - Internal use only (for Railway monitoring)
+@app.get("/health", tags=["Health"], include_in_schema=False)
+async def health_check(request: Request):
+    """Health check endpoint for monitoring and load balancers.
+    
+    This endpoint should only be accessed by Railway's internal monitoring.
+    Public access returns minimal information.
+    """
+    # Check if request is from Railway or internal monitoring
+    user_agent = request.headers.get("user-agent", "").lower()
+    is_internal = any(agent in user_agent for agent in ["railway", "kuma", "uptimerobot", "pingdom"])
+    
+    if not is_internal and os.getenv("ENVIRONMENT") == "production":
+        # Return minimal info for public access
+        return {"status": "ok"}
+    
+    # Full health info for internal monitoring
     return {
         "status": "healthy",
         "service": "RateMyProf India API",
         "version": "1.0.1",
-        "deployment_time": "2025-11-04T15:00:00Z",
-        "validation_fix": "applied",
         "environment": os.getenv("ENVIRONMENT", "development"),
     }
 
 
-# Root endpoint
-@app.get("/", tags=["Root"])
+# Root endpoint - Minimal info
+@app.get("/", tags=["Root"], include_in_schema=False)
 async def root():
-    """Root endpoint with API information."""
+    """Root endpoint - Returns minimal API information."""
+    base_url = "https://ratemyprof-production.up.railway.app" if os.getenv("ENVIRONMENT") == "production" else "http://localhost:8000"
+    
     return {
-        "message": "Welcome to RateMyProf India API",
+        "service": "RateMyProf India API",
         "version": "1.0.1",
-        "validation_fix": "applied",
-        "docs_url": "/docs",
-        "redoc_url": "/redoc",
-        "health_url": "/health",
+        "status": "operational",
+        "api_base": f"{base_url}/v1",
+        "documentation": "Contact admin for API documentation"
     }
 
 
