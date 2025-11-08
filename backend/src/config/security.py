@@ -22,7 +22,7 @@ REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 # CORS Configuration
 ALLOWED_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS",
-    "https://ratemyprof.me,https://www.ratemyprof.me,https://app.ratemyprof.me,http://localhost:3000,http://localhost:3001"
+    "https://ratemyprof.me,https://www.ratemyprof.me,http://localhost:3000,http://localhost:3001"
 ).split(",")
 
 # Rate Limiting Configuration

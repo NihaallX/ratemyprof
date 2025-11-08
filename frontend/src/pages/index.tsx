@@ -14,6 +14,10 @@ import UserDropdown from '../components/UserDropdown';
 import NotificationInbox from '../components/NotificationInbox';
 import RequestCollegeForm from '../components/RequestCollegeForm';
 import Footer from '../components/Footer';
+import dynamic from 'next/dynamic';
+
+// Dynamically import landing page (with 3D components) to reduce initial bundle size
+const LandingPage = dynamic(() => import('./landing'), { ssr: false });
 
 interface SearchSuggestion {
   id: string;
@@ -27,6 +31,27 @@ interface SearchSuggestion {
 }
 
 export default function HomePage() {
+  const { user, loading: authLoading } = useAuth();
+  
+  // Show landing page for unauthenticated users
+  if (!authLoading && !user) {
+    return <LandingPage />;
+  }
+  
+  // Show loading state while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+  
+  // Authenticated users see the main app below
+  return <AuthenticatedHomePage />;
+}
+
+function AuthenticatedHomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [professors, setProfessors] = useState<Professor[]>([]);
   const [colleges, setColleges] = useState<College[]>([]);
@@ -43,7 +68,7 @@ export default function HomePage() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   
-  const { user, signOut, loading: authLoading } = useAuth();
+  const { user, signOut } = useAuth();
 
   // Helper function to get teaching style tags based on rating
   const getTeachingTags = (rating: number) => {
