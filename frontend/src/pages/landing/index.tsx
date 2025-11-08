@@ -213,7 +213,11 @@ export default function EnhancedLandingPage() {
 
   // Helper function to handle navigation (since landing is now part of the same app)
   const navigateToApp = (path: string = '/') => {
-    // Just reload to trigger auth check - user will see the authenticated homepage
+    return path; // Return the path for use in href or window.location
+  };
+  
+  const goToApp = (path: string = '/') => {
+    // Actually navigate to the path
     window.location.href = path;
   };
 
@@ -258,7 +262,7 @@ export default function EnhancedLandingPage() {
     setTimeout(() => {
       if (!authPageLoaded) {
         console.log('Iframe timeout, redirecting directly');
-        navigateToApp(`/auth/${authMode === 'signin' ? 'login' : 'signup'}`);
+        goToApp(`/auth/${authMode === 'signin' ? 'login' : 'signup'}`);
       }
     }, 3000);
   };
@@ -297,7 +301,7 @@ export default function EnhancedLandingPage() {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => {
                   sessionStorage.setItem('from_landing', 'true');
-                  navigateToApp();
+                  goToApp();
                 }}
                 className="px-4 sm:px-6 py-2 bg-white text-green-600 rounded-full text-sm font-bold hover:bg-gray-100 transition-colors shadow-lg flex items-center gap-2"
               >
@@ -520,7 +524,7 @@ export default function EnhancedLandingPage() {
               whileTap={{ scale: 0.95 }}
               onClick={() => {
                 sessionStorage.setItem('from_landing', 'true');
-                navigateToApp();
+                goToApp();
               }}
               className="px-12 py-5 text-lg bg-gradient-to-r from-primary to-secondary rounded-full font-bold text-white shadow-2xl"
             >
@@ -531,7 +535,7 @@ export default function EnhancedLandingPage() {
               whileTap={{ scale: 0.95 }}
               onClick={() => {
                 sessionStorage.setItem('from_landing', 'true');
-                navigateToApp('/auth/login');
+                goToApp('/auth/login');
               }}
               className="px-12 py-5 text-lg bg-white/10 backdrop-blur-md border-2 border-white/30 rounded-full font-bold text-white hover:bg-white/20 transition-all"
             >
@@ -729,7 +733,7 @@ export default function EnhancedLandingPage() {
               whileTap={{ scale: 0.95 }}
               onClick={() => {
                 sessionStorage.setItem('from_landing', 'true');
-                navigateToApp();
+                goToApp();
               }}
               className="px-10 py-4 bg-primary text-white font-semibold rounded-full text-lg"
             >
@@ -740,7 +744,7 @@ export default function EnhancedLandingPage() {
               whileTap={{ scale: 0.95 }}
               onClick={() => {
                 sessionStorage.setItem('from_landing', 'true');
-                navigateToApp();
+                goToApp();
               }}
               className="px-10 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold rounded-full text-lg"
             >
