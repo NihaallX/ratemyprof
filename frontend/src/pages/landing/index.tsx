@@ -129,7 +129,6 @@ export default function EnhancedLandingPage() {
       } finally {
         setStatsLoading(false);
       }
-      }
     };
 
     fetchStats();
