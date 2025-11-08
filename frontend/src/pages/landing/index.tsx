@@ -4,7 +4,6 @@ import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import ParallaxHero from '../../components/landing/ParallaxHero';
 import AnimatedText, { AnimatedWord } from '../../components/landing/AnimatedText';
 import ProfessorCard, { Professor } from '../../components/landing/ProfessorCard';
-import DarkModeToggle from '../../components/DarkModeToggle';
 import { throttle, prefersReducedMotion, isLowPowerMode } from '../../utils/landing/helpers';
 
 // Use Next.js environment variable for API URL
@@ -16,12 +15,6 @@ export default function EnhancedLandingPage() {
   const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 });
   const [gyroData, setGyroData] = useState({ beta: 0, gamma: 0 });
   const [enable3D, setEnable3D] = useState(true);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
-  const [isLoadingAuth, setIsLoadingAuth] = useState(false);
-  const [authPageLoaded, setAuthPageLoaded] = useState(false);
-  const [showAuthIframe, setShowAuthIframe] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [stats, setStats] = useState({ professors: 0, reviews: 0, colleges: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
   const [topProfessors, setTopProfessors] = useState<Professor[]>([]);
@@ -232,54 +225,9 @@ export default function EnhancedLandingPage() {
   };
 
   const handleAuthClick = (mode: 'signin' | 'signup') => {
-    setAuthMode(mode);
-    setShowAuthModal(true);
-    setAuthPageLoaded(false);
-    setIsLoadingAuth(false);
-    setShowAuthIframe(false);
-    
-    // Set session storage flag to prevent redirect loop
     sessionStorage.setItem('from_landing', 'true');
-    
-    // Create hidden iframe to preload auth page immediately
-    setTimeout(() => {
-      setShowAuthIframe(true);
-    }, 100); // Small delay to let modal start opening
-  };
-
-  const handleAuthRedirect = () => {
-    setIsLoadingAuth(true);
-    
-    // Wait for iframe to load, then slide up modal and reveal iframe
-    const checkIframeLoaded = () => {
-      if (authPageLoaded) {
-        // Slide modal up
-        setTimeout(() => {
-          // Focus the iframe to make it interactive
-          if (iframeRef.current) {
-            iframeRef.current.focus();
-          }
-        }, 700); // Wait for slide-up animation to complete
-      } else {
-        // Check again after a short delay
-        setTimeout(checkIframeLoaded, 100);
-      }
-    };
-
-    checkIframeLoaded();
-    
-    // Fallback: if iframe doesn't load within 3 seconds, redirect directly
-    setTimeout(() => {
-      if (!authPageLoaded) {
-        console.log('Iframe timeout, redirecting directly');
-        goToApp(`/auth/${authMode === 'signin' ? 'login' : 'signup'}`);
-      }
-    }, 3000);
-  };
-
-  const handleIframeLoad = () => {
-    console.log('Auth page loaded in iframe');
-    setAuthPageLoaded(true);
+    const path = mode === 'signin' ? '/auth/login' : '/auth/signup';
+    window.location.href = path;
   };
 
   return (
@@ -335,9 +283,6 @@ export default function EnhancedLandingPage() {
           </motion.div>
           
           <div className="flex gap-4 items-center">
-            {/* Dark Mode Toggle */}
-            <DarkModeToggle />
-            
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -357,121 +302,6 @@ export default function EnhancedLandingPage() {
           </div>
         </div>
       </nav>
-
-      {/* Auth Slide-Down Panel */}
-      <AnimatePresence>
-        {showAuthModal && (
-          <motion.div
-            initial={{ y: '-100%' }}
-            animate={{ 
-              y: authPageLoaded && isLoadingAuth ? '-100%' : 0  // Slide up when page loaded AND user clicked continue
-            }}
-            exit={{ y: '-100%' }}
-            onAnimationComplete={(definition: any) => {
-              // When slide-up animation completes, hide the modal
-              if (definition.y === '-100%' && authPageLoaded && isLoadingAuth) {
-                setShowAuthModal(false);
-              }
-            }}
-            transition={{ 
-              type: 'tween',
-              duration: 0.7,
-              ease: [0.43, 0.13, 0.23, 0.96]
-            }}
-            className="fixed inset-0 z-50 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center"
-          >
-            <div className="max-w-4xl mx-auto px-8 py-16 w-full">
-              <div className="flex justify-between items-start mb-10">
-                <div>
-                  <motion.h2 
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="text-5xl font-heading font-bold text-white mb-3"
-                  >
-                    {authMode === 'signin' ? 'Welcome Back! 👋' : 'Join RateMyProf 🚀'}
-                  </motion.h2>
-                  <motion.p 
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="text-gray-300 text-xl"
-                  >
-                    {authMode === 'signin' 
-                      ? 'Sign in to continue your journey' 
-                      : 'Create an account to start reviewing professors'}
-                  </motion.p>
-                </div>
-                <motion.button
-                  initial={{ opacity: 0, rotate: -90 }}
-                  animate={{ opacity: 1, rotate: 0 }}
-                  transition={{ delay: 0.4 }}
-                  onClick={() => setShowAuthModal(false)}
-                  className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-lg"
-                >
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </motion.button>
-              </div>
-              
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="flex flex-col sm:flex-row gap-4"
-              >
-                <motion.button
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleAuthRedirect}
-                  disabled={isLoadingAuth}
-                  className="flex-1 py-5 bg-gradient-to-r from-primary to-secondary rounded-xl text-white font-bold text-xl shadow-2xl hover:shadow-primary/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-                >
-                  {isLoadingAuth ? (
-                    <>
-                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Loading...
-                    </>
-                  ) : (
-                    <>Continue to {authMode === 'signin' ? 'Sign In' : 'Sign Up'} →</>
-                  )}
-                </motion.button>
-                
-                <motion.button
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setAuthMode(authMode === 'signin' ? 'signup' : 'signin')}
-                  disabled={isLoadingAuth}
-                  className="flex-1 py-5 bg-white/10 border-2 border-white/30 rounded-xl text-white font-bold text-xl hover:bg-white/20 hover:border-white/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {authMode === 'signin' ? 'Create Account Instead' : 'Sign In Instead'}
-                </motion.button>
-              </motion.div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Hidden iframe to preload auth page */}
-      {showAuthIframe && (
-        <iframe
-          ref={iframeRef}
-          src={navigateToApp(`/auth/${authMode === 'signin' ? 'login' : 'signup'}`)}
-          onLoad={handleIframeLoad}
-          className={`fixed inset-0 w-full h-full border-0 transition-opacity duration-300 ${
-            authPageLoaded && !showAuthModal ? 'opacity-100 z-40' : 'opacity-0 -z-10'
-          }`}
-          title="Authentication"
-          style={{
-            display: authPageLoaded && !showAuthModal ? 'block' : 'block',
-            pointerEvents: authPageLoaded && !showAuthModal ? 'auto' : 'none'
-          }}
-        />
-      )}
 
       {/* Hero Section */}
       <motion.section
@@ -541,7 +371,7 @@ export default function EnhancedLandingPage() {
               whileTap={{ scale: 0.95 }}
               onClick={() => {
                 sessionStorage.setItem('from_landing', 'true');
-                goToApp();
+                goToApp('/auth/signup');
               }}
               className="px-12 py-5 text-lg bg-gradient-to-r from-primary to-secondary rounded-full font-bold text-white shadow-2xl"
             >
@@ -750,7 +580,7 @@ export default function EnhancedLandingPage() {
               whileTap={{ scale: 0.95 }}
               onClick={() => {
                 sessionStorage.setItem('from_landing', 'true');
-                goToApp();
+                goToApp('/auth/signup');
               }}
               className="px-10 py-4 bg-primary text-white font-semibold rounded-full text-lg"
             >
@@ -761,7 +591,7 @@ export default function EnhancedLandingPage() {
               whileTap={{ scale: 0.95 }}
               onClick={() => {
                 sessionStorage.setItem('from_landing', 'true');
-                goToApp();
+                goToApp('/auth/signup');
               }}
               className="px-10 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold rounded-full text-lg"
             >
