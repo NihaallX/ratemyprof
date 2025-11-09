@@ -416,9 +416,16 @@ async def flag_review(
             )
         
         # Check if user already flagged this review (use admin client)
+        user_email = current_user.get('email')
+        if not user_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User email not found in token"
+            )
+        
         existing_flag = supabase_admin.table('review_flags').select('id').eq(
             'review_id', review_id
-        ).eq('flagger_email', current_user['email']).execute()
+        ).eq('flagger_email', user_email).execute()
         
         if existing_flag.data:
             raise HTTPException(
@@ -429,18 +436,23 @@ async def flag_review(
         # Create flag record (use admin client)
         flag_data = {
             'review_id': review_id,
-            'flagger_email': current_user['email'],
+            'flagger_email': current_user.get('email'),
             'flag_reason': request.reason,
             'additional_details': request.description
         }
         
-        supabase_admin.table('review_flags').insert(flag_data).execute()
+        print(f"🚩 Attempting to insert flag: {flag_data}")
+        result = supabase_admin.table('review_flags').insert(flag_data).execute()
+        print(f"✅ Flag inserted successfully: {result.data}")
         
         return {"message": "Review flagged for moderation"}
         
     except HTTPException:
         raise
     except Exception as e:
+        print(f"❌ Flag review error: {str(e)}")
+        print(f"Current user: {current_user}")
+        print(f"Request data: reason={request.reason}, description={request.description}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to flag review: {str(e)}"
