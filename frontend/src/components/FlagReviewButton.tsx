@@ -98,26 +98,26 @@ const FlagReviewButton: React.FC<FlagReviewButtonProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full my-auto shadow-xl">
         <div className="flex items-center mb-4">
-          <AlertTriangle className="w-5 h-5 text-red-600 mr-2" />
-          <h3 className="text-lg font-semibold">Flag Review</h3>
+          <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 mr-2" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Flag Review</h3>
         </div>
         
-        <p className="text-gray-600 mb-4">
+        <p className="text-gray-600 dark:text-gray-300 mb-4">
           Help us maintain a safe and respectful community by reporting inappropriate content.
         </p>
         
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">
               Reason for flagging *
             </label>
             <select 
               value={reason} 
               onChange={(e) => setReason(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent"
             >
               <option value="">Select a reason</option>
               {FLAG_REASONS.map((option) => (
@@ -129,7 +129,7 @@ const FlagReviewButton: React.FC<FlagReviewButtonProps> = ({
           </div>
           
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-200">
               Additional details (optional)
             </label>
             <textarea
@@ -138,17 +138,17 @@ const FlagReviewButton: React.FC<FlagReviewButtonProps> = ({
               onChange={(e) => setDescription(e.target.value)}
               maxLength={500}
               rows={4}
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-red-500 focus:border-transparent"
             />
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {description.length}/500 characters
             </div>
           </div>
           
-          <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded p-3">
             <div className="flex items-start">
-              <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 mr-2 flex-shrink-0" />
-              <div className="text-sm text-yellow-800">
+              <AlertTriangle className="w-4 h-4 text-yellow-600 dark:text-yellow-500 mt-0.5 mr-2 flex-shrink-0" />
+              <div className="text-sm text-yellow-800 dark:text-yellow-200">
                 <p className="font-medium mb-1">Before flagging:</p>
                 <ul className="text-xs space-y-1">
                   <li>• Only flag content that violates our community guidelines</li>
@@ -164,14 +164,14 @@ const FlagReviewButton: React.FC<FlagReviewButtonProps> = ({
           <button 
             onClick={handleCancel}
             disabled={isSubmitting}
-            className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
+            className="px-4 py-2 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
           >
             Cancel
           </button>
           <button 
             onClick={handleSubmitFlag}
             disabled={isSubmitting || !reason}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isSubmitting ? 'Submitting...' : 'Submit Flag'}
           </button>
