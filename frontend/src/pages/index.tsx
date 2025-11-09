@@ -404,6 +404,23 @@ function AuthenticatedHomePage() {
         <meta name="description" content="Discover and rate professors at Indian colleges and universities" />
       </Head>
 
+      {/* Sign In Banner - Only show when not logged in */}
+      {!user && (
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-sm sm:text-base font-medium text-center sm:text-left">
+              Sign in to rate and review professors and colleges
+            </p>
+            <button
+              onClick={() => window.location.href = '/landing'}
+              className="px-5 py-2 bg-white text-indigo-600 rounded-md font-medium text-sm hover:bg-gray-100 transition-colors whitespace-nowrap"
+            >
+              Go back to landing page
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

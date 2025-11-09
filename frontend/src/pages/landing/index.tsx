@@ -377,7 +377,7 @@ export default function EnhancedLandingPage() {
               }}
               className="px-12 py-5 text-lg bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full font-bold text-white shadow-2xl hover:from-indigo-500 hover:to-purple-500 transition-all"
             >
-              Get Started Free
+              Explore
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -426,7 +426,7 @@ export default function EnhancedLandingPage() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-5xl font-heading font-bold text-center mb-4"
+            className="text-5xl font-heading font-bold text-center mb-4 text-white"
           >
             Why RateMyProf?
           </motion.h2>
@@ -435,7 +435,7 @@ export default function EnhancedLandingPage() {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="text-center text-gray-400 text-lg mb-20"
+            className="text-center text-gray-300 text-lg mb-20"
           >
             The most trusted source for professor reviews in India
           </motion.p>
@@ -498,7 +498,7 @@ export default function EnhancedLandingPage() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-5xl md:text-6xl font-heading font-bold text-center mb-4"
+            className="text-5xl md:text-6xl font-heading font-bold text-center mb-4 text-white"
           >
             <AnimatedWord>Featured Professors</AnimatedWord>
           </motion.h2>
@@ -507,7 +507,7 @@ export default function EnhancedLandingPage() {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="text-center text-gray-400 text-lg mb-20"
+            className="text-center text-gray-300 text-lg mb-20"
           >
             Discover educators from your college
           </motion.p>
@@ -527,7 +527,7 @@ export default function EnhancedLandingPage() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-5xl font-heading font-bold text-center mb-20"
+            className="text-5xl font-heading font-bold text-center mb-20 text-white"
           >
             How It Works
           </motion.h2>
@@ -586,7 +586,7 @@ export default function EnhancedLandingPage() {
               }}
               className="px-10 py-4 bg-primary text-white font-semibold rounded-full text-lg"
             >
-              Get Started Free
+              Explore
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(139, 92, 246, 0.5)' }}
