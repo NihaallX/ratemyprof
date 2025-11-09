@@ -83,9 +83,9 @@ class ModerationAction(BaseModel):
 
 class ReviewFlag(BaseModel):
     id: str
-    reason: str
-    description: Optional[str] = None
-    flagged_by: str
+    flag_reason: str  # Changed from 'reason' to match database
+    additional_details: Optional[str] = None  # Changed from 'description' to match database
+    flagger_email: str  # Changed from 'flagged_by' to match database
     created_at: str
 
 
@@ -106,6 +106,9 @@ class FlaggedReview(BaseModel):
 class FlaggedReviewsResponse(BaseModel):
     reviews: List[FlaggedReview]
     total: int
+    
+    class Config:
+        extra = "ignore"  # Ignore extra fields
 
 
 def create_admin_token(username: str) -> str:
@@ -261,6 +264,7 @@ async def get_flagged_reviews(
         # Get flagged reviews with their flags
         # Note: If review_flags table doesn't have proper schema, just return empty results
         try:
+            print(f"🔍 Fetching flagged reviews with status: {review_status}")
             query = supabase.table('reviews').select(
                 '''
                 id,
@@ -287,14 +291,13 @@ async def get_flagged_reviews(
             query = query.not_.is_('review_flags', 'null')
             
             result = query.execute()
+            print(f"✅ Found {len(result.data)} flagged reviews")
         except Exception as e:
             # If there's a schema mismatch or other DB error, return empty results
-            # Silently handle - schema mismatch is expected
+            print(f"❌ Error fetching flagged reviews: {str(e)}")
             return FlaggedReviewsResponse(
                 reviews=[],
-                total=0,
-                limit=limit,
-                offset=0
+                total=0
             )
         
         # Transform data for response
