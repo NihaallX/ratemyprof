@@ -86,9 +86,9 @@ class ReviewFlag(BaseModel):
     @field_validator('reason')
     @classmethod
     def validate_reason(cls, v):
+        # Match database constraint: 'inappropriate', 'spam', 'fake', 'offensive', 'other'
         valid_reasons = [
-            'inappropriate_content', 'spam', 'fake_review',
-            'harassment', 'off_topic', 'other'
+            'inappropriate', 'spam', 'fake', 'offensive', 'other'
         ]
         if v not in valid_reasons:
             raise ValueError(f'Invalid flag reason. Must be one of: {", ".join(valid_reasons)}')
@@ -418,7 +418,7 @@ async def flag_review(
         # Check if user already flagged this review (use admin client)
         existing_flag = supabase_admin.table('review_flags').select('id').eq(
             'review_id', review_id
-        ).eq('flagger_user_id', current_user['id']).execute()
+        ).eq('flagger_email', current_user['email']).execute()
         
         if existing_flag.data:
             raise HTTPException(
@@ -429,9 +429,9 @@ async def flag_review(
         # Create flag record (use admin client)
         flag_data = {
             'review_id': review_id,
-            'flagger_user_id': current_user['id'],
-            'reason': request.reason,
-            'description': request.description
+            'flagger_email': current_user['email'],
+            'flag_reason': request.reason,
+            'additional_details': request.description
         }
         
         supabase_admin.table('review_flags').insert(flag_data).execute()

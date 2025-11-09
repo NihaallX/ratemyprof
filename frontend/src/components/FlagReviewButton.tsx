@@ -10,11 +10,10 @@ interface FlagReviewButtonProps {
 }
 
 const FLAG_REASONS = [
-  { value: 'inappropriate_content', label: 'Inappropriate Content' },
+  { value: 'inappropriate', label: 'Inappropriate Content' },
   { value: 'spam', label: 'Spam' },
-  { value: 'fake_review', label: 'Fake Review' },
-  { value: 'harassment', label: 'Harassment' },
-  { value: 'off_topic', label: 'Off Topic' },
+  { value: 'fake', label: 'Fake Review' },
+  { value: 'offensive', label: 'Offensive/Harassment' },
   { value: 'other', label: 'Other' },
 ];
 
