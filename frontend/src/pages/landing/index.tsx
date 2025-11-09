@@ -14,10 +14,11 @@ console.log('Landing Page - Using API URL:', API_URL);
 export default function EnhancedLandingPage() {
   const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 });
   const [gyroData, setGyroData] = useState({ beta: 0, gamma: 0 });
-  const [enable3D, setEnable3D] = useState(true);
+  const [enable3D, setEnable3D] = useState(false); // Start false for SSR
   const [stats, setStats] = useState({ professors: 0, reviews: 0, colleges: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
   const [topProfessors, setTopProfessors] = useState<Professor[]>([]);
+  const [mounted, setMounted] = useState(false);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll();
@@ -27,6 +28,11 @@ export default function EnhancedLandingPage() {
 
   // Check if user is already authenticated - show them a redirect option
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  // Mount detection for SSR
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   useEffect(() => {
     // Check for session in localStorage (Supabase auth)
@@ -181,12 +187,14 @@ export default function EnhancedLandingPage() {
 
   // Check for performance constraints
   useEffect(() => {
+    if (!mounted) return;
+    
     // Only disable 3D if user explicitly prefers reduced motion
     // Don't auto-disable based on device specs to avoid breaking the landing page
     const shouldDisable3D = prefersReducedMotion();
     setEnable3D(!shouldDisable3D);
     console.log('3D enabled:', !shouldDisable3D);
-  }, []);
+  }, [mounted]);
 
   // Mouse tracking
   useEffect(() => {
@@ -308,34 +316,27 @@ export default function EnhancedLandingPage() {
         style={{ opacity: heroOpacity, scale: heroScale }}
         className="relative h-screen flex items-center justify-center overflow-hidden pt-16"
       >
-        {enable3D ? (
-          <div className="absolute inset-0">
-            <Canvas 
-              camera={{ position: [0, 0, 5], fov: 75 }} 
-              gl={{ alpha: true, antialias: true }}
-              onCreated={() => console.log('✅ Canvas created successfully!')}
-            >
-              <ambientLight intensity={0.5} />
-              <directionalLight position={[10, 10, 5]} intensity={1} />
-              <ParallaxHero
-                scrollProgress={scrollYProgress.get()}
-                mousePosition={mousePosition}
-                gyroData={gyroData}
-              />
-            </Canvas>
-          </div>
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-96 h-96 rounded-full bg-gradient-to-br from-primary via-secondary to-accent opacity-50 blur-3xl" />
-          </div>
-        )}
+        {/* Beautiful gradient background - multiple layers for depth */}
+        <div className="absolute inset-0 bg-gray-950">
+          {/* Main purple/pink gradient glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-br from-purple-600/40 via-pink-500/30 to-transparent rounded-full blur-3xl"></div>
+          
+          {/* Secondary glow for more depth */}
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-indigo-500/30 via-purple-500/20 to-transparent rounded-full blur-2xl"></div>
+          
+          {/* Bottom accent glow */}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-gradient-to-t from-purple-900/20 to-transparent blur-2xl"></div>
+        </div>
 
         <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-4xl sm:text-6xl md:text-8xl font-logo mb-6"
+            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-logo mb-6 text-white"
+            style={{
+              textShadow: '0 0 60px rgba(139, 92, 246, 0.5), 0 0 30px rgba(236, 72, 153, 0.3)'
+            }}
           >
             <AnimatedWord>Rate My Prof</AnimatedWord>
           </motion.h1>
@@ -344,7 +345,7 @@ export default function EnhancedLandingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
-            className="text-base sm:text-xl md:text-2xl text-gray-300 mb-4"
+            className="text-lg sm:text-xl md:text-2xl text-purple-200 mb-4 font-medium"
           >
             <AnimatedText staggerDelay={0.02}>
               India's Premier Platform for Professor Reviews & Ratings
@@ -355,7 +356,7 @@ export default function EnhancedLandingPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.8 }}
-            className="text-lg text-gray-400 mb-12"
+            className="text-base sm:text-lg text-gray-300 mb-12 max-w-3xl mx-auto"
           >
             Make informed decisions about your education. Read reviews, compare professors, and share your experiences.
           </motion.p>
@@ -367,14 +368,14 @@ export default function EnhancedLandingPage() {
             className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-2xl mx-auto"
           >
             <motion.button
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(139, 92, 246, 0.6)' }}
               whileTap={{ scale: 0.95 }}
               onClick={() => {
                 // Set flag to show main app (browse mode)
                 sessionStorage.setItem('browse_app', 'true');
                 window.location.href = '/';
               }}
-              className="px-12 py-5 text-lg bg-gradient-to-r from-primary to-secondary rounded-full font-bold text-white shadow-2xl"
+              className="px-12 py-5 text-lg bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full font-bold text-white shadow-2xl hover:from-indigo-500 hover:to-purple-500 transition-all"
             >
               Get Started Free
             </motion.button>
@@ -385,7 +386,7 @@ export default function EnhancedLandingPage() {
                 // Redirect to login page
                 window.location.href = '/auth/login';
               }}
-              className="px-12 py-5 text-lg bg-white/10 backdrop-blur-md border-2 border-white/30 rounded-full font-bold text-white hover:bg-white/20 transition-all"
+              className="px-12 py-5 text-lg bg-white/5 backdrop-blur-md border-2 border-white/20 rounded-full font-bold text-white hover:bg-white/10 transition-all"
             >
               Already Have an Account?
             </motion.button>

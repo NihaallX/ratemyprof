@@ -73,19 +73,19 @@ export default function ProfessorCard({ professor, index }: ProfessorCardProps) 
 
         {/* Professor image placeholder - removed initials */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-4xl font-bold">
+          <div className="w-32 h-32 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-4xl font-bold">
             {/* Empty - no initials shown */}
           </div>
         </div>
 
         {/* Glow effect on hover */}
         {isHovered && (
-          <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent blur-xl pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-indigo-600/20 to-transparent blur-xl pointer-events-none" />
         )}
 
         {/* Detail reveal on hover - uses animated clip-path */}
         <motion.div
-          className="absolute inset-0 bg-gradient-to-br from-primary via-secondary to-accent flex items-center justify-center p-8 z-10"
+          className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center p-8 z-10"
           initial={{ clipPath: 'circle(0% at 50% 50%)' }}
           animate={{
             clipPath: isHovered ? 'circle(150% at 50% 50%)' : 'circle(0% at 50% 50%)',
@@ -98,12 +98,12 @@ export default function ProfessorCard({ professor, index }: ProfessorCardProps) 
             <div className="text-lg mb-2">Average Rating</div>
             <div className="text-sm opacity-80">{professor.reviews} reviews</div>
             <a
-              href={`http://localhost:3000/professors/${professor.id}`}
-              className="inline-block mt-6 px-6 py-2 bg-white text-primary font-semibold rounded-full hover:scale-110 active:scale-95 transition-transform no-underline"
+              href={`/professors/${professor.id}`}
+              className="inline-block mt-6 px-6 py-2 bg-white text-indigo-600 font-semibold rounded-full hover:scale-110 active:scale-95 transition-transform no-underline"
               style={{ cursor: 'pointer' }}
               onClick={() => {
                 console.log('View Profile clicked for professor:', professor.id);
-                console.log('Target URL:', `http://localhost:3000/professors/${professor.id}`);
+                console.log('Target URL:', `/professors/${professor.id}`);
               }}
             >
               View Profile

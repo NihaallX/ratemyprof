@@ -9,18 +9,9 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
-        },
+        primary: '#6366f1',  // Indigo-500
+        secondary: '#8b5cf6', // Violet-500
+        accent: '#ec4899',    // Pink-500
         indigo: {
           50: '#eef2ff',
           100: '#e0e7ff',

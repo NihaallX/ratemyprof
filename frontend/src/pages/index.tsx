@@ -398,22 +398,22 @@ function AuthenticatedHomePage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <Head>
         <title>RateMyProf India - Find & Rate Your Professors</title>
         <meta name="description" content="Discover and rate professors at Indian colleges and universities" />
       </Head>
 
       {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-50">
+      <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center">
-              <h1 className="text-2xl sm:text-3xl font-logo text-indigo-600" style={{ letterSpacing: '0.02em' }}>
+              <h1 className="text-2xl sm:text-3xl font-logo text-indigo-600 dark:text-indigo-400" style={{ letterSpacing: '0.02em' }}>
                 RateMyProf
               </h1>
-              <span className="ml-2 sm:ml-3 text-xs sm:text-sm text-gray-500 font-sans">Beta</span>
+              <span className="ml-2 sm:ml-3 text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-sans">Beta</span>
             </div>
 
             {/* Desktop Navigation - Always visible on desktop */}
@@ -431,7 +431,7 @@ function AuthenticatedHomePage() {
                   {user.email?.endsWith('@ratemyprof.in') && (
                     <Link
                       href="/admin"
-                      className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                      className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium"
                     >
                       Admin
                     </Link>
@@ -448,7 +448,7 @@ function AuthenticatedHomePage() {
                   {/* Sign In / Sign Up buttons for non-logged users */}
                   <Link
                     href="/auth/login"
-                    className="text-sm text-gray-700 hover:text-gray-900 font-medium"
+                    className="text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium"
                   >
                     Sign In
                   </Link>
@@ -459,17 +459,19 @@ function AuthenticatedHomePage() {
                   >
                     Sign Up
                   </Link>
+                  {/* Dark Mode Toggle for non-logged users too */}
+                  <DarkModeToggle />
                 </>
               )}
             </div>
 
             {/* Mobile Menu Button */}
             <div className="lg:hidden flex items-center space-x-2">
-              {user && <DarkModeToggle />}
+              <DarkModeToggle />
               {user && <NotificationInbox />}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-md text-gray-600 hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 aria-label="Toggle menu"
               >
                 {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -479,7 +481,7 @@ function AuthenticatedHomePage() {
 
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="lg:hidden mt-4 pb-4 border-t border-gray-200">
+            <div className="lg:hidden mt-4 pb-4 border-t border-gray-200 dark:border-gray-700">
               <nav className="flex flex-col space-y-3 pt-4">
                 {user ? (
                   <>
@@ -495,7 +497,7 @@ function AuthenticatedHomePage() {
                     {user.email?.endsWith('@ratemyprof.in') && (
                       <Link
                         href="/admin"
-                        className="text-sm text-indigo-600 hover:text-indigo-700 font-medium px-4 py-2 hover:bg-indigo-50 rounded-md transition-colors"
+                        className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium px-4 py-2 hover:bg-indigo-50 dark:hover:bg-gray-700 rounded-md transition-colors"
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         Admin Panel
@@ -558,10 +560,10 @@ function AuthenticatedHomePage() {
         
         {/* Hero Section */}
         <div className="text-center mb-8 sm:mb-12">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4 px-4">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-3 sm:mb-4 px-4">
             Find Your Perfect Professor
           </h2>
-          <p className="text-base sm:text-lg lg:text-xl text-gray-600 mb-6 sm:mb-8 px-4">
+          <p className="text-base sm:text-lg lg:text-xl text-gray-600 dark:text-gray-300 mb-6 sm:mb-8 px-4">
             Discover and rate professors at colleges across India
           </p>
 
@@ -570,10 +572,10 @@ function AuthenticatedHomePage() {
             
             {/* Search Type Tabs - Enhanced with smooth animation */}
             <div className="flex justify-center mb-4 sm:mb-6 px-4">
-              <div className="relative bg-white rounded-lg p-1 shadow-md w-full sm:w-auto">
+              <div className="relative bg-white dark:bg-gray-700 rounded-lg p-1 shadow-md w-full sm:w-auto">
                 {/* Background slider for smooth animation */}
                 <div 
-                  className="absolute top-1 bottom-1 bg-indigo-600 rounded-md transition-all duration-300 ease-in-out"
+                  className="absolute top-1 bottom-1 bg-indigo-600 dark:bg-indigo-500 rounded-md transition-all duration-300 ease-in-out"
                   style={{
                     left: searchType === 'professors' ? '4px' : 'calc(50% + 2px)',
                     width: 'calc(50% - 6px)'
@@ -584,7 +586,7 @@ function AuthenticatedHomePage() {
                   className={`relative z-10 w-1/2 sm:w-auto sm:px-6 py-2 sm:py-2 rounded-md font-medium transition-colors duration-300 text-sm sm:text-base ${
                     searchType === 'professors'
                       ? 'text-white'
-                      : 'text-gray-600 hover:text-indigo-600'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400'
                   }`}
                 >
                   Professors
@@ -594,7 +596,7 @@ function AuthenticatedHomePage() {
                   className={`relative z-10 w-1/2 sm:w-auto sm:px-6 py-2 sm:py-2 rounded-md font-medium transition-colors duration-300 text-sm sm:text-base ${
                     searchType === 'colleges'
                       ? 'text-white'
-                      : 'text-gray-600 hover:text-indigo-600'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400'
                   }`}
                 >
                   Colleges
@@ -607,7 +609,7 @@ function AuthenticatedHomePage() {
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+                    <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500" />
                   </div>
                   <input
                     ref={searchInputRef}
@@ -619,7 +621,7 @@ function AuthenticatedHomePage() {
                       if (suggestions.length > 0) setShowSuggestions(true);
                     }}
                     placeholder={`Search for ${searchType === 'professors' ? 'professors...' : 'colleges...'}`}
-                    className="w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base sm:text-lg shadow-sm transition-all duration-200"
+                    className="w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-indigo-400 dark:focus:border-indigo-400 text-base sm:text-lg shadow-sm transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                     autoComplete="off"
                   />
                   
@@ -627,11 +629,11 @@ function AuthenticatedHomePage() {
                   {searchQuery && (
                     <div className="absolute inset-y-0 right-3 flex items-center">
                       {suggestions.length > 0 ? (
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded hidden sm:inline">
+                        <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-600 px-2 py-1 rounded hidden sm:inline">
                           {suggestions.length} results
                         </span>
                       ) : searchQuery.length >= 1 ? (
-                        <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="w-4 h-4 border-2 border-indigo-600 dark:border-indigo-400 border-t-transparent rounded-full animate-spin"></div>
                       ) : null}
                     </div>
                   )}
@@ -640,7 +642,7 @@ function AuthenticatedHomePage() {
                   {showSuggestions && suggestions.length > 0 && (
                     <div 
                       ref={suggestionsRef}
-                      className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-2xl max-h-72 sm:max-h-96 overflow-y-auto animate-fadeIn"
+                      className="absolute z-50 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-2xl max-h-72 sm:max-h-96 overflow-y-auto animate-fadeIn"
                       style={{
                         animation: 'fadeIn 0.2s ease-out'
                       }}
@@ -651,8 +653,8 @@ function AuthenticatedHomePage() {
                             key={`${suggestion.type}-${suggestion.id}`}
                             className={`px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer transition-all duration-150 ${
                               index === selectedSuggestionIndex 
-                                ? 'bg-indigo-50 border-l-4 border-indigo-600' 
-                                : 'hover:bg-gray-50 border-l-4 border-transparent'
+                                ? 'bg-indigo-50 dark:bg-indigo-900/30 border-l-4 border-indigo-600 dark:border-indigo-400' 
+                                : 'hover:bg-gray-50 dark:hover:bg-gray-700 border-l-4 border-transparent'
                             }`}
                             onMouseDown={(e) => {
                               e.preventDefault();
@@ -663,35 +665,35 @@ function AuthenticatedHomePage() {
                             {suggestion.type === 'professor' ? (
                               <div className="flex items-center justify-between">
                                 <div className="flex-1 min-w-0">
-                                  <div className="text-sm font-semibold text-gray-900 truncate">
+                                  <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                                     {highlightSearchTerm(suggestion.name, searchQuery)}
                                   </div>
-                                  <div className="text-xs text-gray-600 mt-0.5 flex items-center gap-1">
+                                  <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 flex items-center gap-1">
                                     <span className="truncate">{suggestion.department}</span>
-                                    <span className="text-gray-400">•</span>
-                                    <span className="font-medium text-indigo-600 truncate">
+                                    <span className="text-gray-400 dark:text-gray-500">•</span>
+                                    <span className="font-medium text-indigo-600 dark:text-indigo-400 truncate">
                                       {suggestion.college}
                                     </span>
                                   </div>
                                 </div>
                                 {suggestion.rating && suggestion.rating > 0 ? (
-                                  <div className="flex items-center ml-3 bg-yellow-50 px-2 py-1 rounded-md">
+                                  <div className="flex items-center ml-3 bg-yellow-50 dark:bg-yellow-900/30 px-2 py-1 rounded-md">
                                     <Star className="w-3.5 h-3.5 mr-1 fill-yellow-400 text-yellow-400" />
-                                    <span className="text-xs font-semibold text-yellow-700">
+                                    <span className="text-xs font-semibold text-yellow-700 dark:text-yellow-300">
                                       {suggestion.rating.toFixed(1)}
                                     </span>
                                   </div>
                                 ) : (
-                                  <span className="ml-3 text-xs text-gray-400 italic">No rating</span>
+                                  <span className="ml-3 text-xs text-gray-400 dark:text-gray-500 italic">No rating</span>
                                 )}
                               </div>
                             ) : (
                               <div className="flex items-center justify-between">
                                 <div className="flex-1 min-w-0">
-                                  <div className="text-sm font-semibold text-gray-900 truncate">
+                                  <div className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                                     {highlightSearchTerm(suggestion.name, searchQuery)}
                                   </div>
-                                  <div className="text-xs text-gray-600 mt-0.5 flex items-center">
+                                  <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 flex items-center">
                                     <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
                                     <span className="truncate">
                                       {suggestion.city}, {suggestion.state}
@@ -699,14 +701,14 @@ function AuthenticatedHomePage() {
                                   </div>
                                 </div>
                                 {suggestion.rating && suggestion.rating > 0 ? (
-                                  <div className="flex items-center ml-3 bg-yellow-50 px-2 py-1 rounded-md">
+                                  <div className="flex items-center ml-3 bg-yellow-50 dark:bg-yellow-900/30 px-2 py-1 rounded-md">
                                     <Star className="w-3.5 h-3.5 mr-1 fill-yellow-400 text-yellow-400" />
-                                    <span className="text-xs font-semibold text-yellow-700">
+                                    <span className="text-xs font-semibold text-yellow-700 dark:text-yellow-300">
                                       {suggestion.rating.toFixed(1)}
                                     </span>
                                   </div>
                                 ) : (
-                                  <span className="ml-3 text-xs text-gray-400 italic">No rating</span>
+                                  <span className="ml-3 text-xs text-gray-400 dark:text-gray-500 italic">No rating</span>
                                 )}
                               </div>
                             )}
@@ -715,10 +717,10 @@ function AuthenticatedHomePage() {
                       </div>
                       
                       {/* Footer hint */}
-                      <div className="px-4 py-2 bg-gray-50 border-t border-gray-200">
-                        <div className="flex items-center justify-between text-xs text-gray-500">
+                      <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
+                        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                           <span>Press ↑↓ to navigate, ⏎ to select, Esc to close</span>
-                          <span className="font-medium text-indigo-600">
+                          <span className="font-medium text-indigo-600 dark:text-indigo-400">
                             {suggestions.length} result{suggestions.length !== 1 ? 's' : ''}
                           </span>
                         </div>
@@ -730,10 +732,10 @@ function AuthenticatedHomePage() {
                   {showSuggestions && suggestions.length === 0 && searchQuery.length >= 1 && (
                     <div 
                       ref={suggestionsRef}
-                      className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-4 animate-fadeIn"
+                      className="absolute z-50 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 animate-fadeIn"
                     >
-                      <div className="text-center text-gray-500">
-                        <Search className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <div className="text-center text-gray-500 dark:text-gray-400">
+                        <Search className="w-8 h-8 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
                         <p className="text-sm font-medium">No {searchType} found</p>
                         <p className="text-xs mt-1">Try a different search term</p>
                       </div>
@@ -744,7 +746,7 @@ function AuthenticatedHomePage() {
                 <button
                   onClick={handleSearch}
                   disabled={loading}
-                  className="px-8 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all duration-200 shadow-md hover:shadow-lg"
+                  className="px-8 py-3 bg-indigo-600 dark:bg-indigo-500 text-white rounded-lg hover:bg-indigo-700 dark:hover:bg-indigo-600 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all duration-200 shadow-md hover:shadow-lg"
                 >
                   {loading ? (
                     <div className="flex items-center">
@@ -827,7 +829,7 @@ function AuthenticatedHomePage() {
             {searchType === 'professors' && topRatedProfessors.length > 0 && (
               <div className="mb-12">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900 flex items-center">
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
                     <Award className="w-6 h-6 mr-2 text-yellow-500" />
                     Top Rated Professors
                   </h3>
@@ -838,7 +840,7 @@ function AuthenticatedHomePage() {
                       key={professor.id}
                       href={`/professors/${professor.id}`}
                       prefetch={true}
-                      className={`block bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group animate-scaleIn stagger-${Math.min(index + 1, 6)}`}
+                      className={`block bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 overflow-hidden group animate-scaleIn stagger-${Math.min(index + 1, 6)}`}
                     >
                       <div className="flex h-full">
                         {/* Left Side - Quality Rating */}
@@ -853,10 +855,10 @@ function AuthenticatedHomePage() {
                         {/* Right Side - Professor Info */}
                         <div className="flex-1 p-3 sm:p-4 flex flex-col min-w-0">
                           <div className="flex-1">
-                            <h4 className="text-base sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                            <h4 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-1 sm:mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
                               {professor.name}
                             </h4>
-                            <p className="text-xs sm:text-sm text-gray-600 mb-2 line-clamp-1">
+                            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-1">
                               {professor.department}
                             </p>
                             {/* Teaching Style Tags */}
@@ -864,7 +866,7 @@ function AuthenticatedHomePage() {
                               {getTeachingTags(professor.average_rating).map((tag, idx) => (
                                 <span 
                                   key={idx}
-                                  className="text-[10px] sm:text-xs px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full font-medium"
+                                  className="text-[10px] sm:text-xs px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full font-medium"
                                 >
                                   {tag}
                                 </span>
@@ -872,9 +874,9 @@ function AuthenticatedHomePage() {
                             </div>
                           </div>
                           
-                          <div className="pt-2 border-t border-gray-100">
-                            <div className="text-xs text-gray-500">
-                              <span className="font-semibold text-gray-700">{professor.total_reviews}</span> rating{professor.total_reviews !== 1 ? 's' : ''}
+                          <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              <span className="font-semibold text-gray-700 dark:text-gray-300">{professor.total_reviews}</span> rating{professor.total_reviews !== 1 ? 's' : ''}
                             </div>
                           </div>
                         </div>
@@ -889,7 +891,7 @@ function AuthenticatedHomePage() {
             {searchType === 'colleges' && topRatedColleges.length > 0 && (
               <div className="mb-12">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900 flex items-center">
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
                     <Award className="w-6 h-6 mr-2 text-yellow-500" />
                     Top Rated Colleges
                   </h3>
@@ -900,7 +902,7 @@ function AuthenticatedHomePage() {
                       key={college.id}
                       href={`/colleges/${college.id}`}
                       prefetch={true}
-                      className={`block bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group animate-scaleIn stagger-${Math.min(index + 1, 6)}`}
+                      className={`block bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 overflow-hidden group animate-scaleIn stagger-${Math.min(index + 1, 6)}`}
                     >
                       <div className="flex h-full">
                         {/* Left Side - Quality Rating */}
@@ -915,33 +917,33 @@ function AuthenticatedHomePage() {
                         {/* Right Side - College Info */}
                         <div className="flex-1 p-3 sm:p-4 flex flex-col min-w-0">
                           <div className="flex-1">
-                            <h4 className="text-base sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                            <h4 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-1 sm:mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
                               {college.name}
                             </h4>
-                            <p className="text-xs sm:text-sm text-gray-600 mb-1 flex items-center line-clamp-1">
+                            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1 flex items-center line-clamp-1">
                               <MapPin className="w-3 sm:w-3.5 h-3 sm:h-3.5 mr-1 flex-shrink-0" />
                               <span className="truncate">{college.city}, {college.state}</span>
                             </p>
-                            <p className="text-xs sm:text-sm text-gray-500 line-clamp-1">
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
                               {college.college_type}
                             </p>
                           </div>
                           
-                          <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
-                            <div className="text-xs text-gray-500">
-                              <span className="font-semibold text-gray-700">{college.total_reviews}</span> rating{college.total_reviews !== 1 ? 's' : ''}
+                          <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2">
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              <span className="font-semibold text-gray-700 dark:text-gray-300">{college.total_reviews}</span> rating{college.total_reviews !== 1 ? 's' : ''}
                             </div>
                             <div className="text-xs text-right">
                               <span className={`font-semibold ${
-                                college.average_rating >= 4.0 ? 'text-blue-600' :
-                                college.average_rating >= 3.0 ? 'text-yellow-600' : 'text-gray-600'
+                                college.average_rating >= 4.0 ? 'text-blue-600 dark:text-blue-400' :
+                                college.average_rating >= 3.0 ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-600 dark:text-gray-400'
                               }`}>
                                 {college.average_rating >= 4.0 ? '85%' : 
                                  college.average_rating >= 3.0 ? '70%' : '55%'}
                               </span>
-                              <span className="text-gray-500 text-[10px] sm:text-xs"> would</span>
+                              <span className="text-gray-500 dark:text-gray-400 text-[10px] sm:text-xs"> would</span>
                               <br />
-                              <span className="text-gray-500 text-[10px] sm:text-xs">recommend</span>
+                              <span className="text-gray-500 dark:text-gray-400 text-[10px] sm:text-xs">recommend</span>
                             </div>
                           </div>
                         </div>
