@@ -104,8 +104,8 @@ async def search_professors(
 ):
     """Search VU professors."""
     try:
-        # TODO: Add back .eq('is_verified', True) once column is added to database
-        query = supabase.table('professors').select('*')
+        # Only show verified professors to users
+        query = supabase.table('professors').select('*').eq('is_verified', True)
         
         if college_id:
             query = query.eq('college_id', college_id)
@@ -117,8 +117,7 @@ async def search_professors(
             query = query.ilike('department', f'%{department}%')
         
         # Get total count BEFORE applying limit/offset
-        count_query = supabase.table('professors').select('*', count='exact')
-        # TODO: Add back .eq('is_verified', True) once column is added
+        count_query = supabase.table('professors').select('*', count='exact').eq('is_verified', True)
         if college_id:
             count_query = count_query.eq('college_id', college_id)
         if q:
