@@ -789,8 +789,8 @@ function AuthenticatedHomePage() {
           </div>
         </div>
 
-        {/* Request Your College CTA Banner - Always visible in main view */}
-        {!searchQuery && professors.length === 0 && colleges.length === 0 && (
+        {/* Request Your College CTA Banner - Always visible when not searching */}
+        {!searchQuery && (
           <div className="mt-16 mb-10">
             <div className="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg shadow-lg overflow-hidden">
               <div className="px-4 py-5 sm:px-6 sm:py-6">
@@ -817,7 +817,7 @@ function AuthenticatedHomePage() {
         )}
 
         {/* Top Rated Section (when no search is active) */}
-        {!searchQuery && professors.length === 0 && colleges.length === 0 && (
+        {!searchQuery && (
           <div>
             {/* Top Rated Professors - Only show when Professors tab is active */}
             {searchType === 'professors' && topRatedProfessors.length > 0 && (
