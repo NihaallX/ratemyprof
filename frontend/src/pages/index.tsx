@@ -785,31 +785,6 @@ function AuthenticatedHomePage() {
                   </div>
                 </div>
               )}
-
-              {/* Request College Banner - More Prominent */}
-              {searchType === 'colleges' && (
-                <div className="mt-6">
-                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg p-4 sm:p-6">
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                      <div className="text-center sm:text-left">
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">
-                          Can't find your college?
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          Let us know and we'll add it to our platform
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => setShowRequestCollegeForm(true)}
-                        className="inline-flex items-center px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg whitespace-nowrap"
-                      >
-                        <MapPin className="w-4 h-4 mr-2" />
-                        Request College
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
