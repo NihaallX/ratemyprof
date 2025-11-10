@@ -15,14 +15,12 @@ interface College {
   college_type: string
   total_reviews: number
   ratings_breakdown: {
-    internet: number
-    safety: number
-    facilities: number
-    opportunities: number
-    location: number
-    clubs: number
-    social: number
     food: number
+    internet: number
+    clubs: number
+    opportunities: number
+    facilities: number
+    teaching: number
     overall: number
   }
 }
@@ -265,22 +263,22 @@ export default function CompareColleges({ currentCollegeId, currentCollegeName, 
               </div>
             ))}
 
-            {/* Safety */}
+            {/* Teaching */}
             {comparisonData.map((college, index) => (
-              <div key={`safety-${college.id}`}>
+              <div key={`teaching-${college.id}`}>
                 {index === 0 && (
-                  <div className="mb-2 text-sm font-semibold text-gray-700 mt-4">Safety:</div>
+                  <div className="mb-2 text-sm font-semibold text-gray-700 mt-4">Teaching:</div>
                 )}
                 <div className="flex items-center gap-3 mb-3">
                   <div className="flex-1 flex items-center gap-2">
                     <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div 
-                        className={`h-full rounded-full transition-all ${getRatingBg(college.ratings_breakdown.safety)}`}
-                        style={{ width: `${(college.ratings_breakdown.safety / 5) * 100}%` }}
+                        className={`h-full rounded-full transition-all ${getRatingBg(college.ratings_breakdown.teaching)}`}
+                        style={{ width: `${(college.ratings_breakdown.teaching / 5) * 100}%` }}
                       />
                     </div>
-                    <span className={`font-semibold w-12 ${getRatingColor(college.ratings_breakdown.safety)}`}>
-                      {college.ratings_breakdown.safety > 0 ? college.ratings_breakdown.safety.toFixed(1) : 'N/A'}
+                    <span className={`font-semibold w-12 ${getRatingColor(college.ratings_breakdown.teaching)}`}>
+                      {college.ratings_breakdown.teaching > 0 ? college.ratings_breakdown.teaching.toFixed(1) : 'N/A'}
                     </span>
                   </div>
                   <span className="text-xs text-gray-500 w-32 text-right truncate">{college.name}</span>
@@ -334,29 +332,6 @@ export default function CompareColleges({ currentCollegeId, currentCollegeName, 
               </div>
             ))}
 
-            {/* Location */}
-            {comparisonData.map((college, index) => (
-              <div key={`location-${college.id}`}>
-                {index === 0 && (
-                  <div className="mb-2 text-sm font-semibold text-gray-700 mt-4">Location:</div>
-                )}
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="flex-1 flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full transition-all ${getRatingBg(college.ratings_breakdown.location)}`}
-                        style={{ width: `${(college.ratings_breakdown.location / 5) * 100}%` }}
-                      />
-                    </div>
-                    <span className={`font-semibold w-12 ${getRatingColor(college.ratings_breakdown.location)}`}>
-                      {college.ratings_breakdown.location > 0 ? college.ratings_breakdown.location.toFixed(1) : 'N/A'}
-                    </span>
-                  </div>
-                  <span className="text-xs text-gray-500 w-32 text-right truncate">{college.name}</span>
-                </div>
-              </div>
-            ))}
-
             {/* Clubs */}
             {comparisonData.map((college, index) => (
               <div key={`clubs-${college.id}`}>
@@ -373,29 +348,6 @@ export default function CompareColleges({ currentCollegeId, currentCollegeName, 
                     </div>
                     <span className={`font-semibold w-12 ${getRatingColor(college.ratings_breakdown.clubs)}`}>
                       {college.ratings_breakdown.clubs > 0 ? college.ratings_breakdown.clubs.toFixed(1) : 'N/A'}
-                    </span>
-                  </div>
-                  <span className="text-xs text-gray-500 w-32 text-right truncate">{college.name}</span>
-                </div>
-              </div>
-            ))}
-
-            {/* Social */}
-            {comparisonData.map((college, index) => (
-              <div key={`social-${college.id}`}>
-                {index === 0 && (
-                  <div className="mb-2 text-sm font-semibold text-gray-700 mt-4">Social:</div>
-                )}
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="flex-1 flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full transition-all ${getRatingBg(college.ratings_breakdown.social)}`}
-                        style={{ width: `${(college.ratings_breakdown.social / 5) * 100}%` }}
-                      />
-                    </div>
-                    <span className={`font-semibold w-12 ${getRatingColor(college.ratings_breakdown.social)}`}>
-                      {college.ratings_breakdown.social > 0 ? college.ratings_breakdown.social.toFixed(1) : 'N/A'}
                     </span>
                   </div>
                   <span className="text-xs text-gray-500 w-32 text-right truncate">{college.name}</span>
