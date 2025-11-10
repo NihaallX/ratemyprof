@@ -950,18 +950,6 @@ function AuthenticatedHomePage() {
                             <div className="text-xs text-gray-500 dark:text-gray-400">
                               <span className="font-semibold text-gray-700 dark:text-gray-300">{college.total_reviews}</span> rating{college.total_reviews !== 1 ? 's' : ''}
                             </div>
-                            <div className="text-xs text-right">
-                              <span className={`font-semibold ${
-                                college.average_rating >= 4.0 ? 'text-blue-600 dark:text-blue-400' :
-                                college.average_rating >= 3.0 ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-600 dark:text-gray-400'
-                              }`}>
-                                {college.average_rating >= 4.0 ? '85%' : 
-                                 college.average_rating >= 3.0 ? '70%' : '55%'}
-                              </span>
-                              <span className="text-gray-500 dark:text-gray-400 text-[10px] sm:text-xs"> would</span>
-                              <br />
-                              <span className="text-gray-500 dark:text-gray-400 text-[10px] sm:text-xs">recommend</span>
-                            </div>
                           </div>
                         </div>
                       </div>
@@ -1090,18 +1078,6 @@ function AuthenticatedHomePage() {
                         <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2">
                           <div className="text-xs text-gray-500 dark:text-gray-400">
                             <span className="font-semibold text-gray-700 dark:text-gray-300">{college.total_reviews}</span> rating{college.total_reviews !== 1 ? 's' : ''}
-                          </div>
-                          <div className="text-xs text-right">
-                            <span className={`font-semibold ${
-                              college.average_rating >= 4.0 ? 'text-blue-600 dark:text-blue-400' :
-                              college.average_rating >= 3.0 ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-600 dark:text-gray-400'
-                            }`}>
-                              {college.average_rating >= 4.0 ? '85%' : 
-                               college.average_rating >= 3.0 ? '70%' : '55%'}
-                            </span>
-                            <span className="text-gray-500 dark:text-gray-400 text-[10px] sm:text-xs"> would</span>
-                            <br />
-                            <span className="text-gray-500 dark:text-gray-400 text-[10px] sm:text-xs">recommend</span>
                           </div>
                         </div>
                       </div>
