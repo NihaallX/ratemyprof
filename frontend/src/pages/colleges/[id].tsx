@@ -7,8 +7,9 @@ import CollegeReviews from '../../components/CollegeReviews';
 import CompareColleges from '../../components/CompareColleges';
 
 /**
- * Validates if the provided ID is a valid UUID v4 format
- * Prevents SSRF/injection attacks by ensuring only valid UUIDs are used in API calls
+ * Validates if the provided ID is a valid college ID format
+ * Accepts both UUID v4 format and custom college IDs (e.g., VU-PUNE-001)
+ * Prevents SSRF/injection attacks by ensuring only valid formats are used in API calls
  */
 function isValidCollegeId(id: string | string[] | undefined): id is string {
   if (!id || typeof id !== 'string') {
@@ -18,7 +19,11 @@ function isValidCollegeId(id: string | string[] | undefined): id is string {
   // UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
   const uuidV4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   
-  return uuidV4Regex.test(id);
+  // Custom college ID format: Letters, numbers, hyphens (e.g., VU-PUNE-001, MIT-MANIPAL-2024)
+  // Max length 50 chars to prevent abuse
+  const customIdRegex = /^[A-Z0-9][A-Z0-9\-]{0,48}[A-Z0-9]$/i;
+  
+  return uuidV4Regex.test(id) || customIdRegex.test(id);
 }
 
 interface College {
