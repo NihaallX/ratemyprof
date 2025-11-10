@@ -128,7 +128,10 @@ async def search_professors(
         count_result = count_query.execute()
         total_count = count_result.count if count_result.count is not None else 0
         
-        query = query.range(offset, offset + limit - 1).order('name')
+        # Order by rating (desc) and total_reviews (desc) to get top professors first
+        # This ensures the most relevant professors appear in the first page
+        query = query.order('average_rating', desc=True).order('total_reviews', desc=True).order('name')
+        query = query.range(offset, offset + limit - 1)
         result = query.execute()
         
         # Transform data to match our model
