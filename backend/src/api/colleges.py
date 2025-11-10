@@ -176,118 +176,6 @@ async def search_colleges(
         )
 
 
-@router.get("/{college_id}", response_model=CollegeDetail)
-async def get_college(
-    college_id: str,
-    supabase: Client = Depends(get_supabase)
-):
-    """Get detailed information about a specific college.
-    
-    Returns comprehensive details about the college including all available data.
-    """
-    try:
-        result = supabase.table('colleges').select('*').eq('id', college_id).execute()
-        
-        if not result.data:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="College not found"
-            )
-        
-        college_data = result.data[0]
-        
-        # Calculate college rating based on professor ratings
-        prof_query = supabase.table('professors').select(
-            'average_rating, total_reviews'
-        ).eq('college_id', college_id)
-        prof_result = prof_query.execute()
-        
-        if prof_result.data:
-            total_rating_sum = 0
-            total_review_count = 0
-            valid_ratings = 0
-            
-            for prof in prof_result.data:
-                avg_rating = prof.get('average_rating')
-                total_reviews = prof.get('total_reviews', 1)
-                if avg_rating and avg_rating > 0:
-                    total_rating_sum += avg_rating * total_reviews
-                    total_review_count += total_reviews
-                    valid_ratings += 1
-            
-            if valid_ratings > 0 and total_review_count > 0:
-                college_data['average_rating'] = round(total_rating_sum / total_review_count, 1)
-                college_data['total_reviews'] = total_review_count
-            else:
-                college_data['average_rating'] = 0.0
-                college_data['total_reviews'] = 0
-        else:
-            college_data['average_rating'] = 0.0
-            college_data['total_reviews'] = 0
-        
-        # Get college review statistics
-        try:
-            college_reviews_result = supabase.table('college_reviews').select('''
-                food_rating, internet_rating, clubs_rating, opportunities_rating,
-                facilities_rating, teaching_rating, overall_rating
-            ''').eq('college_id', college_id).eq('status', 'approved').execute()
-            
-            college_data['college_reviews_count'] = len(college_reviews_result.data) if college_reviews_result.data else 0
-            
-            if college_reviews_result.data:
-                # Calculate average ratings for college reviews
-                totals = {
-                    'food': sum(r['food_rating'] for r in college_reviews_result.data),
-                    'internet': sum(r['internet_rating'] for r in college_reviews_result.data),
-                    'clubs': sum(r['clubs_rating'] for r in college_reviews_result.data),
-                    'opportunities': sum(r['opportunities_rating'] for r in college_reviews_result.data),
-                    'facilities': sum(r['facilities_rating'] for r in college_reviews_result.data),
-                    'teaching': sum(r['teaching_rating'] for r in college_reviews_result.data),
-                    'overall': sum(r['overall_rating'] for r in college_reviews_result.data)
-                }
-                
-                count = len(college_reviews_result.data)
-                college_data['college_average_ratings'] = {
-                    key: round(total / count, 1) for key, total in totals.items()
-                }
-                
-                # Update the main average_rating with college review overall rating
-                if count > 0:
-                    college_data['average_rating'] = college_data['college_average_ratings']['overall']
-            else:
-                college_data['college_average_ratings'] = {
-                    'food': 0.0,
-                    'internet': 0.0,
-                    'clubs': 0.0,
-                    'opportunities': 0.0,
-                    'facilities': 0.0,
-                    'teaching': 0.0,
-                    'overall': 0.0
-                }
-        except Exception:
-            # college_reviews table doesn't exist yet
-            college_data['college_reviews_count'] = 0
-            college_data['college_average_ratings'] = {
-                'food': 0.0,
-                'internet': 0.0,
-                'clubs': 0.0,
-                'opportunities': 0.0,
-                'facilities': 0.0,
-                'teaching': 0.0,
-                'overall': 0.0
-            }
-        
-        return CollegeDetail(**college_data)
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get college details: {str(e)}"
-        )
-
-
 @router.get("/compare")
 async def compare_colleges(
     ids: str = Query(..., description="Comma-separated college IDs to compare"),
@@ -420,4 +308,116 @@ async def compare_colleges(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to compare colleges: {str(e)}"
+        )
+
+
+@router.get("/{college_id}", response_model=CollegeDetail)
+async def get_college(
+    college_id: str,
+    supabase: Client = Depends(get_supabase)
+):
+    """Get detailed information about a specific college.
+    
+    Returns comprehensive details about the college including all available data.
+    """
+    try:
+        result = supabase.table('colleges').select('*').eq('id', college_id).execute()
+        
+        if not result.data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="College not found"
+            )
+        
+        college_data = result.data[0]
+        
+        # Calculate college rating based on professor ratings
+        prof_query = supabase.table('professors').select(
+            'average_rating, total_reviews'
+        ).eq('college_id', college_id)
+        prof_result = prof_query.execute()
+        
+        if prof_result.data:
+            total_rating_sum = 0
+            total_review_count = 0
+            valid_ratings = 0
+            
+            for prof in prof_result.data:
+                avg_rating = prof.get('average_rating')
+                total_reviews = prof.get('total_reviews', 1)
+                if avg_rating and avg_rating > 0:
+                    total_rating_sum += avg_rating * total_reviews
+                    total_review_count += total_reviews
+                    valid_ratings += 1
+            
+            if valid_ratings > 0 and total_review_count > 0:
+                college_data['average_rating'] = round(total_rating_sum / total_review_count, 1)
+                college_data['total_reviews'] = total_review_count
+            else:
+                college_data['average_rating'] = 0.0
+                college_data['total_reviews'] = 0
+        else:
+            college_data['average_rating'] = 0.0
+            college_data['total_reviews'] = 0
+        
+        # Get college review statistics
+        try:
+            college_reviews_result = supabase.table('college_reviews').select('''
+                food_rating, internet_rating, clubs_rating, opportunities_rating,
+                facilities_rating, teaching_rating, overall_rating
+            ''').eq('college_id', college_id).eq('status', 'approved').execute()
+            
+            college_data['college_reviews_count'] = len(college_reviews_result.data) if college_reviews_result.data else 0
+            
+            if college_reviews_result.data:
+                # Calculate average ratings for college reviews
+                totals = {
+                    'food': sum(r['food_rating'] for r in college_reviews_result.data),
+                    'internet': sum(r['internet_rating'] for r in college_reviews_result.data),
+                    'clubs': sum(r['clubs_rating'] for r in college_reviews_result.data),
+                    'opportunities': sum(r['opportunities_rating'] for r in college_reviews_result.data),
+                    'facilities': sum(r['facilities_rating'] for r in college_reviews_result.data),
+                    'teaching': sum(r['teaching_rating'] for r in college_reviews_result.data),
+                    'overall': sum(r['overall_rating'] for r in college_reviews_result.data)
+                }
+                
+                count = len(college_reviews_result.data)
+                college_data['college_average_ratings'] = {
+                    key: round(total / count, 1) for key, total in totals.items()
+                }
+                
+                # Update the main average_rating with college review overall rating
+                if count > 0:
+                    college_data['average_rating'] = college_data['college_average_ratings']['overall']
+            else:
+                college_data['college_average_ratings'] = {
+                    'food': 0.0,
+                    'internet': 0.0,
+                    'clubs': 0.0,
+                    'opportunities': 0.0,
+                    'facilities': 0.0,
+                    'teaching': 0.0,
+                    'overall': 0.0
+                }
+        except Exception:
+            # college_reviews table doesn't exist yet
+            college_data['college_reviews_count'] = 0
+            college_data['college_average_ratings'] = {
+                'food': 0.0,
+                'internet': 0.0,
+                'clubs': 0.0,
+                'opportunities': 0.0,
+                'facilities': 0.0,
+                'teaching': 0.0,
+                'overall': 0.0
+            }
+        
+        return CollegeDetail(**college_data)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get college details: {str(e)}"
         )
