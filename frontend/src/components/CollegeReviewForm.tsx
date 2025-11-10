@@ -172,9 +172,34 @@ export default function CollegeReviewForm({ collegeId, collegeName, onClose, onS
         onClose();
       } else {
         const errorData = await response.json();
-        setErrors({ submit: errorData.detail || 'Failed to submit review' });
+        
+        // Handle validation errors with detailed messages
+        if (response.status === 422 && errorData.detail) {
+          let errorMessage = 'Please fix the following issues:\n\n';
+          
+          // Check if it's a validation error array
+          if (Array.isArray(errorData.detail)) {
+            errorData.detail.forEach((err: any) => {
+              if (err.msg && err.msg.includes('inappropriate language')) {
+                errorMessage = '⚠️ Inappropriate Language Detected\n\nYour review contains inappropriate language or profanity. Please revise your review to maintain a respectful and constructive tone.\n\nRemember: Reviews help other students make informed decisions. Keep it professional!';
+              } else if (err.msg) {
+                errorMessage += `• ${err.loc?.[1] || 'Field'}: ${err.msg}\n`;
+              }
+            });
+          } else if (typeof errorData.detail === 'string') {
+            errorMessage = errorData.detail;
+          }
+          
+          alert(errorMessage);
+          setErrors({ submit: 'Please fix the validation errors and try again.' });
+        } else {
+          const errorMsg = errorData.detail || 'Failed to submit review';
+          alert(`❌ Submission Failed\n\n${errorMsg}`);
+          setErrors({ submit: errorMsg });
+        }
       }
     } catch (error) {
+      alert('❌ Network Error\n\nFailed to submit review. Please check your connection and try again.');
       setErrors({ submit: 'Network error. Please try again.' });
     } finally {
       setIsSubmitting(false);
