@@ -298,13 +298,18 @@ async def compare_colleges(
     Accepts up to 4 college IDs separated by commas.
     Returns detailed comparison data including ratings and review stats.
     """
+    print("=" * 80)
+    print("🏫 COLLEGE COMPARE ENDPOINT HIT!")
+    print(f"🔍 Raw ids parameter: {ids}")
+    print(f"🔍 Type: {type(ids)}")
+    print("=" * 80)
+    
     try:
-        print(f"🔍 Compare colleges request: ids={ids}")
-        
         # Parse college IDs
         college_ids = [cid.strip() for cid in ids.split(',') if cid.strip()]
         
         print(f"📝 Parsed {len(college_ids)} college IDs: {college_ids}")
+        print(f"📝 Individual IDs: {[f'[{cid}]' for cid in college_ids]}")
         
         if len(college_ids) < 2:
             raise HTTPException(
@@ -319,14 +324,19 @@ async def compare_colleges(
             )
         
         # Fetch college details
+        print(f"🔍 Querying Supabase for colleges with IDs: {college_ids}")
         colleges_result = supabase.table('colleges').select('*').in_('id', college_ids).execute()
         
-        print(f"✅ Found {len(colleges_result.data) if colleges_result.data else 0} colleges")
+        print(f"✅ Database returned {len(colleges_result.data) if colleges_result.data else 0} colleges")
+        if colleges_result.data:
+            print(f"✅ Found colleges: {[c['id'] for c in colleges_result.data]}")
         
         if len(colleges_result.data) != len(college_ids):
             found_ids = [c['id'] for c in colleges_result.data]
             missing_ids = [cid for cid in college_ids if cid not in found_ids]
-            print(f"❌ Missing college IDs: {missing_ids}")
+            print(f"❌ MISMATCH! Requested: {college_ids}")
+            print(f"❌ Found: {found_ids}")
+            print(f"❌ Missing: {missing_ids}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Colleges not found: {', '.join(missing_ids)}"
@@ -391,15 +401,20 @@ async def compare_colleges(
                 'ratings_breakdown': avg_ratings
             })
         
+        print("=" * 80)
+        print(f"✅ SUCCESS! Returning {len(comparison_data)} colleges for comparison")
+        print("=" * 80)
+        
         return {
             'colleges': comparison_data,
             'count': len(comparison_data)
         }
         
-    except HTTPException:
+    except HTTPException as he:
+        print(f"❌ HTTPException in compare: {he.status_code} - {he.detail}")
         raise
     except Exception as e:
-        print(f"❌ Error comparing colleges: {str(e)}")
+        print(f"❌ Unexpected error comparing colleges: {str(e)}")
         import traceback
         traceback.print_exc()
         raise HTTPException(
