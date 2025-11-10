@@ -324,9 +324,12 @@ async def compare_colleges(
         print(f"✅ Found {len(colleges_result.data) if colleges_result.data else 0} colleges")
         
         if len(colleges_result.data) != len(college_ids):
+            found_ids = [c['id'] for c in colleges_result.data]
+            missing_ids = [cid for cid in college_ids if cid not in found_ids]
+            print(f"❌ Missing college IDs: {missing_ids}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="One or more colleges not found"
+                detail=f"Colleges not found: {', '.join(missing_ids)}"
             )
         
         # Get college review ratings for each college
