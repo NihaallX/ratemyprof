@@ -2095,24 +2095,16 @@ const AdminPage: NextPage = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                               {review.status === 'pending' && (
-                                <>
-                                  <button
-                                    onClick={() => moderateProfessorReview(review.id, 'approve', 'Approved by admin')}
-                                    className="text-green-600 hover:text-green-900"
-                                  >
-                                    Approve
-                                  </button>
-                                  <button
-                                    onClick={() => moderateProfessorReview(review.id, 'remove', 'Policy violation')}
-                                    className="text-red-600 hover:text-red-900"
-                                  >
-                                    Dismiss
-                                  </button>
-                                </>
+                                <button
+                                  onClick={() => moderateProfessorReview(review.id, 'approve', 'Approved by admin')}
+                                  className="text-green-600 hover:text-green-900"
+                                >
+                                  Approve
+                                </button>
                               )}
                               <button
                                 onClick={() => deleteProfessorReview(review.id)}
-                                className="text-gray-600 hover:text-gray-900"
+                                className="text-red-600 hover:text-red-900"
                                 title="Permanently delete review"
                               >
                                 Delete
