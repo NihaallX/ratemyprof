@@ -850,50 +850,51 @@ const AdminPage: NextPage = () => {
   };
 
   const deleteProfessorReview = async (reviewId: string) => {
-    if (!confirm('Are you sure you want to PERMANENTLY DELETE this review? This action cannot be undone!')) {
-      return;
-    }
-
-    try {
-      // Get admin token
-      const storedSession = localStorage.getItem('adminToken');
-      let adminToken = null;
-      
-      if (storedSession) {
+    showConfirm(
+      'Are you sure you want to PERMANENTLY DELETE this review? This action cannot be undone!',
+      async () => {
         try {
-          adminToken = storedSession;
-        } catch (e) {
-          console.error('Failed to parse admin session');
-        }
-      }
-
-      if (!adminToken) {
-        showToast('Admin session not found. Please refresh the page.', 'error');
-        return;
-      }
-
-      const response = await fetch(
-        `${API_BASE_URL}/moderation/reviews/${reviewId}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${adminToken}`,
-            'Content-Type': 'application/json'
+          // Get admin token
+          const storedSession = localStorage.getItem('adminToken');
+          let adminToken = null;
+          
+          if (storedSession) {
+            try {
+              adminToken = storedSession;
+            } catch (e) {
+              console.error('Failed to parse admin session');
+            }
           }
-        }
-      );
 
-      if (response.ok) {
-        showToast('Review permanently deleted', 'success');
-        await loadProfessorReviews(); // Reload
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        showToast(`Failed to delete review: ${errorData.detail || response.statusText}`, 'error');
+          if (!adminToken) {
+            showToast('Admin session not found. Please refresh the page.', 'error');
+            return;
+          }
+
+          const response = await fetch(
+            `${API_BASE_URL}/moderation/reviews/${reviewId}`,
+            {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${adminToken}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+
+          if (response.ok) {
+            showToast('Review permanently deleted', 'success');
+            await loadProfessorReviews(); // Reload
+          } else {
+            const errorData = await response.json().catch(() => ({}));
+            showToast(`Failed to delete review: ${errorData.detail || response.statusText}`, 'error');
+          }
+        } catch (error) {
+          console.error('Failed to delete review:', error);
+          showToast('Network error: Failed to delete review', 'error');
+        }
       }
-    } catch (error) {
-      console.error('Failed to delete review:', error);
-      showToast('Network error: Failed to delete review', 'error');
-    }
+    );
   };
 
   // College Reviews Moderation Functions
