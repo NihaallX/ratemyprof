@@ -337,42 +337,41 @@ export default function CollegeDetail() {
           </div>
 
           {/* College Information */}
-                    {/* Category Ratings */}
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg hover:shadow-xl dark:shadow-gray-900/50 dark:hover:shadow-indigo-500/30 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600 mb-8">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">College Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                <p className="text-gray-900">{college.city}, {college.state}</p>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location</label>
+                <p className="text-gray-900 dark:text-white">{college.city}, {college.state}</p>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Institution Type</label>
-                <p className="text-gray-900">{college.college_type}</p>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Institution Type</label>
+                <p className="text-gray-900 dark:text-white">{college.college_type}</p>
               </div>
               
               {college.established_year && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Established</label>
-                  <p className="text-gray-900">{college.established_year}</p>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Established</label>
+                  <p className="text-gray-900 dark:text-white">{college.established_year}</p>
                 </div>
               )}
               
               {college.email_domain && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email Domain</label>
-                  <p className="text-gray-900 font-mono">@{college.email_domain}</p>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Domain</label>
+                  <p className="text-gray-900 dark:text-white font-mono">@{college.email_domain}</p>
                 </div>
               )}
               
               {college.website && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Official Website</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Official Website</label>
                   <a
                     href={college.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-700 underline"
+                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline transition-colors"
                   >
                     {college.website}
                   </a>

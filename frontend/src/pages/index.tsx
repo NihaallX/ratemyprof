@@ -1052,14 +1052,14 @@ function AuthenticatedHomePage() {
                     key={college.id}
                     href={`/colleges/${college.id}`}
                     prefetch={true}
-                    className="block bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group"
+                    className="block bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl dark:hover:shadow-indigo-500/20 transition-all duration-300 border border-gray-200 dark:border-gray-700 overflow-hidden group"
                   >
                     <div className="flex h-full">
                       {/* Left Side - Quality Rating */}
-                      <div className="w-20 sm:w-24 bg-gradient-to-br from-blue-400 to-blue-500 flex flex-col items-center justify-center text-white p-3 sm:p-4 relative flex-shrink-0">
+                      <div className="w-20 sm:w-24 bg-gradient-to-br from-blue-400 to-blue-500 dark:from-blue-500 dark:to-blue-600 flex flex-col items-center justify-center text-white p-3 sm:p-4 relative flex-shrink-0">
                         {/* Top Rated Badge */}
                         {index < 3 && college.average_rating >= 4.0 && (
-                          <div className="absolute -top-1 -left-1 bg-yellow-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-br">
+                          <div className="absolute -top-1 -left-1 bg-yellow-500 dark:bg-yellow-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-br">
                             TOP
                           </div>
                         )}
@@ -1075,33 +1075,33 @@ function AuthenticatedHomePage() {
                       {/* Right Side - College Info */}
                       <div className="flex-1 p-3 sm:p-4 flex flex-col min-w-0">
                         <div className="flex-1">
-                          <h4 className="text-base sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                          <h4 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-1 sm:mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
                             {college.name}
                           </h4>
-                          <p className="text-xs sm:text-sm text-gray-600 mb-1 flex items-center line-clamp-1">
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-1 flex items-center line-clamp-1">
                             <MapPin className="w-3 sm:w-3.5 h-3 sm:h-3.5 mr-1 flex-shrink-0" />
                             <span className="truncate">{college.city}, {college.state}</span>
                           </p>
-                          <p className="text-xs sm:text-sm text-gray-500 line-clamp-1">
+                          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 line-clamp-1">
                             {college.college_type}
                           </p>
                         </div>
                         
-                        <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
-                          <div className="text-xs text-gray-500">
-                            <span className="font-semibold text-gray-700">{college.total_reviews}</span> rating{college.total_reviews !== 1 ? 's' : ''}
+                        <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between gap-2">
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            <span className="font-semibold text-gray-700 dark:text-gray-300">{college.total_reviews}</span> rating{college.total_reviews !== 1 ? 's' : ''}
                           </div>
                           <div className="text-xs text-right">
                             <span className={`font-semibold ${
-                              college.average_rating >= 4.0 ? 'text-blue-600' :
-                              college.average_rating >= 3.0 ? 'text-yellow-600' : 'text-gray-600'
+                              college.average_rating >= 4.0 ? 'text-blue-600 dark:text-blue-400' :
+                              college.average_rating >= 3.0 ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-600 dark:text-gray-400'
                             }`}>
                               {college.average_rating >= 4.0 ? '85%' : 
                                college.average_rating >= 3.0 ? '70%' : '55%'}
                             </span>
-                            <span className="text-gray-500 text-[10px] sm:text-xs"> would</span>
+                            <span className="text-gray-500 dark:text-gray-400 text-[10px] sm:text-xs"> would</span>
                             <br />
-                            <span className="text-gray-500 text-[10px] sm:text-xs">recommend</span>
+                            <span className="text-gray-500 dark:text-gray-400 text-[10px] sm:text-xs">recommend</span>
                           </div>
                         </div>
                       </div>
