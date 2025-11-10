@@ -332,67 +332,50 @@ async def compare_colleges(
         # Get college review ratings for each college
         comparison_data = []
         for college in colleges_result.data:
-            # Get average ratings from college_reviews table
+            # Get average ratings from college_reviews table (individual columns)
             try:
                 reviews_result = supabase.table('college_reviews').select(
-                    'ratings'
-                ).eq('college_id', college['id']).execute()
+                    'food_rating, internet_rating, clubs_rating, opportunities_rating, facilities_rating, teaching_rating, overall_rating'
+                ).eq('college_id', college['id']).eq('status', 'approved').execute()
                 
                 avg_ratings = {
-                    'internet': 0.0,
-                    'safety': 0.0,
-                    'facilities': 0.0,
-                    'opportunities': 0.0,
-                    'location': 0.0,
-                    'clubs': 0.0,
-                    'social': 0.0,
                     'food': 0.0,
+                    'internet': 0.0,
+                    'clubs': 0.0,
+                    'opportunities': 0.0,
+                    'facilities': 0.0,
+                    'teaching': 0.0,
                     'overall': 0.0
                 }
                 
                 if reviews_result.data and len(reviews_result.data) > 0:
                     count = len(reviews_result.data)
-                    # Extract ratings from JSON field
-                    total_internet = 0
-                    total_safety = 0
-                    total_facilities = 0
-                    total_opportunities = 0
-                    total_location = 0
-                    total_clubs = 0
-                    total_social = 0
-                    total_food = 0
-                    
-                    for r in reviews_result.data:
-                        if r.get('ratings'):
-                            ratings = r['ratings']
-                            total_internet += ratings.get('internet', 0)
-                            total_safety += ratings.get('safety', 0)
-                            total_facilities += ratings.get('facilities', 0)
-                            total_opportunities += ratings.get('opportunities', 0)
-                            total_location += ratings.get('location', 0)
-                            total_clubs += ratings.get('clubs', 0)
-                            total_social += ratings.get('social', 0)
-                            total_food += ratings.get('food', 0)
+                    # Calculate averages from individual columns
+                    total_food = sum(r.get('food_rating', 0) for r in reviews_result.data)
+                    total_internet = sum(r.get('internet_rating', 0) for r in reviews_result.data)
+                    total_clubs = sum(r.get('clubs_rating', 0) for r in reviews_result.data)
+                    total_opportunities = sum(r.get('opportunities_rating', 0) for r in reviews_result.data)
+                    total_facilities = sum(r.get('facilities_rating', 0) for r in reviews_result.data)
+                    total_teaching = sum(r.get('teaching_rating', 0) for r in reviews_result.data)
+                    total_overall = sum(r.get('overall_rating', 0) for r in reviews_result.data)
                     
                     if count > 0:
-                        avg_ratings['internet'] = total_internet / count
-                        avg_ratings['safety'] = total_safety / count
-                        avg_ratings['facilities'] = total_facilities / count
-                        avg_ratings['opportunities'] = total_opportunities / count
-                        avg_ratings['location'] = total_location / count
-                        avg_ratings['clubs'] = total_clubs / count
-                        avg_ratings['social'] = total_social / count
-                        avg_ratings['food'] = total_food / count
-                        avg_ratings['overall'] = (total_internet + total_safety + total_facilities + 
-                                                 total_opportunities + total_location + total_clubs + 
-                                                 total_social + total_food) / (count * 8)
+                        avg_ratings['food'] = round(total_food / count, 1)
+                        avg_ratings['internet'] = round(total_internet / count, 1)
+                        avg_ratings['clubs'] = round(total_clubs / count, 1)
+                        avg_ratings['opportunities'] = round(total_opportunities / count, 1)
+                        avg_ratings['facilities'] = round(total_facilities / count, 1)
+                        avg_ratings['teaching'] = round(total_teaching / count, 1)
+                        avg_ratings['overall'] = round(total_overall / count, 1)
                     
                     college_reviews_count = count
                 else:
                     college_reviews_count = 0
                     
             except Exception as e:
-                print(f"Error fetching college reviews: {e}")
+                print(f"Error fetching college reviews for {college['id']}: {e}")
+                import traceback
+                traceback.print_exc()
                 college_reviews_count = 0
             
             comparison_data.append({
