@@ -66,6 +66,11 @@ export default function CollegeReviewForm({ collegeId, collegeName, onClose, onS
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(!user);
+  const [errorModal, setErrorModal] = useState<{ show: boolean; title: string; message: string }>({
+    show: false,
+    title: '',
+    message: ''
+  });
 
   const handleRatingChange = (category: string, rating: number) => {
     setFormData(prev => ({
@@ -175,31 +180,41 @@ export default function CollegeReviewForm({ collegeId, collegeName, onClose, onS
         
         // Handle validation errors with detailed messages
         if (response.status === 422 && errorData.detail) {
-          let errorMessage = 'Please fix the following issues:\n\n';
+          let errorTitle = 'Validation Error';
+          let errorMessage = 'Please fix the following issues:';
           
           // Check if it's a validation error array
           if (Array.isArray(errorData.detail)) {
             errorData.detail.forEach((err: any) => {
               if (err.msg && err.msg.includes('inappropriate language')) {
-                errorMessage = '⚠️ Inappropriate Language Detected\n\nYour review contains inappropriate language or profanity. Please revise your review to maintain a respectful and constructive tone.\n\nRemember: Reviews help other students make informed decisions. Keep it professional!';
+                errorTitle = '⚠️ Inappropriate Language Detected';
+                errorMessage = 'Your review contains inappropriate language or profanity. Please revise your review to maintain a respectful and constructive tone.\n\nRemember: Reviews help other students make informed decisions. Keep it professional!';
               } else if (err.msg) {
-                errorMessage += `• ${err.loc?.[1] || 'Field'}: ${err.msg}\n`;
+                errorMessage += `\n• ${err.loc?.[1] || 'Field'}: ${err.msg}`;
               }
             });
           } else if (typeof errorData.detail === 'string') {
             errorMessage = errorData.detail;
           }
           
-          alert(errorMessage);
+          setErrorModal({ show: true, title: errorTitle, message: errorMessage });
           setErrors({ submit: 'Please fix the validation errors and try again.' });
         } else {
           const errorMsg = errorData.detail || 'Failed to submit review';
-          alert(`❌ Submission Failed\n\n${errorMsg}`);
+          setErrorModal({ 
+            show: true, 
+            title: '❌ Submission Failed', 
+            message: errorMsg 
+          });
           setErrors({ submit: errorMsg });
         }
       }
     } catch (error) {
-      alert('❌ Network Error\n\nFailed to submit review. Please check your connection and try again.');
+      setErrorModal({ 
+        show: true, 
+        title: '❌ Network Error', 
+        message: 'Failed to submit review. Please check your connection and try again.' 
+      });
       setErrors({ submit: 'Network error. Please try again.' });
     } finally {
       setIsSubmitting(false);
@@ -407,6 +422,37 @@ export default function CollegeReviewForm({ collegeId, collegeName, onClose, onS
           )}
         </form>
       </div>
+
+      {/* Error Modal */}
+      {errorModal.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full shadow-2xl transform transition-all">
+            <div className="p-6">
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <AlertCircle className="w-12 h-12 text-red-500" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                    {errorModal.title}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-300 text-sm whitespace-pre-line">
+                    {errorModal.message}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setErrorModal({ show: false, title: '', message: '' })}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  Got it
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
