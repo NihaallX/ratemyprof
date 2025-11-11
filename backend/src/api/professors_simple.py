@@ -98,6 +98,8 @@ async def get_top_rated_professors(
     This ensures professors with more reviews appear higher even if rating is slightly lower
     """
     try:
+        print(f"🔍 Fetching top {limit} professors...")
+        
         # Get ALL professors with reviews (we'll sort them in Python for better control)
         query = (
             supabase.table('professors')
@@ -107,6 +109,7 @@ async def get_top_rated_professors(
         )
         
         result = query.execute()
+        print(f"📊 Fetched {len(result.data)} professors with reviews")
         
         # Sort by: 1) Review count (descending), 2) Rating (descending)
         # This ensures Dr. Jupinder Kaur (3 reviews, 4.7) ranks higher than 
@@ -118,6 +121,10 @@ async def get_top_rated_professors(
                 -float(p.get('average_rating', 0.0))  # Then higher rating
             )
         )
+        
+        print("🏆 Top 10 after sorting:")
+        for i, prof in enumerate(sorted_professors[:10]):
+            print(f"  {i+1}. {prof.get('name')} - {prof.get('total_reviews')} reviews, {prof.get('average_rating')} rating")
         
         # Take top N professors after sorting
         top_professors = sorted_professors[:limit]
@@ -134,10 +141,11 @@ async def get_top_rated_professors(
                 'reviews': int(prof.get('total_reviews', 0))
             })
         
+        print(f"✅ Returning {len(professors)} professors")
         return JSONResponse(content=professors)
         
     except Exception as e:
-        print(f"Error fetching top-rated professors: {e}")
+        print(f"❌ Error fetching top-rated professors: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch top-rated professors: {str(e)}"

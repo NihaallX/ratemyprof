@@ -142,9 +142,21 @@ function AuthenticatedHomePage() {
   const loadTopRated = async () => {
     try {
       // Load top-rated professors - use the new endpoint with proper sorting
-      const profResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1'}/professors/top-rated?limit=6`);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1';
+      console.log('Fetching top-rated from:', `${apiUrl}/professors/top-rated?limit=6`);
+      
+      const profResponse = await fetch(`${apiUrl}/professors/top-rated?limit=6`, {
+        // Add cache busting to ensure we get latest data
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
       if (profResponse.ok) {
         const profData = await profResponse.json();
+        console.log('Top-rated professors from backend:', profData);
+        
         // The backend returns array directly, map to our format
         const formattedProfs = profData.map((p: any) => ({
           id: p.id,
@@ -154,8 +166,11 @@ function AuthenticatedHomePage() {
           average_rating: p.rating,
           total_reviews: p.reviews,
         }));
+        
+        console.log('Formatted professors:', formattedProfs);
         setTopRatedProfessors(formattedProfs);
       } else {
+        console.warn('Top-rated endpoint failed, using fallback');
         // Fallback to old method if endpoint fails
         const profResponse = await RateMyProfAPI.searchProfessors({ limit: 50 });
         const sortedProfs = profResponse.professors
@@ -851,7 +866,7 @@ function AuthenticatedHomePage() {
                       key={professor.id}
                       href={`/professors/${professor.id}`}
                       prefetch={true}
-                      className={`block bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 overflow-hidden group animate-scaleIn stagger-${Math.min(index + 1, 6)}`}
+                      className={`block bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl dark:hover:shadow-indigo-500/20 transition-all duration-300 border border-gray-200 dark:border-gray-700 overflow-hidden group animate-scaleIn stagger-${Math.min(index + 1, 6)}`}
                     >
                       <div className="flex h-full">
                         {/* Left Side - Quality Rating */}
@@ -913,7 +928,7 @@ function AuthenticatedHomePage() {
                       key={college.id}
                       href={`/colleges/${college.id}`}
                       prefetch={true}
-                      className={`block bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 overflow-hidden group animate-scaleIn stagger-${Math.min(index + 1, 6)}`}
+                      className={`block bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl dark:hover:shadow-indigo-500/20 transition-all duration-300 border border-gray-200 dark:border-gray-700 overflow-hidden group animate-scaleIn stagger-${Math.min(index + 1, 6)}`}
                     >
                       <div className="flex h-full">
                         {/* Left Side - Quality Rating */}
@@ -987,7 +1002,7 @@ function AuthenticatedHomePage() {
                     key={professor.id}
                     href={`/professors/${professor.id}`}
                     prefetch={true}
-                    className="block bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group"
+                    className="block bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl dark:hover:shadow-indigo-500/20 transition-all duration-300 border border-gray-200 dark:border-gray-700 overflow-hidden group"
                   >
                     <div className="flex h-full">
                       {/* Left Side - Quality Rating */}
@@ -1008,10 +1023,10 @@ function AuthenticatedHomePage() {
                       {/* Right Side - Professor Info */}
                       <div className="flex-1 p-3 sm:p-4 flex flex-col min-w-0">
                         <div className="flex-1">
-                          <h4 className="text-base sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
+                          <h4 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-1 sm:mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
                             {professor.name}
                           </h4>
-                          <p className="text-xs sm:text-sm text-gray-600 mb-2 line-clamp-1">
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-2 line-clamp-1">
                             {professor.department}
                           </p>
                           {/* Teaching Style Tags */}
@@ -1019,7 +1034,7 @@ function AuthenticatedHomePage() {
                             {getTeachingTags(professor.average_rating).map((tag, idx) => (
                               <span 
                                 key={idx}
-                                className="text-[10px] sm:text-xs px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full font-medium"
+                                className="text-[10px] sm:text-xs px-2 py-0.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full font-medium"
                               >
                                 {tag}
                               </span>
@@ -1027,9 +1042,9 @@ function AuthenticatedHomePage() {
                           </div>
                         </div>
                         
-                        <div className="pt-2 border-t border-gray-100">
-                          <div className="text-xs text-gray-500">
-                            <span className="font-semibold text-gray-700">{professor.total_reviews}</span> rating{professor.total_reviews !== 1 ? 's' : ''}
+                        <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            <span className="font-semibold text-gray-700 dark:text-gray-300">{professor.total_reviews}</span> rating{professor.total_reviews !== 1 ? 's' : ''}
                           </div>
                         </div>
                       </div>
