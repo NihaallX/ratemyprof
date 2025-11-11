@@ -439,7 +439,7 @@ export default function ProfessorProfile() {
                         </div>
                         <div className="flex items-center">
                           <Award className="w-4 h-4 mr-1" />
-                          {professor.college_name || 'Unknown College'}
+                          {professor.college?.name || 'Unknown College'}
                         </div>
                         <div className="flex items-center">
                           <MessageSquare className="w-4 h-4 mr-1" />
