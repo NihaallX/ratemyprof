@@ -88,6 +88,22 @@ const AdminPage: NextPage = () => {
   const [maintenanceModeEnabled, setMaintenanceModeEnabled] = useState(false);
   const [isLoadingMaintenance, setIsLoadingMaintenance] = useState(true);
 
+  // Expanded reviews state - track which reviews are expanded
+  const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set());
+
+  // Toggle review expansion
+  const toggleReviewExpansion = (reviewId: string) => {
+    setExpandedReviews(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(reviewId)) {
+        newSet.delete(reviewId);
+      } else {
+        newSet.add(reviewId);
+      }
+      return newSet;
+    });
+  };
+
   // Fetch maintenance mode status from API
   const fetchMaintenanceMode = async () => {
     try {
@@ -1689,7 +1705,24 @@ const AdminPage: NextPage = () => {
                                 <p className="text-sm text-gray-600"><strong>Experience:</strong> {professor.years_of_experience ? `${professor.years_of_experience} years` : 'Not specified'}</p>
                                 <p className="text-sm text-gray-600"><strong>Submitted:</strong> {new Date(professor.created_at).toLocaleDateString()}</p>
                                 {professor.biography && (
-                                  <p className="text-sm text-gray-600"><strong>Biography:</strong> {professor.biography.length > 100 ? professor.biography.substring(0, 100) + '...' : professor.biography}</p>
+                                  <div className="text-sm text-gray-600">
+                                    <strong>Biography:</strong>{' '}
+                                    <span className={expandedReviews.has(professor.id) ? '' : 'inline'}>
+                                      {expandedReviews.has(professor.id) 
+                                        ? professor.biography 
+                                        : (professor.biography.length > 100 
+                                            ? professor.biography.substring(0, 100) + '...' 
+                                            : professor.biography)}
+                                    </span>
+                                    {professor.biography.length > 100 && (
+                                      <button
+                                        onClick={() => toggleReviewExpansion(professor.id)}
+                                        className="text-indigo-600 hover:text-indigo-800 text-xs font-medium ml-1"
+                                      >
+                                        {expandedReviews.has(professor.id) ? 'Show Less' : 'Read More'}
+                                      </button>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             </div>
@@ -2064,7 +2097,19 @@ const AdminPage: NextPage = () => {
                                 <div className="font-medium">Course: {review.course_name}</div>
                                 <div className="mt-1">Rating: {review.overall_rating}/5 ⭐</div>
                                 {review.review_text && (
-                                  <div className="mt-2 text-gray-600 line-clamp-3">{review.review_text}</div>
+                                  <div className="mt-2 text-gray-600">
+                                    <div className={expandedReviews.has(review.id) ? '' : 'line-clamp-3'}>
+                                      {review.review_text}
+                                    </div>
+                                    {review.review_text.length > 150 && (
+                                      <button
+                                        onClick={() => toggleReviewExpansion(review.id)}
+                                        className="text-indigo-600 hover:text-indigo-800 text-sm font-medium mt-1"
+                                      >
+                                        {expandedReviews.has(review.id) ? 'Show Less' : 'Read More'}
+                                      </button>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             </td>
@@ -2242,7 +2287,17 @@ const AdminPage: NextPage = () => {
                             </td>
                             <td className="px-6 py-4">
                               <div className="text-sm text-gray-900 max-w-md">
-                                <p className="line-clamp-2">{flag.college_review?.review_text || 'No content'}</p>
+                                <div className={expandedReviews.has(flag.id) ? '' : 'line-clamp-2'}>
+                                  {flag.college_review?.review_text || 'No content'}
+                                </div>
+                                {flag.college_review?.review_text && flag.college_review.review_text.length > 100 && (
+                                  <button
+                                    onClick={() => toggleReviewExpansion(flag.id)}
+                                    className="text-indigo-600 hover:text-indigo-800 text-xs font-medium mt-1"
+                                  >
+                                    {expandedReviews.has(flag.id) ? 'Show Less' : 'Read More'}
+                                  </button>
+                                )}
                                 <div className="mt-1 flex items-center space-x-2 text-xs text-gray-500">
                                   <span>Rating: {flag.college_review?.overall_rating || 'N/A'}/5</span>
                                   <span>•</span>
@@ -2380,7 +2435,17 @@ const AdminPage: NextPage = () => {
                         {/* Review Text */}
                         {review.review_text && (
                           <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                            <p className="text-gray-700 text-sm">{review.review_text}</p>
+                            <div className={expandedReviews.has(review.id) ? '' : 'line-clamp-3'}>
+                              <p className="text-gray-700 text-sm">{review.review_text}</p>
+                            </div>
+                            {review.review_text.length > 200 && (
+                              <button
+                                onClick={() => toggleReviewExpansion(review.id)}
+                                className="text-indigo-600 hover:text-indigo-800 text-sm font-medium mt-2"
+                              >
+                                {expandedReviews.has(review.id) ? 'Show Less' : 'Read More'}
+                              </button>
+                            )}
                           </div>
                         )}
 
