@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node scripts/generate-sitemap.js",
+    "generate-sitemap": "node scripts/generate-sitemap.js",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",

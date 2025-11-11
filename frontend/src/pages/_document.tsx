@@ -51,28 +51,19 @@ export default function Document() {
         <link rel="manifest" href="/site.webmanifest" />
         <link rel="shortcut icon" href="/favicon.ico" />
         
-        {/* Open Graph / Facebook Meta Tags */}
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://ratemyprof.me/" />
-        <meta property="og:title" content="RateMyProf - Rate Your Professors | India" />
-        <meta property="og:description" content="Discover and review professors across Indian colleges. Help students make informed decisions with honest professor ratings and reviews." />
+        {/* Common meta tags for all pages */}
+        <meta name="author" content="RateMyProf" />
+        <meta name="theme-color" content="#4F46E5" />
+        
+        {/* Default Open Graph image and site name (pages can override) */}
         <meta property="og:image" content="https://ratemyprof.me/android-chrome-512x512.png" />
         <meta property="og:image:width" content="512" />
         <meta property="og:image:height" content="512" />
         <meta property="og:site_name" content="RateMyProf" />
         
-        {/* Twitter Card Meta Tags */}
+        {/* Default Twitter Card settings */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:url" content="https://ratemyprof.me/" />
-        <meta name="twitter:title" content="RateMyProf - Rate Your Professors | India" />
-        <meta name="twitter:description" content="Discover and review professors across Indian colleges. Help students make informed decisions with honest professor ratings and reviews." />
         <meta name="twitter:image" content="https://ratemyprof.me/android-chrome-512x512.png" />
-        
-        {/* Additional Meta Tags for SEO */}
-        <meta name="description" content="RateMyProf - The #1 platform for rating and reviewing professors across Indian colleges and universities. Make informed decisions with student reviews." />
-        <meta name="keywords" content="rate professors, professor reviews, college reviews, university reviews, Indian professors, student reviews, academic ratings" />
-        <meta name="author" content="RateMyProf" />
-        <meta name="theme-color" content="#4F46E5" />
         
         {/* Structured Data for Google Search */}
         <script
@@ -109,11 +100,11 @@ export default function Document() {
           }}
         />
         
-        {/* Google Fonts - Inter, Poppins & Pacifico */}
+        {/* Google Fonts - Inter, Poppins & Pacifico - Optimized */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link 
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Pacifico&display=swap" 
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&family=Pacifico&display=swap" 
           rel="stylesheet" 
         />
       </Head>

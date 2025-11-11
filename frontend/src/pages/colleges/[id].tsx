@@ -193,8 +193,50 @@ export default function CollegeDetail() {
   return (
     <>
       <Head>
-        <title>{college.name} - RateMyProf India</title>
-        <meta name="description" content={`Learn about ${college.name} in ${college.city}, ${college.state}. Find professors, reviews, and more.`} />
+        <title>{college.name} Professor Reviews & Ratings | RateMyProf India</title>
+        <meta 
+          name="description" 
+          content={`Browse ${professors.length} professor reviews at ${college.name} in ${college.city}, ${college.state}. Find top-rated faculty${departments.length > 0 ? ` in ${departments.slice(0, 3).join(', ')}${departments.length > 3 ? ' and more' : ''}` : ''}. Student ratings for teaching quality and course difficulty.`}
+        />
+        <meta 
+          name="keywords" 
+          content={`${college.name}, ${college.city} colleges, professor reviews ${college.city}, ${college.name} faculty ratings, ${college.state} universities, student reviews`}
+        />
+        
+        {/* Open Graph Tags */}
+        <meta property="og:title" content={`${college.name} - Professor Reviews & Ratings`} />
+        <meta property="og:description" content={`${professors.length} professors reviewed by students. ${college.college_type} in ${college.city}.`} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={`https://ratemyprof.me/colleges/${college.id}/`} />
+        
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={`${college.name} Professor Reviews`} />
+        <meta name="twitter:description" content={`${professors.length} professors reviewed by students`} />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href={`https://ratemyprof.me/colleges/${college.id}/`} />
+        
+        {/* Structured Data - EducationalOrganization */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "EducationalOrganization",
+              "name": college.name,
+              "address": {
+                "@type": "PostalAddress",
+                "addressLocality": college.city,
+                "addressRegion": college.state,
+                "addressCountry": "IN"
+              },
+              ...(college.website && { "url": college.website }),
+              ...(college.established_year && { "foundingDate": college.established_year.toString() }),
+              "description": `${college.college_type} in ${college.city}, ${college.state} with ${professors.length} faculty members.`
+            })
+          }}
+        />
       </Head>
 
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">

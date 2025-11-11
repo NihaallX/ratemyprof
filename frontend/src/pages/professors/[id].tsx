@@ -333,8 +333,57 @@ export default function ProfessorProfile() {
   return (
     <>
       <Head>
-        <title>{professor.name} - RateMyProf India</title>
-        <meta name="description" content={`Rate and review ${professor.name} from ${professor.department}`} />
+        <title>
+          {professor.name} Reviews - {professor.department} | RateMyProf India
+        </title>
+        <meta 
+          name="description" 
+          content={`Read ${professor.total_reviews || 0} student reviews and ratings for ${professor.name} in ${professor.department}. Average rating: ${professor.average_rating > 0 ? professor.average_rating.toFixed(1) : 'Not rated'}/5.0. Find professor difficulty, clarity, and helpfulness ratings.`}
+        />
+        <meta 
+          name="keywords" 
+          content={`${professor.name}, ${professor.department} professor, Vishwakarma University, professor reviews, student ratings, faculty ratings india`}
+        />
+        
+        {/* Open Graph Tags */}
+        <meta property="og:title" content={`${professor.name} - Professor Reviews | RateMyProf`} />
+        <meta property="og:description" content={`${professor.total_reviews || 0} student reviews. Rating: ${professor.average_rating > 0 ? professor.average_rating.toFixed(1) : 'Not rated'}/5.0`} />
+        <meta property="og:type" content="profile" />
+        <meta property="og:url" content={`https://ratemyprof.me/professors/${professor.id}/`} />
+        
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={`${professor.name} Reviews`} />
+        <meta name="twitter:description" content={`${professor.total_reviews || 0} student reviews. Rating: ${professor.average_rating > 0 ? professor.average_rating.toFixed(1) : 'Not rated'}/5.0`} />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href={`https://ratemyprof.me/professors/${professor.id}/`} />
+        
+        {/* Structured Data - Person with AggregateRating */}
+        {professor.average_rating > 0 && professor.total_reviews > 0 && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Person",
+                "name": professor.name,
+                "jobTitle": "Professor",
+                "worksFor": {
+                  "@type": "EducationalOrganization",
+                  "name": "Vishwakarma University"
+                },
+                "aggregateRating": {
+                  "@type": "AggregateRating",
+                  "ratingValue": professor.average_rating.toFixed(1),
+                  "reviewCount": professor.total_reviews,
+                  "bestRating": "5",
+                  "worstRating": "1"
+                }
+              })
+            }}
+          />
+        )}
       </Head>
 
       {/* Success/Error Notification */}

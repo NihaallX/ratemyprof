@@ -432,8 +432,25 @@ function AuthenticatedHomePage() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <Head>
-        <title>RateMyProf India - Find & Rate Your Professors</title>
-        <meta name="description" content="Discover and rate professors at Indian colleges and universities" />
+        <title>Rate Professors in India | RateMyProf - Student Reviews & Ratings</title>
+        <meta 
+          name="description" 
+          content="Find honest student reviews and ratings for professors across Indian colleges. Make informed decisions with RateMyProf - India's #1 professor rating platform." 
+        />
+        <meta 
+          name="keywords" 
+          content="rate professors india, professor reviews, college faculty ratings, student reviews india, university professors, RateMyProf, rate my professor india" 
+        />
+        
+        {/* Open Graph - Enhanced */}
+        <meta property="og:title" content="Rate Professors in India | RateMyProf" />
+        <meta property="og:description" content="Student reviews for Indian professors. Find the best faculty before enrolling." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://ratemyprof.me/" />
+        
+        {/* Twitter Card - Enhanced */}
+        <meta name="twitter:title" content="Rate Professors in India | RateMyProf" />
+        <meta name="twitter:description" content="Student reviews for Indian professors. Find the best faculty before enrolling." />
       </Head>
 
       {/* Sign In Banner - Only show when not logged in */}
