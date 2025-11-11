@@ -24,6 +24,7 @@ class Professor(BaseModel):
     name: str
     department: Optional[str] = None  # Make optional - some professors might not have department
     college_id: str
+    college_name: Optional[str] = None  # Add college name for search results
     average_rating: float
     total_reviews: int
     designation: Optional[str] = None
@@ -161,10 +162,10 @@ async def search_professors(
     offset: int = Query(0, ge=0, description="Number of records to skip"),
     supabase: Client = Depends(get_supabase)
 ):
-    """Search VU professors."""
+    """Search professors with college information."""
     try:
-        # Only show verified professors to users
-        query = supabase.table('professors').select('*').eq('is_verified', True)
+        # Only show verified professors to users - JOIN with colleges to get college name
+        query = supabase.table('professors').select('*, colleges(name)').eq('is_verified', True)
         
         if college_id:
             query = query.eq('college_id', college_id)
@@ -209,11 +210,21 @@ async def search_professors(
                 elif isinstance(subjects, str):
                     subjects = [s.strip() for s in subjects.split(',') if s.strip()]
                 
+                # Handle college data for search results
+                college_name = 'Unknown'
+                if 'colleges' in prof:
+                    colleges_data = prof['colleges']
+                    if isinstance(colleges_data, dict):
+                        college_name = colleges_data.get('name', 'Unknown')
+                    elif isinstance(colleges_data, list) and len(colleges_data) > 0:
+                        college_name = colleges_data[0].get('name', 'Unknown')
+                
                 professor_data = {
                     'id': prof['id'],
                     'name': prof['name'],
                     'department': prof.get('department'),  # Now optional
                     'college_id': prof['college_id'],
+                    'college_name': college_name,  # Add college name for frontend search
                     'average_rating': float(prof.get('average_rating', 0.0)),
                     'total_reviews': int(prof.get('total_reviews', 0)),
                     'designation': prof.get('designation'),

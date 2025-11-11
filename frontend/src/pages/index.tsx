@@ -215,7 +215,7 @@ function AuthenticatedHomePage() {
           type: 'professor',
           name: prof.name,
           department: prof.department,
-          college: 'Vishwakarma University', // You can fetch this from college_id if needed
+          college: prof.college_name || 'Unknown College', // Now using actual college name from API
           rating: prof.average_rating
         }));
         
