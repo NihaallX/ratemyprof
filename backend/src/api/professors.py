@@ -206,6 +206,63 @@ async def search_professors(
         )
 
 
+@router.get("/more-professors")
+async def get_more_professors(
+    college_id: Optional[str] = Query(None),
+    exclude_id: Optional[str] = Query(None),
+    limit: int = Query(6, ge=1, le=20),
+    supabase: Client = Depends(get_supabase)
+):
+    """Get more professors to explore.
+    
+    Returns top-rated professors, optionally filtered by college.
+    Can exclude a specific professor (useful for showing on professor detail page).
+    """
+    print(f"🔍 More professors request: college_id={college_id}, exclude_id={exclude_id}, limit={limit}")
+    try:
+        query = supabase.table('professors').select(
+            'id, name, department, average_rating, total_reviews, subjects, college_id'
+        )
+        
+        if college_id:
+            query = query.eq('college_id', college_id)
+        
+        if exclude_id:
+            query = query.neq('id', exclude_id)
+        
+        # Get top-rated professors with at least 1 review
+        result = query.gt('total_reviews', 0).order(
+            'average_rating', desc=True
+        ).order('total_reviews', desc=True).limit(limit).execute()
+        
+        print(f"✅ Found {len(result.data)} more professors")
+        
+        professors = []
+        for prof in result.data:
+            professors.append({
+                'id': prof['id'],
+                'name': prof['name'],
+                'department': prof['department'],
+                'average_rating': prof['average_rating'] or 0.0,
+                'total_reviews': prof['total_reviews'] or 0,
+                'subjects': prof['subjects'].split(',') if prof.get('subjects') else []
+            })
+        
+        return {
+            'professors': professors,
+            'total': len(professors)
+        }
+        
+    except Exception as e:
+        print(f"❌ More professors error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch professors: {str(e)}"
+        )
+
+
 @router.get("/{professor_id}", response_model=ProfessorProfile)
 async def get_professor(
     professor_id: str,
@@ -463,63 +520,6 @@ async def get_similar_professors(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch similar professors: {str(e)}"
-        )
-
-
-@router.get("/more-professors")
-async def get_more_professors(
-    college_id: Optional[str] = Query(None),
-    exclude_id: Optional[str] = Query(None),
-    limit: int = Query(6, ge=1, le=20),
-    supabase: Client = Depends(get_supabase)
-):
-    """Get more professors to explore.
-    
-    Returns top-rated professors, optionally filtered by college.
-    Can exclude a specific professor (useful for showing on professor detail page).
-    """
-    print(f"🔍 More professors request: college_id={college_id}, exclude_id={exclude_id}, limit={limit}")
-    try:
-        query = supabase.table('professors').select(
-            'id, name, department, average_rating, total_reviews, subjects, college_id'
-        )
-        
-        if college_id:
-            query = query.eq('college_id', college_id)
-        
-        if exclude_id:
-            query = query.neq('id', exclude_id)
-        
-        # Get top-rated professors with at least 1 review
-        result = query.gt('total_reviews', 0).order(
-            'average_rating', desc=True
-        ).order('total_reviews', desc=True).limit(limit).execute()
-        
-        print(f"✅ Found {len(result.data)} more professors")
-        
-        professors = []
-        for prof in result.data:
-            professors.append({
-                'id': prof['id'],
-                'name': prof['name'],
-                'department': prof['department'],
-                'average_rating': prof['average_rating'] or 0.0,
-                'total_reviews': prof['total_reviews'] or 0,
-                'subjects': prof['subjects'].split(',') if prof.get('subjects') else []
-            })
-        
-        return {
-            'professors': professors,
-            'total': len(professors)
-        }
-        
-    except Exception as e:
-        print(f"❌ More professors error: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch professors: {str(e)}"
         )
 
 
