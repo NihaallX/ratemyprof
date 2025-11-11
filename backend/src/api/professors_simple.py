@@ -442,15 +442,92 @@ async def compare_professors(
         )
 
 
-@router.get("/{professor_id}", response_model=Professor, responses={
-    404: {"model": ErrorResponse, "description": "Professor not found"},
-    400: {"model": ErrorResponse, "description": "Invalid professor ID"}
-})
+@router.get("/more-professors")
+async def get_more_professors(
+    college_id: Optional[str] = Query(None),
+    exclude_id: Optional[str] = Query(None),
+    limit: int = Query(6, ge=1, le=20),
+    supabase: Client = Depends(get_supabase)
+):
+    """Get more professors to explore.
+    
+    Returns top-rated professors, optionally filtered by college.
+    Can exclude a specific professor (useful for showing on professor detail page).
+    
+    IMPORTANT: This route MUST come before /{professor_id} to avoid FastAPI matching "more-professors" as an ID!
+    """
+    print(f"🔍 More professors request: college_id={college_id}, exclude_id={exclude_id}, limit={limit}")
+    try:
+        
+        query = supabase.table('professors').select(
+            'id, name, department, average_rating, total_reviews, subjects, college_id, colleges(name)'
+        )
+        
+        if college_id:
+            query = query.eq('college_id', college_id)
+        
+        if exclude_id:
+            query = query.neq('id', exclude_id)
+        
+        # Get top-rated professors with at least 1 review
+        result = query.gt('total_reviews', 0).order(
+            'average_rating', desc=True
+        ).order('total_reviews', desc=True).limit(limit).execute()
+        
+        print(f"✅ Found {len(result.data) if result.data else 0} professors")
+        
+        professors = []
+        for prof in result.data:
+            # Handle subjects - can be list or comma-separated string
+            subjects = prof.get('subjects', [])
+            if isinstance(subjects, str):
+                subjects = [s.strip() for s in subjects.split(',') if s.strip()]
+            elif not isinstance(subjects, list):
+                subjects = []
+            
+            # Handle college data
+            college_name = 'Unknown'
+            if 'colleges' in prof:
+                colleges_data = prof['colleges']
+                if isinstance(colleges_data, dict):
+                    college_name = colleges_data.get('name', 'Unknown')
+                elif isinstance(colleges_data, list) and len(colleges_data) > 0:
+                    college_name = colleges_data[0].get('name', 'Unknown')
+                
+            professors.append({
+                'id': prof['id'],
+                'name': prof['name'],
+                'department': prof['department'],
+                'college': {'name': college_name},
+                'average_rating': prof.get('average_rating') or 0.0,
+                'total_reviews': prof.get('total_reviews') or 0,
+                'subjects': subjects
+            })
+        
+        return {
+            'professors': professors,
+            'total': len(professors)
+        }
+        
+    except Exception as e:
+        print(f"❌ Error in more-professors: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch professors: {str(e)}"
+        )
+
+
+@router.get("/{professor_id}")
 async def get_professor(
     professor_id: str,
     supabase: Client = Depends(get_supabase)
 ):
-    """Get a specific professor by ID - simplified format."""
+    """Get a specific professor by ID with college name.
+    
+    Returns professor data with nested college object containing the college name.
+    """
     try:
         # Validate UUID format
         try:
@@ -461,9 +538,10 @@ async def get_professor(
                 content={"error": "invalid_uuid", "message": "Invalid professor ID format"}
             )
         
-        # Get professor data
-        # TODO: Add back .eq('is_verified', True) once column is added to database
-        result = supabase.table('professors').select('*').eq('id', professor_id).execute()
+        # Get professor data WITH college name via join
+        result = supabase.table('professors').select(
+            '*, colleges(name, city, state)'
+        ).eq('id', professor_id).execute()
         
         if not result.data:
             return JSONResponse(
@@ -473,27 +551,45 @@ async def get_professor(
         
         prof_data = result.data[0]
         
-        # Transform data to match our model
+        # Transform data to match frontend expectations
         subjects = prof_data.get('subjects', [])
         if subjects is None:
             subjects = []
         elif isinstance(subjects, str):
             subjects = [s.strip() for s in subjects.split(',') if s.strip()]
         
-        transformed_data = {
+        # Handle college data - frontend expects { college: { name: "..." } }
+        college_data = prof_data.get('colleges')
+        college = {'name': 'Unknown College'}
+        
+        if college_data:
+            if isinstance(college_data, dict):
+                college = {
+                    'name': college_data.get('name', 'Unknown College'),
+                    'city': college_data.get('city'),
+                    'state': college_data.get('state')
+                }
+            elif isinstance(college_data, list) and len(college_data) > 0:
+                college = {
+                    'name': college_data[0].get('name', 'Unknown College'),
+                    'city': college_data[0].get('city'),
+                    'state': college_data[0].get('state')
+                }
+        
+        return {
             'id': prof_data['id'],
             'name': prof_data['name'],
-            'department': prof_data['department'],
+            'department': prof_data.get('department'),
             'college_id': prof_data['college_id'],
+            'college': college,  # ← Frontend expects this nested structure
             'average_rating': float(prof_data.get('average_rating', 0.0)),
             'total_reviews': int(prof_data.get('total_reviews', 0)),
             'designation': prof_data.get('designation'),
             'subjects': subjects
         }
         
-        return Professor(**transformed_data)
-        
     except Exception as e:
+        print(f"❌ Error fetching professor: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get professor: {str(e)}"
@@ -676,69 +772,4 @@ async def get_similar_professors(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch similar professors: {str(e)}"
-        )
-
-
-@router.get("/more-professors")
-async def get_more_professors(
-    college_id: Optional[str] = Query(None),
-    exclude_id: Optional[str] = Query(None),
-    limit: int = Query(6, ge=1, le=20),
-    supabase: Client = Depends(get_supabase)
-):
-    """Get more professors to explore.
-    
-    Returns top-rated professors, optionally filtered by college.
-    Can exclude a specific professor (useful for showing on professor detail page).
-    """
-    print(f"🔍 More professors request: college_id={college_id}, exclude_id={exclude_id}, limit={limit}")
-    try:
-        
-        query = supabase.table('professors').select(
-            'id, name, department, average_rating, total_reviews, subjects, college_id'
-        )
-        
-        if college_id:
-            query = query.eq('college_id', college_id)
-        
-        if exclude_id:
-            query = query.neq('id', exclude_id)
-        
-        # Get top-rated professors with at least 1 review
-        result = query.gt('total_reviews', 0).order(
-            'average_rating', desc=True
-        ).order('total_reviews', desc=True).limit(limit).execute()
-        
-        print(f"✅ Found {len(result.data) if result.data else 0} professors")
-        
-        professors = []
-        for prof in result.data:
-            # Handle subjects - can be list or comma-separated string
-            subjects = prof.get('subjects', [])
-            if isinstance(subjects, str):
-                subjects = [s.strip() for s in subjects.split(',') if s.strip()]
-            elif not isinstance(subjects, list):
-                subjects = []
-                
-            professors.append({
-                'id': prof['id'],
-                'name': prof['name'],
-                'department': prof['department'],
-                'average_rating': prof.get('average_rating') or 0.0,
-                'total_reviews': prof.get('total_reviews') or 0,
-                'subjects': subjects
-            })
-        
-        return {
-            'professors': professors,
-            'total': len(professors)
-        }
-        
-    except Exception as e:
-        print(f"❌ Error in more-professors: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch professors: {str(e)}"
         )
