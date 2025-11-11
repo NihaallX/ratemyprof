@@ -21,6 +21,7 @@ export interface Professor {
   name: string;
   department: string;
   college_id: string;
+  college_name?: string;
   average_rating: number;
   total_reviews: number;
   designation?: string;
