@@ -141,28 +141,45 @@ function AuthenticatedHomePage() {
 
   const loadTopRated = async () => {
     try {
-      // Load top-rated professors - get more than we need, then filter and sort
-      const profResponse = await RateMyProfAPI.searchProfessors({ limit: 50 }); // Get 50 to have enough with ratings
-      const sortedProfs = profResponse.professors
-        .filter(p => p.average_rating > 0 && p.total_reviews > 0) // Only professors with actual reviews
-        .sort((a, b) => {
-          // Sort by rating first, then by number of reviews as tiebreaker
-          if (b.average_rating !== a.average_rating) {
+      // Load top-rated professors - use the new endpoint with proper sorting
+      const profResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1'}/professors/top-rated?limit=6`);
+      if (profResponse.ok) {
+        const profData = await profResponse.json();
+        // The backend returns array directly, map to our format
+        const formattedProfs = profData.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          department: p.department,
+          college_id: p.college_id,
+          average_rating: p.rating,
+          total_reviews: p.reviews,
+        }));
+        setTopRatedProfessors(formattedProfs);
+      } else {
+        // Fallback to old method if endpoint fails
+        const profResponse = await RateMyProfAPI.searchProfessors({ limit: 50 });
+        const sortedProfs = profResponse.professors
+          .filter(p => p.average_rating > 0 && p.total_reviews > 0)
+          .sort((a, b) => {
+            // Sort by review count first, then rating
+            if (b.total_reviews !== a.total_reviews) {
+              return b.total_reviews - a.total_reviews;
+            }
             return b.average_rating - a.average_rating;
-          }
-          return b.total_reviews - a.total_reviews;
-        });
-      setTopRatedProfessors(sortedProfs.slice(0, 6));
+          });
+        setTopRatedProfessors(sortedProfs.slice(0, 6));
+      }
 
       // Load top-rated colleges - get more than we need, then filter and sort  
       const collegeResponse = await RateMyProfAPI.searchColleges({ limit: 50 });
       const sortedColleges = collegeResponse.colleges
         .filter(c => c.average_rating > 0 && c.total_reviews > 0)
         .sort((a, b) => {
-          if (b.average_rating !== a.average_rating) {
-            return b.average_rating - a.average_rating;
+          // Sort by review count first, then rating
+          if (b.total_reviews !== a.total_reviews) {
+            return b.total_reviews - a.total_reviews;
           }
-          return b.total_reviews - a.total_reviews;
+          return b.average_rating - a.average_rating;
         });
       setTopRatedColleges(sortedColleges.slice(0, 6));
     } catch (error) {

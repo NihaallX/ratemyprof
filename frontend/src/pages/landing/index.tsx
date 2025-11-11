@@ -76,50 +76,27 @@ export default function EnhancedLandingPage() {
 
   // Fetch real data from your backend
   useEffect(() => {
-    // Fetch platform stats from the main backend API (parallel requests for speed)
+    // Fetch platform stats from the new stats endpoint
     const fetchStats = async () => {
       try {
         setStatsLoading(true);
         console.log('Fetching stats from backend...');
         
-        // Fetch all three endpoints in parallel for faster loading
-        const [profsResponse, collegesResponse] = await Promise.all([
-          fetch(`${API_URL}/professors?limit=1`),
-          fetch(`${API_URL}/colleges?limit=1`),
-        ]);
+        // Use the new stats endpoint
+        const statsResponse = await fetch(`${API_URL}/professors/stats`);
         
-        if (!profsResponse.ok || !collegesResponse.ok) {
+        if (!statsResponse.ok) {
           throw new Error('Failed to fetch stats');
         }
         
-        const [profsData, collegesData] = await Promise.all([
-          profsResponse.json(),
-          collegesResponse.json(),
-        ]);
+        const statsData = await statsResponse.json();
         
-        console.log('Professors data:', profsData);
-        console.log('Colleges data:', collegesData);
-        
-        const professorsCount = profsData.total || 0;
-        const collegesCount = collegesData.total || 0;
-        
-        // Fetch the first college's details to get accurate total_reviews
-        let reviewsCount = 0;
-        if (collegesData.colleges && collegesData.colleges.length > 0) {
-          const collegeId = collegesData.colleges[0].id;
-          const collegeDetailResponse = await fetch(`${API_URL}/colleges/${collegeId}`);
-          if (collegeDetailResponse.ok) {
-            const collegeDetail = await collegeDetailResponse.json();
-            reviewsCount = collegeDetail.total_reviews || 0;
-          }
-        }
-
-        console.log('Final stats:', { professorsCount, reviewsCount, collegesCount });
+        console.log('Stats data:', statsData);
         
         setStats({
-          professors: professorsCount,
-          reviews: reviewsCount,
-          colleges: collegesCount,
+          professors: statsData.professors || 0,
+          reviews: statsData.reviews || 0,
+          colleges: statsData.colleges || 0,
         });
       } catch (error) {
         console.error('Failed to fetch stats:', error);
@@ -132,45 +109,25 @@ export default function EnhancedLandingPage() {
 
     fetchStats();
 
-    // Fetch top-rated professors from main backend (using proxy)
+    // Fetch top-rated professors from main backend
     const fetchProfessors = async () => {
       try {
         console.log('Fetching professors from backend...');
-        const response = await fetch(`${API_URL}/professors?limit=200`);
+        const response = await fetch(`${API_URL}/professors/top-rated?limit=6`);
         if (!response.ok) {
           throw new Error(`Failed to fetch professors: ${response.status}`);
         }
         const data = await response.json();
-        console.log('Fetched professors data:', data);
+        console.log('Fetched top professors data:', data);
         
-        // Get all professors
-        const allProfessors = data.professors || [];
-        console.log('Total professors fetched:', allProfessors.length);
-        
-        // First, try to get professors WITH ratings
-        let professorsToShow = allProfessors
-          .filter((prof: any) => prof.average_rating && prof.average_rating > 0)
-          .sort((a: any, b: any) => b.average_rating - a.average_rating)
-          .slice(0, 6);
-        
-        console.log('Professors with ratings:', professorsToShow.length);
-        
-        // If we don't have 6 professors with ratings, fill the rest with any professors
-        if (professorsToShow.length < 6) {
-          const remaining = 6 - professorsToShow.length;
-          const professorsWithoutRatings = allProfessors
-            .filter((prof: any) => !prof.average_rating || prof.average_rating === 0)
-            .slice(0, remaining);
-          professorsToShow = [...professorsToShow, ...professorsWithoutRatings];
-        }
-        
+        // The backend now returns professors sorted by review count first, then rating
         // Map to the format we need
-        const formattedProfessors = professorsToShow.map((prof: any) => ({
+        const formattedProfessors = data.map((prof: any) => ({
           id: prof.id,
           name: prof.name,
           department: prof.department,
-          rating: prof.average_rating || 0,
-          reviews: prof.total_reviews || 0,
+          rating: prof.rating || 0,
+          reviews: prof.reviews || 0,
         }));
         
         console.log('Showing professors:', formattedProfessors);

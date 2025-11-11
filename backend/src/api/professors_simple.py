@@ -51,29 +51,80 @@ class StatsResponse(BaseModel):
     reviews: int
     colleges: int
 
+@router.get("/stats")
+@cache_response(ttl_seconds=60)  # Cache for 1 minute
+async def get_platform_stats(
+    supabase: Client = Depends(get_supabase)
+):
+    """Get platform statistics for landing page."""
+    try:
+        # Get total professors count
+        prof_result = supabase.table('professors').select('id', count='exact').execute()
+        total_professors = prof_result.count or 0
+        
+        # Get total reviews count by summing all professors' total_reviews
+        reviews_result = supabase.table('professors').select('total_reviews').execute()
+        total_reviews = sum(prof.get('total_reviews', 0) or 0 for prof in reviews_result.data)
+        
+        # Get total colleges count
+        college_result = supabase.table('colleges').select('id', count='exact').execute()
+        total_colleges = college_result.count or 0
+        
+        return JSONResponse(content={
+            'professors': total_professors,
+            'reviews': total_reviews,
+            'colleges': total_colleges
+        })
+        
+    except Exception as e:
+        print(f"Error fetching platform stats: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch platform stats: {str(e)}"
+        )
+
 @router.get("/top-rated")
 @cache_response(ttl_seconds=300)  # Cache for 5 minutes
 async def get_top_rated_professors(
     limit: int = Query(6, ge=1, le=50, description="Number of top professors to return"),
     supabase: Client = Depends(get_supabase)
 ):
-    """Get top-rated professors for landing page showcase."""
+    """Get top-rated professors for landing page showcase.
+    
+    Sorting logic:
+    1. Fetch all professors with at least 1 review
+    2. Sort by review count first (more reviews = more reliable)
+    3. Then by rating as secondary sort
+    This ensures professors with more reviews appear higher even if rating is slightly lower
+    """
     try:
-        # Get top professors with highest average rating and minimum reviews
+        # Get ALL professors with reviews (we'll sort them in Python for better control)
         query = (
             supabase.table('professors')
             .select('id, name, department, college_id, average_rating, total_reviews')
             .gte('total_reviews', 1)  # At least 1 review to be considered
-            .order('average_rating', desc=True)
-            .order('total_reviews', desc=True)
-            .limit(limit)
+            .limit(200)  # Get enough to sort properly
         )
         
         result = query.execute()
         
+        # Sort by: 1) Review count (descending), 2) Rating (descending)
+        # This ensures Dr. Jupinder Kaur (3 reviews, 4.7) ranks higher than 
+        # someone with 1 review and 5.0
+        sorted_professors = sorted(
+            result.data,
+            key=lambda p: (
+                -int(p.get('total_reviews', 0)),  # More reviews first (negative for descending)
+                -float(p.get('average_rating', 0.0))  # Then higher rating
+            )
+        )
+        
+        # Take top N professors after sorting
+        top_professors = sorted_professors[:limit]
+        
         # Transform data
         professors = []
-        for prof in result.data:
+        for prof in top_professors:
             professors.append({
                 'id': prof['id'],
                 'name': prof['name'],
