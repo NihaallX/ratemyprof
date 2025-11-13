@@ -5,6 +5,8 @@ import ParallaxHero from '../../components/landing/ParallaxHero';
 import AnimatedText, { AnimatedWord } from '../../components/landing/AnimatedText';
 import ProfessorCard, { Professor } from '../../components/landing/ProfessorCard';
 import { throttle, prefersReducedMotion, isLowPowerMode } from '../../utils/landing/helpers';
+import { BackgroundPaths } from '../../components/ui/background-paths';
+import { FeaturesSectionWithHoverEffects } from '../../components/ui/feature-section-with-hover-effects';
 
 // Use Next.js environment variable for API URL
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1';
@@ -17,6 +19,7 @@ export default function EnhancedLandingPage() {
   const [enable3D, setEnable3D] = useState(false); // Start false for SSR
   const [stats, setStats] = useState({ professors: 0, reviews: 0, colleges: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
+  const [showCopyToast, setShowCopyToast] = useState(false);
   const [topProfessors, setTopProfessors] = useState<Professor[]>([]);
   const [mounted, setMounted] = useState(false);
   
@@ -195,6 +198,16 @@ export default function EnhancedLandingPage() {
     window.location.href = path;
   };
 
+  const copyEmailToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText('ratemyprofrn@gmail.com');
+      setShowCopyToast(true);
+      setTimeout(() => setShowCopyToast(false), 3000);
+    } catch (err) {
+      console.error('Failed to copy email:', err);
+    }
+  };
+
   return (
     <div ref={containerRef} className="relative min-h-screen bg-gray-950 overflow-x-hidden">
       {/* Banner for authenticated users */}
@@ -273,209 +286,58 @@ export default function EnhancedLandingPage() {
         style={{ opacity: heroOpacity, scale: heroScale }}
         className="relative h-screen flex items-center justify-center overflow-hidden pt-16"
       >
-        {/* Beautiful gradient background - multiple layers for depth */}
-        <div className="absolute inset-0 bg-gray-950">
-          {/* Main purple/pink gradient glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-br from-purple-600/40 via-pink-500/30 to-transparent rounded-full blur-3xl"></div>
-          
-          {/* Secondary glow for more depth */}
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-indigo-500/30 via-purple-500/20 to-transparent rounded-full blur-2xl"></div>
-          
-          {/* Bottom accent glow */}
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1000px] h-[400px] bg-gradient-to-t from-purple-900/20 to-transparent blur-2xl"></div>
+        {/* Animated background paths */}
+        <div className="absolute inset-0">
+          <BackgroundPaths 
+            title="Rate My Prof"
+            buttonText="Explore"
+            onButtonClick={() => {
+              // Set flag to show main app (browse mode) for unauthenticated users
+              sessionStorage.setItem('browse_app', 'true');
+              window.location.href = '/';
+            }}
+          />
         </div>
 
-        <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-logo mb-6 text-white"
-            style={{
-              textShadow: '0 0 60px rgba(139, 92, 246, 0.5), 0 0 30px rgba(236, 72, 153, 0.3)'
-            }}
-          >
-            <AnimatedWord>Rate My Prof</AnimatedWord>
-          </motion.h1>
-          
+        {/* Overlay content - subtitle and stats */}
+        <div className="absolute bottom-32 left-0 right-0 z-20 text-center px-4">
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            className="text-lg sm:text-xl md:text-2xl text-purple-200 mb-4 font-medium"
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="text-lg sm:text-xl md:text-2xl text-gray-300 dark:text-gray-400 mb-12 max-w-2xl mx-auto"
           >
-            <AnimatedText staggerDelay={0.02}>
-              India's Premier Platform for Professor Reviews & Ratings
-            </AnimatedText>
+            India's Premier Platform for Professor Reviews & Ratings
           </motion.p>
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+          {/* Stats */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.8 }}
-            className="text-base sm:text-lg text-gray-300 mb-12 max-w-3xl mx-auto"
+            className="flex flex-wrap justify-center gap-8 sm:gap-12 text-white"
           >
-            Make informed decisions about your education. Read reviews, compare professors, and share your experiences.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 1 }}
-            className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-2xl mx-auto"
-          >
-            <motion.button
-              whileHover={{ scale: 1.05, boxShadow: '0 0 40px rgba(139, 92, 246, 0.6)' }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                // Set flag to show main app (browse mode)
-                sessionStorage.setItem('browse_app', 'true');
-                window.location.href = '/';
-              }}
-              className="px-12 py-5 text-lg bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full font-bold text-white shadow-2xl hover:from-indigo-500 hover:to-purple-500 transition-all"
-            >
-              Explore
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                // Redirect to login page
-                window.location.href = '/auth/login';
-              }}
-              className="px-12 py-5 text-lg bg-white/5 backdrop-blur-md border-2 border-white/20 rounded-full font-bold text-white hover:bg-white/10 transition-all"
-            >
-              Already Have an Account?
-            </motion.button>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 1.3 }}
-            className="mt-16"
-          >
-            <div className="flex justify-center gap-12 flex-wrap">
-              {[
-                { label: 'Professors', value: statsLoading ? '...' : `${stats.professors}` },
-                { label: 'Reviews', value: statsLoading ? '...' : `${stats.reviews}` },
-                { label: 'Colleges', value: statsLoading ? '...' : `${stats.colleges}` },
-              ].map((stat) => (
-                <motion.div
-                  key={stat.label}
-                  whileHover={{ scale: 1.1, y: -5 }}
-                  className="text-center"
-                >
-                  <div className="text-4xl font-bold text-gradient">{stat.value}</div>
-                  <div className="text-sm text-gray-400 mt-1">{stat.label}</div>
-                </motion.div>
-              ))}
+            <div className="text-center backdrop-blur-sm bg-indigo-500/10 dark:bg-indigo-900/20 px-6 py-3 rounded-xl border border-indigo-400/20 dark:border-indigo-500/20">
+              <div className="text-3xl sm:text-4xl font-bold text-gradient mb-1">
+                {statsLoading ? '...' : stats.professors.toLocaleString()}
+              </div>
+              <div className="text-sm text-indigo-300 dark:text-indigo-400">Professors</div>
             </div>
-            <div className="text-center text-sm text-gray-500 mt-4">and counting...</div>
+            <div className="text-center backdrop-blur-sm bg-indigo-500/10 dark:bg-indigo-900/20 px-6 py-3 rounded-xl border border-indigo-400/20 dark:border-indigo-500/20">
+              <div className="text-3xl sm:text-4xl font-bold text-gradient mb-1">
+                {statsLoading ? '...' : stats.reviews.toLocaleString()}
+              </div>
+              <div className="text-sm text-indigo-300 dark:text-indigo-400">Reviews</div>
+            </div>
+            <div className="text-center backdrop-blur-sm bg-indigo-500/10 dark:bg-indigo-900/20 px-6 py-3 rounded-xl border border-indigo-400/20 dark:border-indigo-500/20">
+              <div className="text-3xl sm:text-4xl font-bold text-gradient mb-1">
+                {statsLoading ? '...' : stats.colleges.toLocaleString()}
+              </div>
+              <div className="text-sm text-indigo-300 dark:text-indigo-400">Colleges</div>
+            </div>
           </motion.div>
         </div>
       </motion.section>
-
-      {/* Features Section */}
-      <section className="relative py-32 px-4 bg-gray-900/30">
-        <div className="max-w-7xl mx-auto">
-          <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-5xl font-heading font-bold text-center mb-4 text-white"
-          >
-            Why RateMyProf?
-          </motion.h2>
-          
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-center text-gray-300 text-lg mb-20"
-          >
-            The most trusted source for professor reviews in India
-          </motion.p>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: '🎯',
-                title: 'Accurate Ratings',
-                description: 'Verified student reviews with detailed breakdowns of teaching quality, difficulty level, and more.',
-              },
-              {
-                icon: '🔍',
-                title: 'Easy Discovery',
-                description: 'Find professors by name, college, department, or subject. Filter by rating and teaching style.',
-              },
-              {
-                icon: '🤝',
-                title: 'Community Driven',
-                description: 'Join thousands of students helping each other make better academic decisions.',
-              },
-              {
-                icon: '📊',
-                title: 'Detailed Analytics',
-                description: 'View comprehensive statistics including grade distributions, course difficulty, and student success rates.',
-              },
-              {
-                icon: '🔒',
-                title: 'Anonymous Reviews',
-                description: 'Share your honest feedback anonymously while maintaining accountability through verified accounts.',
-              },
-              {
-                icon: '⚡',
-                title: 'Real-Time Updates',
-                description: 'Get instant notifications about new reviews for your professors and stay informed.',
-              },
-            ].map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -10, boxShadow: '0 20px 40px rgba(99, 102, 241, 0.3)' }}
-                className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-white/10 rounded-2xl p-8 transition-all"
-              >
-                <div className="text-5xl mb-4">{feature.icon}</div>
-                <h3 className="text-2xl font-heading font-bold mb-3 text-white">{feature.title}</h3>
-                <p className="text-gray-400">{feature.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Top Professors Section */}
-      <section className="relative py-32 px-4">
-        <div className="max-w-7xl mx-auto">
-          <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-5xl md:text-6xl font-heading font-bold text-center mb-4 text-white"
-          >
-            <AnimatedWord>Featured Professors</AnimatedWord>
-          </motion.h2>
-          
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="text-center text-gray-300 text-lg mb-20"
-          >
-            Discover educators from your college
-          </motion.p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
-            {topProfessors.map((professor, index) => (
-              <ProfessorCard key={professor.id} professor={professor} index={index} />
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* How It Works Section */}
       <section className="relative py-32 px-4 bg-gray-900/30">
@@ -519,6 +381,60 @@ export default function EnhancedLandingPage() {
         </div>
       </section>
 
+      {/* Features Section */}
+      <section id="features" className="relative py-32 px-4 bg-gray-900/30">
+        <div className="max-w-7xl mx-auto">
+          <motion.h2
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-5xl font-heading font-bold text-center mb-4 text-white"
+          >
+            Why RateMyProf?
+          </motion.h2>
+          
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center text-gray-300 text-lg mb-12"
+          >
+            The most trusted source for professor reviews in India
+          </motion.p>
+
+          <FeaturesSectionWithHoverEffects />
+        </div>
+      </section>
+
+      {/* Top Professors Section */}
+      <section className="relative py-32 px-4">
+        <div className="max-w-7xl mx-auto">
+          <motion.h2
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-5xl md:text-6xl font-heading font-bold text-center mb-4 text-white"
+          >
+            <AnimatedWord>Top Rated Professors</AnimatedWord>
+          </motion.h2>
+          
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center text-gray-300 text-lg mb-20"
+          >
+          
+          </motion.p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+            {topProfessors.map((professor, index) => (
+              <ProfessorCard key={professor.id} professor={professor} index={index} />
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="relative py-32 px-4">
         <motion.div
@@ -527,34 +443,39 @@ export default function EnhancedLandingPage() {
           viewport={{ once: true }}
           className="max-w-4xl mx-auto text-center bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20 backdrop-blur-xl border border-white/10 rounded-3xl p-16"
         >
-          <h2 className="text-5xl font-heading font-bold mb-6">
+          <h2 className="text-5xl font-heading font-bold mb-6 text-white">
             <AnimatedWord>Join the Community</AnimatedWord>
           </h2>
           <p className="text-xl text-gray-300 mb-10">
-            Help fellow students make informed decisions. Share your experience today.
+            Join the community — we disappear, return, and somehow make it work.
           </p>
-          <div className="flex gap-4 justify-center flex-wrap">
-            <motion.button
-              whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(99, 102, 241, 0.5)' }}
+          <div className="flex gap-6 justify-center flex-wrap items-center">
+            {/* Instagram */}
+            <motion.a
+              href="https://www.instagram.com/ratemyprof.me/"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.05, y: -5 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                sessionStorage.setItem('browse_app', 'true');
-                window.location.href = '/';
-              }}
-              className="px-10 py-4 bg-primary text-white font-semibold rounded-full text-lg"
+              className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-full text-lg transition-all"
             >
-              Explore
-            </motion.button>
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+              </svg>
+              <span>@ratemyprof.me</span>
+            </motion.a>
+
+            {/* Gmail */}
             <motion.button
-              whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(139, 92, 246, 0.5)' }}
+              onClick={copyEmailToClipboard}
+              whileHover={{ scale: 1.05, y: -5 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                sessionStorage.setItem('browse_app', 'true');
-                window.location.href = '/';
-              }}
-              className="px-10 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold rounded-full text-lg"
+              className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-red-600 to-red-500 text-white font-semibold rounded-full text-lg transition-all cursor-pointer"
             >
-              Browse Professors
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/>
+              </svg>
+              <span>ratemyprofrn@gmail.com</span>
             </motion.button>
           </div>
         </motion.div>
@@ -609,6 +530,24 @@ export default function EnhancedLandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Copy Toast Notification */}
+      <AnimatePresence>
+        {showCopyToast && (
+          <motion.div
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 100 }}
+            className="fixed bottom-8 right-8 bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 z-50"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="font-semibold">Email copied to clipboard!</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
+
