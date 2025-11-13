@@ -91,13 +91,13 @@ export function BackgroundPaths({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 2 }}
-                    className="max-w-4xl mx-auto"
+                    className="max-w-6xl mx-auto"
                 >
-                    <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-hero mb-8 pb-4">
+                    <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-hero mb-6 sm:mb-8 leading-tight">
                         {words.map((word, wordIndex) => (
                             <span
                                 key={wordIndex}
-                                className="inline-block mr-6 last:mr-0"
+                                className="inline-block mr-2 sm:mr-4 md:mr-6 last:mr-0"
                             >
                                 {word.split("").map((letter, letterIndex) => (
                                     <motion.span
@@ -138,7 +138,7 @@ export function BackgroundPaths({
                     >
                         <button
                             onClick={onButtonClick}
-                            className="group px-8 py-4 text-lg font-semibold backdrop-blur-md 
+                            className="group px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold backdrop-blur-md 
                             bg-white/10 hover:bg-white/20 text-white transition-all duration-300 
                             border border-white/20 hover:border-white/40 rounded-2xl
                             hover:shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5"
