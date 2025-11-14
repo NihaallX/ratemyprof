@@ -6,7 +6,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { Star, Search, ChevronDown, MapPin, Award, Users, Calendar, Menu, X } from 'lucide-react';
+import { Star, Search, ChevronDown, MapPin, Award, Users, Calendar, Menu, X, User } from 'lucide-react';
 import { RateMyProfAPI, Professor, College } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import CompareColleges from '../components/CompareColleges';
@@ -487,13 +487,6 @@ function AuthenticatedHomePage() {
               {/* Navigation Links - Only for logged in users */}
               {user ? (
                 <>
-                  <Link
-                    href="/professors/add"
-                    className="text-sm text-white px-4 py-2 rounded-md font-medium hover:opacity-90 transition-opacity"
-                    style={{ backgroundColor: '#4e46e5' }}
-                  >
-                    Add Professor
-                  </Link>
                   {user.email?.endsWith('@ratemyprof.in') && (
                     <Link
                       href="/admin"
@@ -804,6 +797,19 @@ function AuthenticatedHomePage() {
                         <Search className="w-8 h-8 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
                         <p className="text-sm font-medium">No {searchType} found</p>
                         <p className="text-xs mt-1">Try a different search term</p>
+                        {searchType === 'professors' && (
+                          <p className="text-xs mt-3 text-gray-600 dark:text-gray-300">
+                            Or{' '}
+                            <Link 
+                              href="/professors/add" 
+                              className="text-indigo-600 dark:text-indigo-400 font-semibold underline hover:text-indigo-700 dark:hover:text-indigo-300"
+                              onClick={() => setShowSuggestions(false)}
+                            >
+                              add it
+                            </Link>
+                            {' '}right now! Our team will review and update it ASAP
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}
@@ -838,27 +844,49 @@ function AuthenticatedHomePage() {
           </div>
         </div>
 
-        {/* Request Your College CTA Banner - Always visible when not searching */}
+        {/* CTA Banner - Changes based on active tab */}
         {!searchQuery && (
           <div className="mt-16 mb-10">
             <div className="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg shadow-lg overflow-hidden">
               <div className="px-4 py-5 sm:px-6 sm:py-6">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="text-center sm:text-left">
-                    <h3 className="text-lg sm:text-xl font-bold text-white mb-1">
-                      Can't find your college?
-                    </h3>
-                    <p className="text-sm text-indigo-100">
-                      Request it and we'll prioritize adding it to the platform
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setShowRequestCollegeForm(true)}
-                    className="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-indigo-600 bg-white rounded-lg hover:bg-indigo-50 transition-all shadow-md hover:shadow-lg whitespace-nowrap"
-                  >
-                    <MapPin className="w-4 h-4 mr-2" />
-                    Request College
-                  </button>
+                  {searchType === 'professors' ? (
+                    <>
+                      <div className="text-center sm:text-left">
+                        <h3 className="text-lg sm:text-xl font-bold text-white mb-1">
+                          Want to help the community?
+                        </h3>
+                        <p className="text-sm text-indigo-100">
+                          You can also add professors if you can't find them
+                        </p>
+                      </div>
+                      <Link
+                        href="/professors/add"
+                        className="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-indigo-600 bg-white rounded-lg hover:bg-indigo-50 transition-all shadow-md hover:shadow-lg whitespace-nowrap"
+                      >
+                        <User className="w-4 h-4 mr-2" />
+                        Add Professor
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-center sm:text-left">
+                        <h3 className="text-lg sm:text-xl font-bold text-white mb-1">
+                          Can't find your college?
+                        </h3>
+                        <p className="text-sm text-indigo-100">
+                          Request it and we'll prioritize adding it to the platform
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setShowRequestCollegeForm(true)}
+                        className="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-indigo-600 bg-white rounded-lg hover:bg-indigo-50 transition-all shadow-md hover:shadow-lg whitespace-nowrap"
+                      >
+                        <MapPin className="w-4 h-4 mr-2" />
+                        Request College
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

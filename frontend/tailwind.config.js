@@ -30,6 +30,30 @@ module.exports = {
         heading: ['Poppins', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         logo: ['Pacifico', 'cursive'],
       },
+      keyframes: {
+        fillBar: {
+          '0%': { width: '0%' },
+          '100%': { width: 'var(--bar-width)' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        fadeSlideUp: {
+          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        scaleIn: {
+          '0%': { opacity: '0', transform: 'scale(0.9)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+      },
+      animation: {
+        fillBar: 'fillBar 1s ease-out forwards',
+        fadeIn: 'fadeIn 0.5s ease-out',
+        fadeSlideUp: 'fadeSlideUp 0.5s ease-out',
+        scaleIn: 'scaleIn 0.4s ease-out',
+      },
     },
   },
   plugins: [],

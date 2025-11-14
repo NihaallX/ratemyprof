@@ -25,6 +25,9 @@ import {
   ChevronDown,
   ChevronUp
 } from 'lucide-react'
+import { SlideButton } from './ui/slide-button'
+import { InteractiveHoverButton } from './ui/interactive-hover-button'
+import { BackButton } from './ui/back-button'
 
 interface ReviewSubmissionFormProps {
   professor: Professor
@@ -556,42 +559,39 @@ export default function ReviewSubmissionForm({ professor, onCancel, onSubmit }: 
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex justify-between pt-4 border-t border-gray-200">
-        <button
-          onClick={handlePrevious}
-          disabled={step === 1}
-          className="flex items-center px-4 py-2 text-gray-600 disabled:text-gray-400 hover:text-gray-800 disabled:cursor-not-allowed"
-        >
-          <ChevronLeft className="w-4 h-4 mr-1" />
-          Previous
-        </button>
-
+      <div className="flex flex-col items-center gap-4 pt-4 border-t border-gray-200">
         {step < 4 ? (
-          <button
-            onClick={handleNext}
-            className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-          >
-            Next
-            <ChevronRight className="w-4 h-4 ml-1" />
-          </button>
+          <div className="flex justify-between w-full items-center">
+            <BackButton
+              onClick={handlePrevious}
+              disabled={step === 1}
+              text="Previous"
+            />
+
+            <InteractiveHoverButton
+              onClick={handleNext}
+              text="Continue"
+              className="w-36"
+            />
+          </div>
         ) : (
-          <button
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="flex items-center px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
-          >
-            {submitting ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Submitting...
-              </>
-            ) : (
-              <>
-                <Send className="w-4 h-4 mr-2" />
-                Submit Review
-              </>
-            )}
-          </button>
+          <>
+            {/* Slide to Submit Button */}
+            <div className="flex flex-col items-center gap-2">
+              <SlideButton 
+                onSlideComplete={handleSubmit}
+                disabled={submitting}
+                resolveTo="success"
+              />
+              <p className="text-xs text-gray-500">Slide to submit review</p>
+            </div>
+
+            {/* Previous Button Below */}
+            <BackButton
+              onClick={handlePrevious}
+              text="Previous"
+            />
+          </>
         )}
       </div>
 

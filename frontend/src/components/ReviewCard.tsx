@@ -153,11 +153,11 @@ const ReviewCard: React.FC<ReviewProps> = ({
             <div className="flex-1 flex items-center gap-2">
               <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div 
-                  className={`h-full rounded-full transition-all ${
+                  className={`h-full rounded-full animate-fillBar ${
                     ratings.clarity >= 4 ? 'bg-green-500' :
                     ratings.clarity >= 3 ? 'bg-yellow-500' : 'bg-red-500'
                   }`}
-                  style={{ width: `${(ratings.clarity / 5) * 100}%` }}
+                  style={{ '--bar-width': `${(ratings.clarity / 5) * 100}%` } as React.CSSProperties}
                 />
               </div>
               <span className={`font-semibold w-8 ${
@@ -175,11 +175,11 @@ const ReviewCard: React.FC<ReviewProps> = ({
             <div className="flex-1 flex items-center gap-2">
               <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div 
-                  className={`h-full rounded-full transition-all ${
+                  className={`h-full rounded-full animate-fillBar ${
                     ratings.helpfulness >= 4 ? 'bg-green-500' :
                     ratings.helpfulness >= 3 ? 'bg-yellow-500' : 'bg-red-500'
                   }`}
-                  style={{ width: `${(ratings.helpfulness / 5) * 100}%` }}
+                  style={{ '--bar-width': `${(ratings.helpfulness / 5) * 100}%`, animationDelay: '0.1s' } as React.CSSProperties}
                 />
               </div>
               <span className={`font-semibold w-8 ${
@@ -197,11 +197,11 @@ const ReviewCard: React.FC<ReviewProps> = ({
             <div className="flex-1 flex items-center gap-2">
               <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div 
-                  className={`h-full rounded-full transition-all ${
+                  className={`h-full rounded-full animate-fillBar ${
                     ratings.difficulty <= 2 ? 'bg-green-500' :
                     ratings.difficulty <= 3 ? 'bg-yellow-500' : 'bg-red-500'
                   }`}
-                  style={{ width: `${(ratings.difficulty / 5) * 100}%` }}
+                  style={{ '--bar-width': `${(ratings.difficulty / 5) * 100}%`, animationDelay: '0.2s' } as React.CSSProperties}
                 />
               </div>
               <span className={`font-semibold w-8 ${

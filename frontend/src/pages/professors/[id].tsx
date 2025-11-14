@@ -632,7 +632,7 @@ export default function ProfessorProfile() {
                             <div className="flex-1 flex items-center gap-2">
                               <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                 <div 
-                                  className={`h-full rounded-full animate-barGrow ${
+                                  className={`h-full rounded-full animate-fillBar ${
                                     review.clarity_rating >= 4 ? 'bg-green-500' :
                                     review.clarity_rating >= 3 ? 'bg-yellow-500' : 'bg-red-500'
                                   }`}
@@ -654,11 +654,11 @@ export default function ProfessorProfile() {
                             <div className="flex-1 flex items-center gap-2">
                               <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                 <div 
-                                  className={`h-full rounded-full animate-barGrow animate-delay-100 ${
+                                  className={`h-full rounded-full animate-fillBar ${
                                     review.helpfulness_rating >= 4 ? 'bg-green-500' :
                                     review.helpfulness_rating >= 3 ? 'bg-yellow-500' : 'bg-red-500'
                                   }`}
-                                  style={{ '--bar-width': `${(review.helpfulness_rating / 5) * 100}%` } as React.CSSProperties}
+                                  style={{ '--bar-width': `${(review.helpfulness_rating / 5) * 100}%`, animationDelay: '0.1s' } as React.CSSProperties}
                                 />
                               </div>
                               <span className={`font-semibold w-8 ${
@@ -676,11 +676,11 @@ export default function ProfessorProfile() {
                             <div className="flex-1 flex items-center gap-2">
                               <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                 <div 
-                                  className={`h-full rounded-full animate-barGrow animate-delay-200 ${
+                                  className={`h-full rounded-full animate-fillBar ${
                                     review.overall_rating >= 4 ? 'bg-green-500' :
                                     review.overall_rating >= 3 ? 'bg-yellow-500' : 'bg-red-500'
                                   }`}
-                                  style={{ '--bar-width': `${(review.overall_rating / 5) * 100}%` } as React.CSSProperties}
+                                  style={{ '--bar-width': `${(review.overall_rating / 5) * 100}%`, animationDelay: '0.2s' } as React.CSSProperties}
                                 />
                               </div>
                               <span className={`font-semibold w-8 ${
@@ -698,11 +698,11 @@ export default function ProfessorProfile() {
                             <div className="flex-1 flex items-center gap-2">
                               <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                 <div 
-                                  className={`h-full rounded-full animate-barGrow animate-delay-300 ${
+                                  className={`h-full rounded-full animate-fillBar ${
                                     review.difficulty_rating <= 2 ? 'bg-green-500' :
                                     review.difficulty_rating <= 3 ? 'bg-yellow-500' : 'bg-red-500'
                                   }`}
-                                  style={{ '--bar-width': `${(review.difficulty_rating / 5) * 100}%` } as React.CSSProperties}
+                                  style={{ '--bar-width': `${(review.difficulty_rating / 5) * 100}%`, animationDelay: '0.3s' } as React.CSSProperties}
                                 />
                               </div>
                               <span className={`font-semibold w-8 ${
@@ -826,51 +826,7 @@ export default function ProfessorProfile() {
             </div>
           </div>
 
-          {/* More Professors Section - Full Width Below Everything */}
-          {moreProfessors.length > 0 && (
-            <div className="mt-8">
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">More Professors You Might Like</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {moreProfessors.map((prof) => (
-                    <Link
-                      key={prof.id}
-                      href={`/professors/${prof.id}`}
-                      className="p-4 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg hover:shadow-lg transition-all border border-indigo-100"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <h4 className="font-bold text-gray-900 text-lg">{prof.name}</h4>
-                          <p className="text-sm text-gray-600">{prof.department}</p>
-                        </div>
-                        <div className={`inline-flex items-center px-3 py-1 rounded-full font-bold text-sm ${getRatingColorClasses(prof.average_rating)}`}>
-                          ★ {prof.average_rating.toFixed(1)}
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-500">{prof.total_reviews} reviews</span>
-                        <span className="text-indigo-600 font-medium">View Profile →</span>
-                      </div>
-                      {prof.subjects.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-1">
-                          {prof.subjects.slice(0, 2).map((subject, idx) => (
-                            <span key={idx} className="px-2 py-1 bg-white text-xs text-gray-600 rounded-full border border-gray-200">
-                              {subject}
-                            </span>
-                          ))}
-                          {prof.subjects.length > 2 && (
-                            <span className="px-2 py-1 bg-white text-xs text-gray-600 rounded-full border border-gray-200">
-                              +{prof.subjects.length - 2} more
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+
         </div>
 
         {/* Compare Modal */}

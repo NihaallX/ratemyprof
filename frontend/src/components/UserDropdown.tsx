@@ -38,15 +38,15 @@ export default function UserDropdown() {
       {/* Dropdown Trigger */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md px-2 py-1"
+        className="flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded-md px-2 py-1 transition-colors"
       >
         <div className="flex items-center space-x-2">
-          <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center">
-            <User className="w-4 h-4 text-indigo-600" />
+          <div className="w-6 h-6 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center">
+            <User className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
           </div>
           <span className="hidden sm:inline">
-            <span className="text-gray-500">Hey </span>
-            <span className="font-medium">{displayName}</span>
+            <span className="text-gray-500 dark:text-gray-400">Hey </span>
+            <span className="font-medium text-gray-900 dark:text-white">{displayName}</span>
           </span>
         </div>
         <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -54,16 +54,16 @@ export default function UserDropdown() {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+        <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
           {/* User Info Header */}
-          <div className="px-4 py-3 border-b border-gray-100">
+          <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                <User className="w-6 h-6 text-indigo-600" />
+              <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center">
+                <User className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">{displayName}</p>
-                <p className="text-xs text-gray-500 truncate">{email}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{displayName}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{email}</p>
               </div>
             </div>
           </div>
@@ -74,7 +74,7 @@ export default function UserDropdown() {
             {isAdmin && (
               <Link
                 href="/admin"
-                className="flex items-center space-x-3 px-4 py-2 text-sm text-indigo-700 hover:bg-indigo-50 font-medium"
+                className="flex items-center space-x-3 px-4 py-2 text-sm text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 font-medium"
                 onClick={() => setIsOpen(false)}
               >
                 <Shield className="w-4 h-4" />
@@ -84,7 +84,7 @@ export default function UserDropdown() {
             
             <Link
               href="/profile"
-              className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               onClick={() => setIsOpen(false)}
             >
               <Settings className="w-4 h-4" />
@@ -93,7 +93,7 @@ export default function UserDropdown() {
             
             <Link
               href="/my-reviews"
-              className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               onClick={() => setIsOpen(false)}
             >
               <MessageSquare className="w-4 h-4" />
@@ -102,7 +102,7 @@ export default function UserDropdown() {
           </div>
 
           {/* Divider */}
-          <div className="border-t border-gray-100"></div>
+          <div className="border-t border-gray-100 dark:border-gray-700"></div>
 
           {/* Sign Out */}
           <div className="py-2">
@@ -111,7 +111,7 @@ export default function UserDropdown() {
                 setIsOpen(false)
                 signOut()
               }}
-              className="flex items-center space-x-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
+              className="flex items-center space-x-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/50 w-full text-left"
             >
               <LogOut className="w-4 h-4" />
               <span>Sign Out</span>

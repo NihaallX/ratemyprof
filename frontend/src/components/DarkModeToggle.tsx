@@ -7,8 +7,8 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Moon, Sun, Zap } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { LeverSwitch } from './ui/lever-switch';
 
 const ROASTS = {
   dark: [
@@ -30,7 +30,7 @@ const ROASTS = {
 };
 
 export default function DarkModeToggle() {
-  const { theme, toggleTheme, isDark } = useTheme();
+  const { theme, isDark } = useTheme();
   const [roast, setRoast] = useState('');
   const [showRoast, setShowRoast] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -45,85 +45,30 @@ export default function DarkModeToggle() {
     return roasts[Math.floor(Math.random() * roasts.length)];
   };
 
-  const handleToggle = () => {
-    const newTheme = isDark ? 'light' : 'dark';
-    toggleTheme();
+  // Watch for theme changes and show roast
+  useEffect(() => {
+    if (!mounted) return;
     
-    // Show humorous message
-    setRoast(getRandomRoast(newTheme));
+    const currentTheme = isDark ? 'dark' : 'light';
+    setRoast(getRandomRoast(currentTheme));
     setShowRoast(true);
     
-    // Hide after 2 seconds
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       setShowRoast(false);
     }, 2000);
-  };
+    
+    return () => clearTimeout(timer);
+  }, [theme, mounted]);
 
   // Don't render until mounted to avoid hydration issues
   if (!mounted) {
-    return (
-      <div className="w-24 h-10"></div> // Placeholder with same dimensions
-    );
+    return <div className="w-40 h-10" />;
   }
 
   return (
-    <div className="relative">
-      {/* Toggle Button */}
-      <motion.button
-        onClick={handleToggle}
-        className={`
-          relative flex items-center gap-2 px-4 py-2 rounded-full font-medium
-          transition-all duration-300 overflow-hidden
-          ${isDark 
-            ? 'bg-gray-800 text-yellow-400 hover:bg-gray-700' 
-            : 'bg-yellow-100 text-gray-900 hover:bg-yellow-200'
-          }
-        `}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        title={isDark ? "Switch to Light Mode (if you dare)" : "Switch to Dark Mode (join us)"}
-      >
-        {/* Background glow effect */}
-        <motion.div
-          className={`absolute inset-0 ${isDark ? 'bg-yellow-400/10' : 'bg-gray-900/10'}`}
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        />
-        
-        {/* Icon with rotation animation */}
-        <motion.div
-          className="relative z-10"
-          animate={{ rotate: isDark ? 0 : 180 }}
-          transition={{ duration: 0.5, type: 'spring' }}
-        >
-          {isDark ? (
-            <Moon className="w-5 h-5" />
-          ) : (
-            <Sun className="w-5 h-5" />
-          )}
-        </motion.div>
-
-        {/* Text */}
-        <span className="relative z-10 hidden sm:inline">
-          {isDark ? 'Dark' : 'Light'}
-        </span>
-
-        {/* Sparkle effect on toggle */}
-        <AnimatePresence>
-          {showRoast && (
-            <motion.div
-              initial={{ scale: 0, rotate: 0 }}
-              animate={{ scale: [0, 1.5, 0], rotate: [0, 180, 360] }}
-              exit={{ scale: 0 }}
-              transition={{ duration: 0.5 }}
-              className="absolute inset-0 pointer-events-none"
-            >
-              <Zap className="w-6 h-6 text-yellow-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.button>
+    <div className="relative flex items-center gap-2 sm:gap-3">
+      {/* Lever Switch */}
+      <LeverSwitch />
 
       {/* Humorous Toast Message */}
       <AnimatePresence>
@@ -135,8 +80,8 @@ export default function DarkModeToggle() {
             transition={{ type: 'spring', damping: 15 }}
             className={`
               absolute top-full mt-2 left-1/2 -translate-x-1/2 
-              px-4 py-2 rounded-lg shadow-xl whitespace-nowrap
-              font-medium text-sm pointer-events-none z-50
+              px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow-xl whitespace-nowrap
+              font-medium text-xs sm:text-sm pointer-events-none z-50
               ${isDark 
                 ? 'bg-gray-800 text-yellow-400 border border-yellow-400/20' 
                 : 'bg-white text-gray-900 border border-gray-200'
