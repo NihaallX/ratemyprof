@@ -8,7 +8,7 @@ from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 from ..lib.database import get_supabase, get_supabase_service
-from ..lib.auth import get_current_user, get_authenticated_supabase
+from ..lib.auth import get_current_user
 from ..lib.notification_templates import (
     NotificationTemplate,
     NotificationService,
@@ -124,13 +124,19 @@ async def get_user_notifications(
     limit: int = Query(default=3, ge=1, le=50),
     offset: int = Query(default=0, ge=0),
     include_read: bool = Query(default=True),
-    current_user = Depends(get_current_user),
-    supabase = Depends(get_authenticated_supabase)
+    current_user = Depends(get_current_user)
 ):
     """
     Get user's notifications (most recent 3 by default)
     Auto-filters out expired notifications
     """
+    # Use service role to bypass RLS since we've already authenticated via get_current_user
+    try:
+        supabase = get_supabase_service()
+    except ValueError:
+        # Fallback to regular client if service role not available
+        supabase = get_supabase()
+    
     user_id = current_user.get('id')
     
     # Build query
@@ -172,10 +178,15 @@ async def get_user_notifications(
 @router.post("/{notification_id}/read")
 async def mark_notification_as_read(
     notification_id: str,
-    current_user = Depends(get_current_user),
-    supabase = Depends(get_authenticated_supabase)
+    current_user = Depends(get_current_user)
 ):
     """Mark a single notification as read"""
+    # Use service role to bypass RLS
+    try:
+        supabase = get_supabase_service()
+    except ValueError:
+        supabase = get_supabase()
+    
     user_id = current_user.get('id')
     
     # Verify notification belongs to user and update
@@ -193,10 +204,15 @@ async def mark_notification_as_read(
 
 @router.post("/read-all")
 async def mark_all_notifications_as_read(
-    current_user = Depends(get_current_user),
-    supabase = Depends(get_authenticated_supabase)
+    current_user = Depends(get_current_user)
 ):
     """Mark all user's notifications as read"""
+    # Use service role to bypass RLS
+    try:
+        supabase = get_supabase_service()
+    except ValueError:
+        supabase = get_supabase()
+    
     user_id = current_user.get('id')
     
     response = supabase.table("notifications")\
@@ -408,10 +424,15 @@ async def send_notification_to_user(
 @router.delete("/{notification_id}")
 async def delete_notification(
     notification_id: str,
-    current_user = Depends(get_current_user),
-    supabase = Depends(get_authenticated_supabase)
+    current_user = Depends(get_current_user)
 ):
     """Delete a notification (user can delete their own, admin can delete any)"""
+    # Use service role to bypass RLS
+    try:
+        supabase = get_supabase_service()
+    except ValueError:
+        supabase = get_supabase()
+    
     user_id = current_user.get('id')
     
     # Try to delete (RLS will handle permissions)
