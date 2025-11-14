@@ -17,18 +17,27 @@ interface Template {
   required_fields: string[]
 }
 
+interface User {
+  id: string
+  email: string
+  created_at?: string
+}
+
 interface NotificationSenderProps {
   onNotificationSent?: () => void
 }
 
 export default function NotificationSenderTemplates({ onNotificationSent }: NotificationSenderProps) {
   const [templates, setTemplates] = useState<Template[]>([])
+  const [users, setUsers] = useState<User[]>([])
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
   const [templateData, setTemplateData] = useState<Record<string, string>>({})
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [loadingUsers, setLoadingUsers] = useState(false)
   const [sendToSpecific, setSendToSpecific] = useState(false)
   const [specificUserId, setSpecificUserId] = useState('')
+  const [userSearchQuery, setUserSearchQuery] = useState('')
   const [result, setResult] = useState<{
     success: boolean
     message: string
@@ -66,6 +75,45 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
   useEffect(() => {
     fetchTemplates()
   }, [])
+
+  // Fetch users when switching to "specific user" mode
+  useEffect(() => {
+    if (sendToSpecific && users.length === 0) {
+      fetchUsers()
+    }
+  }, [sendToSpecific])
+
+  const fetchUsers = async () => {
+    setLoadingUsers(true)
+    try {
+      const token = await getAuthToken()
+      if (!token) {
+        console.error('❌ No auth token available')
+        setLoadingUsers(false)
+        return
+      }
+
+      console.log('👥 Fetching users from:', `${API_BASE_URL}/moderation/users`)
+      const response = await fetch(`${API_BASE_URL}/moderation/users`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        console.log('✅ Users received:', data.length || 0, 'users')
+        setUsers(data || [])
+      } else {
+        const errorText = await response.text()
+        console.error('❌ Failed to fetch users:', response.status, errorText)
+      }
+    } catch (error) {
+      console.error('❌ Failed to fetch users:', error)
+    } finally {
+      setLoadingUsers(false)
+    }
+  }
 
   const fetchTemplates = async () => {
     try {
@@ -257,6 +305,7 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
         setSelectedTemplate(null)
         setTemplateData({})
         setSpecificUserId('')
+        setUserSearchQuery('')
         
         // Callback
         if (onNotificationSent) {
@@ -416,7 +465,11 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
                 <input
                   type="radio"
                   checked={!sendToSpecific}
-                  onChange={() => setSendToSpecific(false)}
+                  onChange={() => {
+                    setSendToSpecific(false)
+                    setSpecificUserId('')
+                    setUserSearchQuery('')
+                  }}
                   className="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
                 />
                 <span className="text-sm text-gray-700">All Users (Broadcast)</span>
@@ -431,17 +484,57 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
                 <span className="text-sm text-gray-700">Specific User</span>
               </label>
               {sendToSpecific && (
-                <div className="ml-6">
-                  <input
-                    type="text"
-                    value={specificUserId}
-                    onChange={(e) => setSpecificUserId(e.target.value)}
-                    placeholder="Enter User ID (UUID)"
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    You can find user IDs in the Users tab
-                  </p>
+                <div className="ml-6 space-y-2">
+                  <label className="block text-xs font-medium text-gray-700">
+                    Select User
+                  </label>
+                  {loadingUsers ? (
+                    <div className="flex items-center space-x-2 text-sm text-gray-500">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>
+                      <span>Loading users...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <input
+                        type="text"
+                        value={userSearchQuery}
+                        onChange={(e) => setUserSearchQuery(e.target.value)}
+                        placeholder="Search by email..."
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                      <select
+                        value={specificUserId}
+                        onChange={(e) => {
+                          setSpecificUserId(e.target.value)
+                          // Set search query to selected user's email for easy identification
+                          const selectedUser = users.find(u => u.id === e.target.value)
+                          if (selectedUser) {
+                            setUserSearchQuery(selectedUser.email)
+                          }
+                        }}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 max-h-48 overflow-y-auto"
+                      >
+                        <option value="">-- Select a user --</option>
+                        {users
+                          .filter(user => 
+                            !userSearchQuery || 
+                            user.email.toLowerCase().includes(userSearchQuery.toLowerCase())
+                          )
+                          .map(user => (
+                            <option key={user.id} value={user.id}>
+                              {user.email}
+                            </option>
+                          ))
+                        }
+                      </select>
+                      <p className="text-xs text-gray-500">
+                        {users.length} users available • {users.filter(u => 
+                          !userSearchQuery || 
+                          u.email.toLowerCase().includes(userSearchQuery.toLowerCase())
+                        ).length} matching search
+                      </p>
+                    </>
+                  )}
                 </div>
               )}
             </div>
