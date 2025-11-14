@@ -469,3 +469,50 @@ async def cleanup_expired_notifications(
             detail=f"Failed to cleanup notifications: {str(e)}"
         )
 
+
+@router.post("/admin/delete-all")
+async def delete_all_notifications_for_all_users(
+    current_user = Depends(get_current_user)
+):
+    """
+    Admin only: Delete ALL notifications for ALL users (for testing/fresh start)
+    WARNING: This is destructive and cannot be undone!
+    """
+    # Check if user is admin
+    user_email = current_user.get('email', '')
+    user_metadata = current_user.get('user_metadata', {}) or {}
+    
+    is_admin = (
+        user_email == 'admin@gmail.com' or
+        user_email.endswith('@ratemyprof.in') or
+        user_metadata.get('role') == 'admin' or
+        user_metadata.get('is_moderator') == True
+    )
+    
+    if not is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Only administrators can delete all notifications"
+        )
+    
+    try:
+        # Use service role to delete all notifications
+        admin_client = get_supabase_service()
+        
+        # Delete all notifications
+        result = admin_client.table("notifications").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
+        
+        deleted_count = len(result.data) if result.data else 0
+        
+        return {
+            "success": True,
+            "message": f"Deleted all {deleted_count} notifications from the database",
+            "deleted_count": deleted_count
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to delete all notifications: {str(e)}"
+        )
+
+

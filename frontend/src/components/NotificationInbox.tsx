@@ -1,13 +1,15 @@
 /**
- * Notification Inbox Component
- * Displays recent notifications with humorous empty states
+ * Enhanced Notification Inbox Component
+ * Features: Scrollable list, auto-mark as read on view, delete functionality
  */
 
 import { useState, useRef, useEffect } from 'react'
-import { Bell, X } from 'lucide-react'
+import { Bell, X, Trash2, ChevronDown, ChevronUp, LoaderCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { API_BASE_URL } from '../config/api'
+import { Button } from './ui/button'
+import { cn } from '../lib/utils'
 
 interface Notification {
   id: string
@@ -34,8 +36,13 @@ export default function NotificationInbox() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deletingAll, setDeletingAll] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const { user } = useAuth()
+  const observerRef = useRef<IntersectionObserver | null>(null)
+  const [visibleNotifications, setVisibleNotifications] = useState<Set<string>>(new Set())
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -59,6 +66,44 @@ export default function NotificationInbox() {
     }
   }, [user])
 
+  // Setup intersection observer to auto-mark notifications as read when visible
+  useEffect(() => {
+    if (!isOpen) return
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const notificationId = entry.target.getAttribute('data-notification-id')
+          if (entry.isIntersecting && notificationId) {
+            // Add to visible set
+            setVisibleNotifications(prev => new Set(prev).add(notificationId))
+            
+            // Find the notification
+            const notification = notifications.find(n => n.id === notificationId)
+            if (notification && !notification.is_read) {
+              // Auto-mark as read after 1 second of being visible
+              setTimeout(() => {
+                markAsRead(notificationId, true)
+              }, 1000)
+            }
+          }
+        })
+      },
+      {
+        root: scrollContainerRef.current,
+        threshold: 0.5, // 50% visible
+      }
+    )
+
+    // Observe all notification elements
+    const notificationElements = scrollContainerRef.current?.querySelectorAll('[data-notification-id]')
+    notificationElements?.forEach((el) => observerRef.current?.observe(el))
+
+    return () => {
+      observerRef.current?.disconnect()
+    }
+  }, [isOpen, notifications])
+
   const fetchNotifications = async () => {
     if (!user) return
     
@@ -73,7 +118,8 @@ export default function NotificationInbox() {
         return
       }
       
-      const response = await fetch(`${API_BASE_URL}/notifications?limit=3`, {
+      // Fetch all notifications (remove limit for scrollable view)
+      const response = await fetch(`${API_BASE_URL}/notifications?limit=50`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
@@ -93,8 +139,11 @@ export default function NotificationInbox() {
     }
   }
 
-  const markAsRead = async (notificationId: string) => {
+  const markAsRead = async (notificationId: string, auto = false) => {
     try {
+      const notification = notifications.find(n => n.id === notificationId)
+      if (!notification || notification.is_read) return
+
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.access_token) return
       
@@ -115,24 +164,72 @@ export default function NotificationInbox() {
     }
   }
 
-  const markAllAsRead = async () => {
+  const deleteNotification = async (notificationId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    
     try {
+      setDeletingId(notificationId)
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.access_token) return
       
-      await fetch(`${API_BASE_URL}/notifications/read-all`, {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}`, {
+        method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
       })
       
-      // Update local state
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
+      if (response.ok) {
+        // Remove from local state
+        const wasUnread = notifications.find(n => n.id === notificationId)?.is_read === false
+        setNotifications(prev => prev.filter(n => n.id !== notificationId))
+        if (wasUnread) {
+          setUnreadCount(prev => Math.max(0, prev - 1))
+        }
+      }
+    } catch (error) {
+      console.error('Failed to delete notification:', error)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  const deleteAllNotifications = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    
+    try {
+      setDeletingAll(true)
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) return
+      
+      // Delete each notification individually
+      const deletePromises = notifications.map(n => 
+        fetch(`${API_BASE_URL}/notifications/${n.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        })
+      )
+      
+      await Promise.all(deletePromises)
+      
+      // Clear local state
+      setNotifications([])
       setUnreadCount(0)
     } catch (error) {
-      console.error('Failed to mark all as read:', error)
+      console.error('Failed to delete all notifications:', error)
+    } finally {
+      setDeletingAll(false)
     }
+  }
+
+  const scrollUp = () => {
+    scrollContainerRef.current?.scrollBy({ top: -200, behavior: 'smooth' })
+  }
+
+  const scrollDown = () => {
+    scrollContainerRef.current?.scrollBy({ top: 200, behavior: 'smooth' })
   }
 
   const getRandomEmptyMessage = () => {
@@ -179,7 +276,7 @@ export default function NotificationInbox() {
       >
         <Bell className="w-5 h-5" />
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full animate-pulse">
+          <span className="absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold text-gray-900 bg-white border-2 border-gray-900 rounded-full">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -187,22 +284,62 @@ export default function NotificationInbox() {
 
       {/* Notification Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 animate-fadeIn">
+        <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 animate-fadeIn">
           {/* Header */}
           <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
-            {notifications.length > 0 && unreadCount > 0 && (
-              <button
-                onClick={markAllAsRead}
-                className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+            {notifications.length > 0 && (
+              <Button
+                onClick={deleteAllNotifications}
+                disabled={deletingAll}
+                size="sm"
+                variant="destructive"
+                className={cn(
+                  "relative justify-center cursor-pointer inline-flex items-center text-center",
+                  "h-[26px] px-2.5 py-1 text-xs",
+                  deletingAll && "pl-7"
+                )}
               >
-                Mark all read
-              </button>
+                <div className="flex items-center gap-1.5">
+                  <div 
+                    className={cn(
+                      "absolute left-2.5 transition-all duration-200 ease-in-out opacity-0 -translate-x-2",
+                      deletingAll && "opacity-100 translate-x-0"
+                    )}
+                  >
+                    <LoaderCircle
+                      className="animate-spin"
+                      size={12}
+                      strokeWidth={2}
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <Trash2 className="w-3 h-3" />
+                  <span>Clear All</span>
+                </div>
+              </Button>
             )}
           </div>
 
-          {/* Notification List */}
-          <div className="max-h-96 overflow-y-auto">
+          {/* Scroll Up Button */}
+          {notifications.length > 3 && (
+            <div className="flex justify-center py-1 border-b border-gray-100">
+              <button
+                onClick={scrollUp}
+                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                aria-label="Scroll up"
+              >
+                <ChevronUp className="w-4 h-4 text-gray-600" />
+              </button>
+            </div>
+          )}
+
+          {/* Notification List - Scrollable */}
+          <div 
+            ref={scrollContainerRef}
+            className="max-h-96 overflow-y-auto scroll-smooth"
+            style={{ scrollbarWidth: 'thin' }}
+          >
             {loading ? (
               <div className="px-4 py-8 text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
@@ -213,7 +350,8 @@ export default function NotificationInbox() {
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer ${
+                    data-notification-id={notification.id}
+                    className={`group px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer relative ${
                       !notification.is_read ? 'bg-indigo-50' : ''
                     }`}
                     onClick={() => !notification.is_read && markAsRead(notification.id)}
@@ -233,9 +371,23 @@ export default function NotificationInbox() {
                           {formatTimeAgo(notification.created_at)}
                         </p>
                       </div>
-                      {!notification.is_read && (
-                        <div className="w-2 h-2 bg-indigo-600 rounded-full flex-shrink-0 mt-1"></div>
-                      )}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {!notification.is_read && (
+                          <div className="w-2 h-2 bg-indigo-600 rounded-full"></div>
+                        )}
+                        <button
+                          onClick={(e) => deleteNotification(notification.id, e)}
+                          disabled={deletingId === notification.id}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-100 rounded"
+                          aria-label="Delete notification"
+                        >
+                          {deletingId === notification.id ? (
+                            <LoaderCircle className="w-4 h-4 text-red-600 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -253,17 +405,15 @@ export default function NotificationInbox() {
             )}
           </div>
 
-          {/* Footer - View All Link */}
-          {notifications.length > 0 && (
-            <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
+          {/* Scroll Down Button */}
+          {notifications.length > 3 && (
+            <div className="flex justify-center py-1 border-t border-gray-100">
               <button
-                onClick={() => {
-                  setIsOpen(false)
-                  // Could navigate to a full notifications page
-                }}
-                className="text-xs text-indigo-600 hover:text-indigo-700 font-medium w-full text-center"
+                onClick={scrollDown}
+                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                aria-label="Scroll down"
               >
-                View all notifications
+                <ChevronDown className="w-4 h-4 text-gray-600" />
               </button>
             </div>
           )}

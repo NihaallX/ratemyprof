@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
-import { Shield, Users, Flag, Check, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare, Bell, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Shield, Users, Flag, Check, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare, Bell, Settings, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import AdminLoginModal from '../components/AdminLoginModal';
 import NotificationSenderTemplates from '../components/NotificationSenderTemplates';
@@ -2581,9 +2581,39 @@ const AdminPage: NextPage = () => {
           {activeTab === 'notifications' && (
             <div className="space-y-6">
               <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
-                <div className="flex items-center space-x-3 mb-2">
-                  <Bell className="w-8 h-8" />
-                  <h2 className="text-2xl font-bold">Send Notifications to All Users</h2>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-3">
+                    <Bell className="w-8 h-8" />
+                    <h2 className="text-2xl font-bold">Send Notifications to All Users</h2>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      if (!confirm('⚠️ WARNING: This will delete ALL notifications for ALL users. This cannot be undone. Are you sure?')) {
+                        return;
+                      }
+                      try {
+                        const response = await fetch(`${API_BASE_URL}/notifications/admin/delete-all`, {
+                          method: 'POST',
+                          headers: {
+                            'Authorization': `Bearer ${session?.access_token}`
+                          }
+                        });
+                        if (response.ok) {
+                          const data = await response.json();
+                          showToast(`Successfully deleted ${data.deleted_count} notifications! 🗑️`, 'success');
+                        } else {
+                          showToast('Failed to delete notifications', 'error');
+                        }
+                      } catch (error) {
+                        console.error('Error deleting notifications:', error);
+                        showToast('Error deleting notifications', 'error');
+                      }
+                    }}
+                    className="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete All Notifications</span>
+                  </button>
                 </div>
                 <p className="text-indigo-100">
                   Broadcast important announcements, new features, or updates to all users in the system.
