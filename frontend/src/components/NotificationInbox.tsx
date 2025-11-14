@@ -8,8 +8,6 @@ import { Bell, X, Trash2, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { API_BASE_URL } from '../config/api'
-import { Button } from './ui/button'
-import { cn } from '../lib/utils'
 
 interface Notification {
   id: string
@@ -37,7 +35,6 @@ export default function NotificationInbox() {
   const [loading, setLoading] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [deletingAll, setDeletingAll] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const { user } = useAuth()
@@ -175,18 +172,12 @@ export default function NotificationInbox() {
         return
       }
       
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
-      
       const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${session.access_token}`
-        },
-        signal: controller.signal
+        }
       })
-      
-      clearTimeout(timeoutId)
       
       if (response.ok) {
         // Remove from local state immediately for better UX
@@ -198,77 +189,11 @@ export default function NotificationInbox() {
       } else {
         const errorText = await response.text()
         console.error('Failed to delete notification:', response.status, errorText)
-        throw new Error(`Failed to delete: ${response.status}`)
       }
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        console.error('Delete request timed out')
-      } else {
-        console.error('Failed to delete notification:', error)
-      }
-      // Remove deleting state even on error
+      console.error('Failed to delete notification:', error)
     } finally {
       setDeletingId(null)
-    }
-  }
-
-  const deleteAllNotifications = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    
-    if (notifications.length === 0) return
-    
-    // Confirm before deleting
-    if (!confirm(`Are you sure you want to delete all ${notifications.length} notifications?`)) {
-      return
-    }
-    
-    try {
-      setDeletingAll(true)
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.access_token) {
-        console.error('No session token available')
-        return
-      }
-      
-      // Optimistically clear UI first for better UX
-      const notificationsToDelete = [...notifications]
-      setNotifications([])
-      setUnreadCount(0)
-      
-      // Delete in batches to avoid overwhelming the server
-      const batchSize = 10
-      for (let i = 0; i < notificationsToDelete.length; i += batchSize) {
-        const batch = notificationsToDelete.slice(i, i + batchSize)
-        
-        const deletePromises = batch.map(n => {
-          const controller = new AbortController()
-          const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout per request
-          
-          return fetch(`${API_BASE_URL}/notifications/${n.id}`, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`
-            },
-            signal: controller.signal
-          }).then(response => {
-            clearTimeout(timeoutId)
-            return response
-          }).catch(err => {
-            clearTimeout(timeoutId)
-            console.error(`Failed to delete notification ${n.id}:`, err)
-            return null // Continue even if one fails
-          })
-        })
-        
-        await Promise.allSettled(deletePromises)
-      }
-      
-    } catch (error) {
-      console.error('Failed to delete all notifications:', error)
-      // Reload notifications on error
-      fetchNotifications()
-    } finally {
-      setDeletingAll(false)
     }
   }
 
@@ -336,37 +261,6 @@ export default function NotificationInbox() {
           {/* Header */}
           <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
-            {notifications.length > 0 && (
-              <Button
-                onClick={deleteAllNotifications}
-                disabled={deletingAll}
-                size="sm"
-                variant="destructive"
-                className={cn(
-                  "relative justify-center cursor-pointer inline-flex items-center text-center",
-                  "h-[26px] px-2.5 py-1 text-xs",
-                  deletingAll && "pl-7"
-                )}
-              >
-                <div className="flex items-center gap-1.5">
-                  <div 
-                    className={cn(
-                      "absolute left-2.5 transition-all duration-200 ease-in-out opacity-0 -translate-x-2",
-                      deletingAll && "opacity-100 translate-x-0"
-                    )}
-                  >
-                    <Loader2
-                      className="animate-spin"
-                      size={12}
-                      strokeWidth={2}
-                      aria-hidden="true"
-                    />
-                  </div>
-                  <Trash2 className="w-3 h-3" />
-                  <span>Clear All</span>
-                </div>
-              </Button>
-            )}
           </div>
 
           {/* Scroll Up Button */}
