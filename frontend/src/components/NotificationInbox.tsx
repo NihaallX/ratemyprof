@@ -4,7 +4,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react'
-import { Bell, X, Trash2, ChevronDown, ChevronUp, LoaderCircle } from 'lucide-react'
+import { Bell, X, Trash2, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { API_BASE_URL } from '../config/api'
@@ -307,7 +307,7 @@ export default function NotificationInbox() {
                       deletingAll && "opacity-100 translate-x-0"
                     )}
                   >
-                    <LoaderCircle
+                    <Loader2
                       className="animate-spin"
                       size={12}
                       strokeWidth={2}
@@ -382,7 +382,7 @@ export default function NotificationInbox() {
                           aria-label="Delete notification"
                         >
                           {deletingId === notification.id ? (
-                            <LoaderCircle className="w-4 h-4 text-red-600 animate-spin" />
+                            <Loader2 className="w-4 h-4 text-red-600 animate-spin" />
                           ) : (
                             <Trash2 className="w-4 h-4 text-red-600" />
                           )}
