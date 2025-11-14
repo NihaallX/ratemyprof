@@ -7,8 +7,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 from datetime import datetime, timedelta
-from ..lib.database import get_supabase, supabase_admin
-from ..lib.auth import get_current_user
+from ..lib.database import get_supabase, get_supabase_service
+from ..lib.auth import get_current_user, get_authenticated_supabase
 from ..lib.notification_templates import (
     NotificationTemplate,
     NotificationService,
@@ -124,13 +124,13 @@ async def get_user_notifications(
     limit: int = Query(default=3, ge=1, le=50),
     offset: int = Query(default=0, ge=0),
     include_read: bool = Query(default=True),
-    current_user = Depends(get_current_user)
+    current_user = Depends(get_current_user),
+    supabase = Depends(get_authenticated_supabase)
 ):
     """
     Get user's notifications (most recent 3 by default)
     Auto-filters out expired notifications
     """
-    supabase = get_supabase()
     user_id = current_user.get('id')
     
     # Build query
@@ -172,10 +172,10 @@ async def get_user_notifications(
 @router.post("/{notification_id}/read")
 async def mark_notification_as_read(
     notification_id: str,
-    current_user = Depends(get_current_user)
+    current_user = Depends(get_current_user),
+    supabase = Depends(get_authenticated_supabase)
 ):
     """Mark a single notification as read"""
-    supabase = get_supabase()
     user_id = current_user.get('id')
     
     # Verify notification belongs to user and update
@@ -193,10 +193,10 @@ async def mark_notification_as_read(
 
 @router.post("/read-all")
 async def mark_all_notifications_as_read(
-    current_user = Depends(get_current_user)
+    current_user = Depends(get_current_user),
+    supabase = Depends(get_authenticated_supabase)
 ):
     """Mark all user's notifications as read"""
-    supabase = get_supabase()
     user_id = current_user.get('id')
     
     response = supabase.table("notifications")\
@@ -361,9 +361,14 @@ async def send_notification_to_user(
     
     # Insert notification for specific user using admin client
     try:
-        # Use service role client to bypass RLS
-        admin_client = supabase_admin if supabase_admin else supabase
-        using_service_role = supabase_admin is not None
+        # Use service role client to bypass RLS for admin operations
+        try:
+            admin_client = get_supabase_service()
+            using_service_role = True
+        except ValueError:
+            # Fallback to regular client if service role not configured
+            admin_client = supabase
+            using_service_role = False
         
         print(f"🔑 Using {'SERVICE ROLE' if using_service_role else 'ANON KEY'} client for notification insert")
         print(f"👤 Target user_id: {notification.user_id}")
@@ -403,10 +408,10 @@ async def send_notification_to_user(
 @router.delete("/{notification_id}")
 async def delete_notification(
     notification_id: str,
-    current_user = Depends(get_current_user)
+    current_user = Depends(get_current_user),
+    supabase = Depends(get_authenticated_supabase)
 ):
     """Delete a notification (user can delete their own, admin can delete any)"""
-    supabase = get_supabase()
     user_id = current_user.get('id')
     
     # Try to delete (RLS will handle permissions)
