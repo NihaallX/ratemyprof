@@ -170,25 +170,43 @@ export default function NotificationInbox() {
     try {
       setDeletingId(notificationId)
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.access_token) return
+      if (!session?.access_token) {
+        console.error('No session token available')
+        return
+      }
+      
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
       
       const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${session.access_token}`
-        }
+        },
+        signal: controller.signal
       })
       
+      clearTimeout(timeoutId)
+      
       if (response.ok) {
-        // Remove from local state
+        // Remove from local state immediately for better UX
         const wasUnread = notifications.find(n => n.id === notificationId)?.is_read === false
         setNotifications(prev => prev.filter(n => n.id !== notificationId))
         if (wasUnread) {
           setUnreadCount(prev => Math.max(0, prev - 1))
         }
+      } else {
+        const errorText = await response.text()
+        console.error('Failed to delete notification:', response.status, errorText)
+        throw new Error(`Failed to delete: ${response.status}`)
       }
     } catch (error) {
-      console.error('Failed to delete notification:', error)
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.error('Delete request timed out')
+      } else {
+        console.error('Failed to delete notification:', error)
+      }
+      // Remove deleting state even on error
     } finally {
       setDeletingId(null)
     }
@@ -197,28 +215,58 @@ export default function NotificationInbox() {
   const deleteAllNotifications = async (e: React.MouseEvent) => {
     e.stopPropagation()
     
+    if (notifications.length === 0) return
+    
+    // Confirm before deleting
+    if (!confirm(`Are you sure you want to delete all ${notifications.length} notifications?`)) {
+      return
+    }
+    
     try {
       setDeletingAll(true)
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.access_token) return
+      if (!session?.access_token) {
+        console.error('No session token available')
+        return
+      }
       
-      // Delete each notification individually
-      const deletePromises = notifications.map(n => 
-        fetch(`${API_BASE_URL}/notifications/${n.id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`
-          }
-        })
-      )
-      
-      await Promise.all(deletePromises)
-      
-      // Clear local state
+      // Optimistically clear UI first for better UX
+      const notificationsToDelete = [...notifications]
       setNotifications([])
       setUnreadCount(0)
+      
+      // Delete in batches to avoid overwhelming the server
+      const batchSize = 10
+      for (let i = 0; i < notificationsToDelete.length; i += batchSize) {
+        const batch = notificationsToDelete.slice(i, i + batchSize)
+        
+        const deletePromises = batch.map(n => {
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout per request
+          
+          return fetch(`${API_BASE_URL}/notifications/${n.id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`
+            },
+            signal: controller.signal
+          }).then(response => {
+            clearTimeout(timeoutId)
+            return response
+          }).catch(err => {
+            clearTimeout(timeoutId)
+            console.error(`Failed to delete notification ${n.id}:`, err)
+            return null // Continue even if one fails
+          })
+        })
+        
+        await Promise.allSettled(deletePromises)
+      }
+      
     } catch (error) {
       console.error('Failed to delete all notifications:', error)
+      // Reload notifications on error
+      fetchNotifications()
     } finally {
       setDeletingAll(false)
     }
