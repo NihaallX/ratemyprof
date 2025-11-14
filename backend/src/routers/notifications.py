@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 from datetime import datetime, timedelta
-from ..lib.database import get_supabase
+from ..lib.database import get_supabase, supabase_admin
 from ..lib.auth import get_current_user
 from ..lib.notification_templates import (
     NotificationTemplate,
@@ -359,9 +359,12 @@ async def send_notification_to_user(
                 detail="Either template_id or both title and message must be provided"
             )
     
-    # Insert notification for specific user
+    # Insert notification for specific user using admin client
     try:
-        result = supabase.table("notifications").insert({
+        # Use service role client to bypass RLS
+        admin_client = supabase_admin if supabase_admin else supabase
+        
+        result = admin_client.table("notifications").insert({
             "user_id": notification.user_id,
             "title": title,
             "message": message,

@@ -51,8 +51,10 @@ const AdminPage: NextPage = () => {
   const [professorsLoaded, setProfessorsLoaded] = useState(false);
   const [usersLoaded, setUsersLoaded] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [professorsDisplayPage, setProfessorsDisplayPage] = useState(1); // For paginating professor display
   const [totalProfessorsCount, setTotalProfessorsCount] = useState(0);
   const PAGE_SIZE = 100;
+  const PROFESSORS_DISPLAY_PAGE_SIZE = 50; // Show 50 professors per page in UI
 
   // Navigation scroll state
   const [showLeftArrow, setShowLeftArrow] = useState(false);
@@ -163,21 +165,39 @@ const AdminPage: NextPage = () => {
 
   const handleAdminLogin = async (email: string, password: string) => {
     try {
-      const { error } = await signIn(email, password);
-      
-      if (error) {
-        return { success: false, error: error.message };
+      // Use the admin login API endpoint (same as /admin/login page)
+      const response = await fetch(`${API_BASE_URL}/moderation/admin/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: email,
+          password: password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { success: false, error: data.detail || data.error || 'Invalid credentials' };
       }
-      
-      // Check if the logged in user is admin
-      const isAdminUser = email === 'admin@gmail.com' || email.endsWith('@ratemyprof.in');
-      if (!isAdminUser) {
-        return { success: false, error: 'Access denied. Admin credentials required.' };
-      }
+
+      // Store admin token in BOTH sessionStorage and localStorage
+      sessionStorage.setItem('adminToken', data.access_token);
+      sessionStorage.setItem('adminUser', JSON.stringify(data.user));
+      localStorage.setItem('adminToken', data.access_token);
+      localStorage.setItem('adminUser', JSON.stringify(data.user));
       
       setShowAdminLoginModal(false);
+      setIsAdmin(true);
+      
+      // Reload stats after successful login
+      loadRealTimeStats();
+      
       return { success: true };
     } catch (error) {
+      console.error('Admin login error:', error);
       return { success: false, error: 'Login failed. Please try again.' };
     }
   };
@@ -410,16 +430,29 @@ const AdminPage: NextPage = () => {
   // Load all professors when user switches to that tab
   useEffect(() => {
     if (activeTab === 'all-professors' && !professorsLoaded) {
-      loadAllProfessors();
+      // Debounce loading
+      const timer = setTimeout(() => {
+        loadAllProfessors();
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [activeTab]);
+  }, [activeTab, professorsLoaded]);
 
   // Load all users when user switches to Users tab
   useEffect(() => {
     if (activeTab === 'users' && !usersLoaded) {
-      loadAllUsers();
+      // Debounce loading
+      const timer = setTimeout(() => {
+        loadAllUsers();
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [activeTab]);
+  }, [activeTab, usersLoaded]);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setProfessorsDisplayPage(1);
+  }, [searchQuery, departmentFilter, sortBy]);
 
   // Manual refresh function
   const handleRefresh = () => {
@@ -488,10 +521,35 @@ const AdminPage: NextPage = () => {
         'Content-Type': 'application/json'
       } : { 'Content-Type': 'application/json' };
 
-      // Fetch all professors in batches
-      let allProfs = [];
-      let offset = 0;
-      const limit = 100;
+      // Load only first batch initially for instant display (50 items)
+      const initialLimit = 50;
+      const response = await fetch(`${API_BASE}/api/professors?limit=${initialLimit}&offset=0`, { headers });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const batch = Array.isArray(data.professors) ? data.professors : [];
+        setAllProfessors(batch);
+        setProfessorsLoaded(true); // Mark as loaded after first batch
+        console.log(`Initial load: ${batch.length} professors displayed`);
+
+        // Load remaining professors in background without blocking UI
+        if (data.has_more) {
+          loadRemainingProfessorsInBackground(headers, initialLimit);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading all professors:', error);
+    } finally {
+      setIsLoadingAllProfessors(false);
+    }
+  };
+
+  // Background loading function (non-blocking)
+  const loadRemainingProfessorsInBackground = async (headers: any, initialLimit: number) => {
+    try {
+      let allProfs = [...allProfessors]; // Start with already loaded professors
+      let offset = initialLimit; // Start after initial batch
+      const limit = 100; // Load larger batches in background
       let hasMore = true;
 
       while (hasMore) {
@@ -499,27 +557,21 @@ const AdminPage: NextPage = () => {
         if (response.ok) {
           const data = await response.json();
           const batch = Array.isArray(data.professors) ? data.professors : [];
-          allProfs.push(...batch);
+          allProfs = [...allProfs, ...batch];
           hasMore = data.has_more && batch.length === limit;
           offset += limit;
 
-          // Update UI progressively
+          // Update UI progressively (batched updates every 100 items)
           setAllProfessors([...allProfs]);
-          console.log(`Loaded ${allProfs.length} professors so far...`);
+          console.log(`Background load: ${allProfs.length} professors total`);
         } else {
           hasMore = false;
         }
       }
 
-      setAllProfessors(allProfs);
-      // Don't override the count - let loadRealTimeStats handle it
-      // setTotalProfessorsCount(allProfs.length);
-      setProfessorsLoaded(true);
-      console.log(`Finished loading all ${allProfs.length} professors`);
+      console.log(`Finished background loading: ${allProfs.length} total professors`);
     } catch (error) {
-      console.error('Error loading all professors:', error);
-    } finally {
-      setIsLoadingAllProfessors(false);
+      console.error('Error in background loading:', error);
     }
   };
 
@@ -1624,13 +1676,43 @@ const AdminPage: NextPage = () => {
                     return <p className="text-gray-500 text-center py-8">No professors match your filters</p>;
                   }
                   
+                  // Paginate the filtered results
+                  const startIndex = (professorsDisplayPage - 1) * PROFESSORS_DISPLAY_PAGE_SIZE;
+                  const endIndex = startIndex + PROFESSORS_DISPLAY_PAGE_SIZE;
+                  const paginatedProfessors = filtered.slice(startIndex, endIndex);
+                  const totalPages = Math.ceil(filtered.length / PROFESSORS_DISPLAY_PAGE_SIZE);
+                  
                   return (
                     <>
-                      <div className="mb-4 text-sm text-gray-600">
-                        Showing {filtered.length} of {allProfessors.length} professors
+                      <div className="mb-4 flex justify-between items-center">
+                        <div className="text-sm text-gray-600">
+                          Showing {startIndex + 1}-{Math.min(endIndex, filtered.length)} of {filtered.length} professors
+                          {filtered.length !== allProfessors.length && ` (filtered from ${allProfessors.length} total)`}
+                        </div>
+                        {totalPages > 1 && (
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => setProfessorsDisplayPage(Math.max(1, professorsDisplayPage - 1))}
+                              disabled={professorsDisplayPage === 1}
+                              className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Previous
+                            </button>
+                            <span className="text-sm text-gray-600">
+                              Page {professorsDisplayPage} of {totalPages}
+                            </span>
+                            <button
+                              onClick={() => setProfessorsDisplayPage(Math.min(totalPages, professorsDisplayPage + 1))}
+                              disabled={professorsDisplayPage === totalPages}
+                              className="px-3 py-1 text-sm border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Next
+                            </button>
+                          </div>
+                        )}
                       </div>
                       <div className="space-y-4">
-                        {filtered.map((professor: any) => (
+                        {paginatedProfessors.map((professor: any) => (
                         <div key={professor.id} className="border rounded-lg p-4">
                           <div className="flex justify-between items-start mb-2">
                             <div>
