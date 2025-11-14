@@ -27,6 +27,8 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
   const [templateData, setTemplateData] = useState<Record<string, string>>({})
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [sendToSpecific, setSendToSpecific] = useState(false)
+  const [specificUserId, setSpecificUserId] = useState('')
   const [result, setResult] = useState<{
     success: boolean
     message: string
@@ -180,6 +182,15 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
       return
     }
 
+    // Check if specific user ID is provided when sending to specific user
+    if (sendToSpecific && !specificUserId.trim()) {
+      setResult({
+        success: false,
+        message: 'Please enter a User ID'
+      })
+      return
+    }
+
     setSending(true)
     setResult(null)
 
@@ -194,24 +205,46 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
         return
       }
 
-      const response = await fetch(`${API_BASE_URL}/notifications/broadcast`, {
+      const endpoint = sendToSpecific 
+        ? `${API_BASE_URL}/notifications/send-to-user`
+        : `${API_BASE_URL}/notifications/broadcast`
+
+      const requestBody = sendToSpecific
+        ? {
+            user_id: specificUserId.trim(),
+            template_id: selectedTemplate.id,
+            template_data: templateData,
+            metadata: {
+              sent_at: new Date().toISOString(),
+              sender: 'admin',
+              template: selectedTemplate.id
+            }
+          }
+        : {
+            template_id: selectedTemplate.id,
+            template_data: templateData,
+            metadata: {
+              sent_at: new Date().toISOString(),
+              sender: 'admin',
+              template: selectedTemplate.id
+            }
+          }
+
+      console.log('📤 Sending notification to:', endpoint)
+      console.log('📦 Request body:', requestBody)
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          template_id: selectedTemplate.id,
-          template_data: templateData,
-          metadata: {
-            sent_at: new Date().toISOString(),
-            sender: 'admin',
-            template: selectedTemplate.id
-          }
-        })
+        body: JSON.stringify(requestBody)
       })
 
+      console.log('📡 Response status:', response.status)
       const data = await response.json()
+      console.log('📨 Response data:', data)
 
       if (response.ok) {
         setResult({
@@ -223,6 +256,7 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
         // Clear form
         setSelectedTemplate(null)
         setTemplateData({})
+        setSpecificUserId('')
         
         // Callback
         if (onNotificationSent) {
@@ -235,6 +269,7 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
         })
       }
     } catch (error) {
+      console.error('❌ Error sending notification:', error)
       setResult({
         success: false,
         message: 'Network error. Please try again.'
@@ -370,6 +405,49 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
           </div>
         )}
 
+        {/* Send To Options */}
+        {selectedTemplate && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Send To
+            </label>
+            <div className="space-y-3">
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="radio"
+                  checked={!sendToSpecific}
+                  onChange={() => setSendToSpecific(false)}
+                  className="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-sm text-gray-700">All Users (Broadcast)</span>
+              </label>
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="radio"
+                  checked={sendToSpecific}
+                  onChange={() => setSendToSpecific(true)}
+                  className="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-sm text-gray-700">Specific User</span>
+              </label>
+              {sendToSpecific && (
+                <div className="ml-6">
+                  <input
+                    type="text"
+                    value={specificUserId}
+                    onChange={(e) => setSpecificUserId(e.target.value)}
+                    placeholder="Enter User ID (UUID)"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    You can find user IDs in the Users tab
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Result Message */}
         {result && (
           <div className={`flex items-start space-x-2 p-3 rounded-lg ${
@@ -408,12 +486,12 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
           {sending ? (
             <>
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-              <span>Sending to all users...</span>
+              <span>Sending...</span>
             </>
           ) : (
             <>
               <Send className="w-5 h-5" />
-              <span>Send to All Users</span>
+              <span>{sendToSpecific ? 'Send to User' : 'Send to All Users'}</span>
             </>
           )}
         </button>
