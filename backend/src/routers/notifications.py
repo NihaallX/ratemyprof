@@ -363,6 +363,10 @@ async def send_notification_to_user(
     try:
         # Use service role client to bypass RLS
         admin_client = supabase_admin if supabase_admin else supabase
+        using_service_role = supabase_admin is not None
+        
+        print(f"🔑 Using {'SERVICE ROLE' if using_service_role else 'ANON KEY'} client for notification insert")
+        print(f"👤 Target user_id: {notification.user_id}")
         
         result = admin_client.table("notifications").insert({
             "user_id": notification.user_id,
@@ -374,6 +378,9 @@ async def send_notification_to_user(
             "created_at": datetime.utcnow().isoformat(),
             "expires_at": (datetime.utcnow() + timedelta(days=4)).isoformat()
         }).execute()
+        
+        print(f"📨 Insert result data: {result.data}")
+        print(f"📨 Insert result count: {result.count if hasattr(result, 'count') else 'N/A'}")
         
         if result.data:
             return {

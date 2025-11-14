@@ -41,6 +41,9 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 supabase_admin: Optional[Client] = None
 if SUPABASE_SERVICE_ROLE_KEY:
     supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    print("✅ Service role client initialized (RLS bypass enabled)")
+else:
+    print("⚠️ SUPABASE_SERVICE_ROLE_KEY not set - admin operations will use anon key (RLS applies)")
 
 # For direct SQL operations, we can still use SQLAlchemy with Supabase's PostgreSQL connection
 # This allows us to keep our existing models while using Supabase for auth
