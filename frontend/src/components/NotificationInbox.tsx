@@ -44,8 +44,6 @@ export default function NotificationInbox() {
   const observerRef = useRef<IntersectionObserver | null>(null)
   const [visibleNotifications, setVisibleNotifications] = useState<Set<string>>(new Set())
   const lastClearTimeRef = useRef<number>(0)
-  const lastClearTimeRef = useRef<number>(0)
-  const lastClearTimeRef = useRef<number>(0)
 
   // Close dropdown when clicking outside
   useEffect(() => {
