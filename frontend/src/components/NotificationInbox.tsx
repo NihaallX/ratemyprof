@@ -57,15 +57,23 @@ export default function NotificationInbox() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Fetch notifications when component mounts or opens
+  // Fetch notifications when component mounts
   useEffect(() => {
-    if (user) {
-      fetchNotifications()
-      // Poll for new notifications every 2 minutes
-      const interval = setInterval(fetchNotifications, 120000)
-      return () => clearInterval(interval)
-    }
-  }, [user])
+    if (!user) return
+    
+    // Initial fetch
+    fetchNotifications()
+    
+    // Poll for new notifications every 2 minutes, but only when tab is visible
+    const interval = setInterval(() => {
+      // Only fetch if document is visible (tab is active)
+      if (document.visibilityState === 'visible') {
+        fetchNotifications()
+      }
+    }, 120000)
+    
+    return () => clearInterval(interval)
+  }, []) // Empty deps - only run once on mount
 
   // Setup intersection observer to auto-mark notifications as read when visible
   useEffect(() => {

@@ -32,8 +32,8 @@ export const fetcher = async (url: string) => {
  */
 export const swrConfig: SWRConfiguration = {
   fetcher,
-  // Revalidate when window regains focus
-  revalidateOnFocus: true,
+  // Disable revalidate on focus to prevent unnecessary refetches when switching tabs
+  revalidateOnFocus: false,
   // Revalidate when network reconnects
   revalidateOnReconnect: true,
   // Dedupe requests within 2 seconds
