@@ -43,6 +43,9 @@ export default function NotificationInbox() {
   const { user } = useAuth()
   const observerRef = useRef<IntersectionObserver | null>(null)
   const [visibleNotifications, setVisibleNotifications] = useState<Set<string>>(new Set())
+  const lastClearTimeRef = useRef<number>(0)
+  const lastClearTimeRef = useRef<number>(0)
+  const lastClearTimeRef = useRef<number>(0)
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -106,6 +109,13 @@ export default function NotificationInbox() {
 
   const fetchNotifications = async () => {
     if (!user) return
+    
+    // Skip fetch if we just cleared all (within last 10 seconds)
+    const timeSinceClear = Date.now() - lastClearTimeRef.current
+    if (timeSinceClear < 10000) {
+      console.log('Skipping fetch - just cleared notifications')
+      return
+    }
     
     try {
       setLoading(true)
@@ -216,6 +226,9 @@ export default function NotificationInbox() {
       
       // Store count before clearing
       const notificationsToDelete = [...notifications]
+      
+      // Mark the time we cleared
+      lastClearTimeRef.current = Date.now()
       
       // Optimistically clear UI first
       setNotifications([])
