@@ -108,9 +108,9 @@ export default function NotificationInbox() {
   const fetchNotifications = async () => {
     if (!user) return
     
-    // Skip fetch if we just cleared all (within last 10 seconds)
+    // Skip fetch if we just cleared all (within last 30 seconds)
     const timeSinceClear = Date.now() - lastClearTimeRef.current
-    if (timeSinceClear < 10000) {
+    if (timeSinceClear < 30000) {
       console.log('Skipping fetch - just cleared notifications')
       return
     }
@@ -306,8 +306,15 @@ export default function NotificationInbox() {
       {/* Bell Icon Button */}
       <button
         onClick={() => {
+          const wasOpen = isOpen
           setIsOpen(!isOpen)
-          if (!isOpen) fetchNotifications()
+          // Only fetch when opening (not closing) and respect the clear timestamp
+          if (!wasOpen) {
+            const timeSinceClear = Date.now() - lastClearTimeRef.current
+            if (timeSinceClear >= 30000) {
+              fetchNotifications()
+            }
+          }
         }}
         className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
         aria-label="Notifications"
