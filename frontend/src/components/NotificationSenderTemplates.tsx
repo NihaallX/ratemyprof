@@ -93,8 +93,8 @@ export default function NotificationSenderTemplates({ onNotificationSent }: Noti
         return
       }
 
-      console.log('👥 Fetching users from:', `${API_BASE_URL}/moderation/users`)
-      const response = await fetch(`${API_BASE_URL}/moderation/users`, {
+      console.log('👥 Fetching users from:', `${API_BASE_URL}/moderation/users?limit=100`)
+      const response = await fetch(`${API_BASE_URL}/moderation/users?limit=100`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

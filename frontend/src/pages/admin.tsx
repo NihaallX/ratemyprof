@@ -2592,15 +2592,26 @@ const AdminPage: NextPage = () => {
                         return;
                       }
                       try {
+                        // Get admin token from storage
+                        const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
+                        if (!adminToken) {
+                          showToast('Admin authentication required', 'error');
+                          return;
+                        }
+                        
                         const response = await fetch(`${API_BASE_URL}/notifications/admin/delete-all`, {
                           method: 'POST',
                           headers: {
-                            'Authorization': `Bearer ${session?.access_token}`
+                            'Authorization': `Bearer ${adminToken}`,
+                            'Content-Type': 'application/json'
                           }
                         });
+                        
                         if (response.ok) {
                           const data = await response.json();
                           showToast(`Successfully deleted ${data.deleted_count} notifications! 🗑️`, 'success');
+                        } else if (response.status === 401 || response.status === 403) {
+                          showToast('Admin authorization required', 'error');
                         } else {
                           showToast('Failed to delete notifications', 'error');
                         }
