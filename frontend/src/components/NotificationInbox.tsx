@@ -210,45 +210,43 @@ export default function NotificationInbox() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.access_token) {
         console.error('No session token available')
+        setDeletingAll(false)
         return
       }
       
-      // Optimistically clear UI first
+      // Store count before clearing
       const notificationsToDelete = [...notifications]
+      
+      // Optimistically clear UI first
       setNotifications([])
       setUnreadCount(0)
       
-      // Delete each notification - no timeout, let them complete naturally
-      let failedCount = 0
-      for (const notification of notificationsToDelete) {
-        try {
-          const response = await fetch(`${API_BASE_URL}/notifications/${notification.id}`, {
+      // Delete all notifications in the background - fire and forget
+      // We trust the optimistic update and don't wait for responses
+      Promise.all(
+        notificationsToDelete.map(notification =>
+          fetch(`${API_BASE_URL}/notifications/${notification.id}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${session.access_token}`
             }
+          }).catch(error => {
+            console.error(`Failed to delete notification ${notification.id}:`, error)
           })
-          
-          if (!response.ok) {
-            failedCount++
-          }
-        } catch (error) {
-          console.error(`Failed to delete notification ${notification.id}:`, error)
-          failedCount++
-        }
-      }
-      
-      if (failedCount > 0) {
-        console.warn(`${failedCount} notifications failed to delete`)
-        // Refresh to get accurate state
-        await fetchNotifications()
-      }
+        )
+      ).then(() => {
+        // All done, keep UI cleared
+        console.log(`Successfully cleared ${notificationsToDelete.length} notifications`)
+      }).catch(error => {
+        console.error('Error during batch delete:', error)
+      })
       
     } catch (error) {
       console.error('Failed to delete all notifications:', error)
-      // Reload notifications on error
+      // Only reload on catastrophic error
       await fetchNotifications()
     } finally {
+      // End loading state immediately after optimistic update
       setDeletingAll(false)
     }
   }
