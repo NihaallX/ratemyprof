@@ -47,7 +47,17 @@ else:
 
 # For direct SQL operations, we can still use SQLAlchemy with Supabase's PostgreSQL connection
 # This allows us to keep our existing models while using Supabase for auth
-DATABASE_URL = f"postgresql+asyncpg://postgres:[YOUR-DB-PASSWORD]@db.{SUPABASE_URL.split('//')[1].split('.')[0]}.supabase.co:5432/postgres"
+# Get database password from environment or construct URL from SUPABASE_URL
+DB_PASSWORD = os.getenv("SUPABASE_DB_PASSWORD")
+if DB_PASSWORD:
+    DATABASE_URL = f"postgresql+asyncpg://postgres.{SUPABASE_URL.split('//')[1].split('.')[0]}:{DB_PASSWORD}@aws-0-ap-south-1.pooler.supabase.com:6543/postgres"
+else:
+    # Fallback: Try to get full DATABASE_URL from environment
+    DATABASE_URL = os.getenv("DATABASE_URL")
+    if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
+        DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
 
 # Note: We'll primarily use Supabase client for auth and simple queries,
 # but keep SQLAlchemy for complex relationships and our existing models

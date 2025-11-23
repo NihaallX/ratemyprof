@@ -25,13 +25,21 @@ except ImportError:
     target_metadata = None
 
 # Get database URL from environment variable
-database_url = os.getenv('DATABASE_URL') or os.getenv('DATABASE_PRIVATE_URL')
-if not database_url:
-    raise ValueError("DATABASE_URL or DATABASE_PRIVATE_URL environment variable must be set")
+SUPABASE_URL = os.getenv('SUPABASE_URL')
+DB_PASSWORD = os.getenv('SUPABASE_DB_PASSWORD')
+DATABASE_URL = os.getenv('DATABASE_URL')
 
-# Handle postgres:// vs postgresql:// 
-if database_url.startswith('postgres://'):
-    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+# Try to construct from Supabase credentials
+if DB_PASSWORD and SUPABASE_URL:
+    project_ref = SUPABASE_URL.split('//')[1].split('.')[0]
+    database_url = f"postgresql://postgres.{project_ref}:{DB_PASSWORD}@aws-0-ap-south-1.pooler.supabase.com:6543/postgres"
+elif DATABASE_URL:
+    database_url = DATABASE_URL
+    # Handle postgres:// vs postgresql:// 
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+else:
+    raise ValueError("Either SUPABASE_DB_PASSWORD or DATABASE_URL environment variable must be set")
 
 config.set_main_option('sqlalchemy.url', database_url)
 
