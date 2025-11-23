@@ -112,15 +112,26 @@ if AUTO_BAN_ENABLED:
     print("✅ IP ban middleware enabled")
 
 # CORS middleware - Restrict to allowed origins
+# Important: This must be added AFTER other middleware but BEFORE routes
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=["*"],
+    allow_headers=[
+        "Accept",
+        "Accept-Language",
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Origin",
+        "X-CSRF-Token",
+    ],
     expose_headers=["*"],
     max_age=3600,  # Cache preflight requests for 1 hour
 )
+
+print(f"✅ CORS middleware configured for: {', '.join(ALLOWED_ORIGINS)}")
 
 
 # Global exception handler
@@ -191,6 +202,19 @@ async def general_exception_handler(request: Request, exc: Exception):
             "path": str(request.url.path),
         }
     )
+
+
+# CORS Debug endpoint - helps troubleshoot CORS issues
+@app.get("/cors-check", tags=["Debug"], include_in_schema=False)
+async def cors_check(request: Request):
+    """Check CORS configuration and request origin."""
+    origin = request.headers.get("origin", "No origin header")
+    return {
+        "your_origin": origin,
+        "allowed_origins": ALLOWED_ORIGINS,
+        "is_allowed": origin in ALLOWED_ORIGINS,
+        "cors_enabled": True
+    }
 
 
 # Health check endpoint - Internal use only (for Railway monitoring)
