@@ -25,12 +25,15 @@ except ImportError:
     target_metadata = None
 
 # Get database URL from environment variable
-database_url = os.getenv('DATABASE_URL')
-if database_url:
-    # Handle postgres:// vs postgresql:// 
-    if database_url.startswith('postgres://'):
-        database_url = database_url.replace('postgres://', 'postgresql://', 1)
-    config.set_main_option('sqlalchemy.url', database_url)
+database_url = os.getenv('DATABASE_URL') or os.getenv('DATABASE_PRIVATE_URL')
+if not database_url:
+    raise ValueError("DATABASE_URL or DATABASE_PRIVATE_URL environment variable must be set")
+
+# Handle postgres:// vs postgresql:// 
+if database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+
+config.set_main_option('sqlalchemy.url', database_url)
 
 
 def run_migrations_offline() -> None:
