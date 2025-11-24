@@ -826,7 +826,7 @@ If you find this project helpful, please consider giving it a star! ⭐
 
 <div align="center">
 
-## 💝 Made with Love for Indian Education
+##  Made with need for Indian Education
 
 **Empowering students to make informed decisions about their education**
 

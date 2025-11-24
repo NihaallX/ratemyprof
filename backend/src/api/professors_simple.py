@@ -11,6 +11,7 @@ import os
 from src.lib.database import get_supabase, get_supabase_service
 from src.lib.auth import get_current_user
 from src.lib.cache import cache_response, medium_cache
+from src.lib.bayesian_ranking import compute_bayesian_ranking
 
 security = HTTPBearer()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -88,79 +89,97 @@ async def get_platform_stats(
 @cache_response(ttl_seconds=300)  # Cache for 5 minutes
 async def get_top_rated_professors(
     limit: int = Query(6, ge=1, le=50, description="Number of top professors to return"),
+    min_reviews: int = Query(1, ge=0, le=10, description="Minimum reviews required"),
+    confidence: float = Query(10.0, ge=1.0, le=50.0, description="Bayesian confidence parameter"),
+    enable_recency: bool = Query(False, description="Enable recency weighting"),
     supabase: Client = Depends(get_supabase_service)
 ):
-    """Get top-rated professors for landing page showcase.
+    """Get top-rated professors using Bayesian ranking.
     
-    Sorting logic:
-    1. Fetch all professors with at least 1 review
-    2. Sort by review count first (more reviews = more reliable)
-    3. Then by rating as secondary sort
-    This ensures professors with more reviews appear higher even if rating is slightly lower
+    Bayesian Ranking Algorithm:
+    - Balances rating quality (avg_rating) with quantity (total_reviews)
+    - Prevents 1 perfect review from outranking 50 reviews at 4.8
+    - Formula: score = (C * global_mean + reviews * rating) / (C + reviews)
+    - Higher C = more conservative (trust global average more)
+    
+    Optional Recency Weighting:
+    - Boosts professors with recent reviews
+    - Uses exponential decay with 365-day half-life
+    - Modest impact (15% weight factor)
     """
     try:
-        print(f"🔍 Fetching top {limit} professors...")
+        print(f"🔍 Fetching professors for Bayesian ranking (limit={limit}, min_reviews={min_reviews})...")
         
-        # Get ALL professors with reviews (we'll sort them in Python for better control)
+        # Get ALL verified professors with reviews
         try:
             query = (
                 supabase.table('professors')
-                .select('id, name, department, college_id, average_rating, total_reviews')
-                .gte('total_reviews', 1)  # At least 1 review to be considered
-                .eq('is_verified', True)  # Only show verified professors
-                .limit(200)  # Get enough to sort properly
+                .select('id, name, department, college_id, average_rating, total_reviews, is_verified, updated_at')
+                .gte('total_reviews', min_reviews)
+                .eq('is_verified', True)
+                .limit(200)  # Get enough candidates for ranking
             )
             
             result = query.execute()
-            print(f"📊 Fetched {len(result.data)} professors with reviews")
+            print(f"📊 Fetched {len(result.data)} professors for ranking")
         except Exception as db_error:
             print(f"❌ Database query failed: {db_error}")
-            # Return empty result instead of crashing
             return JSONResponse(content=[])
         
-        # Handle empty result
         if not result.data or len(result.data) == 0:
-            print("⚠️ No professors found with reviews, returning empty array")
+            print("⚠️ No professors found matching criteria")
             return JSONResponse(content=[])
         
-        # Sort by: 1) Review count (descending), 2) Rating (descending)
-        # This ensures Dr. Jupinder Kaur (3 reviews, 4.7) ranks higher than 
-        # someone with 1 review and 5.0
-        sorted_professors = sorted(
-            result.data,
-            key=lambda p: (
-                -int(p.get('total_reviews', 0)),  # More reviews first (negative for descending)
-                -float(p.get('average_rating', 0.0))  # Then higher rating
-            )
+        # Prepare recency weighting config
+        recency_config = None
+        if enable_recency:
+            recency_config = {
+                'enabled': True,
+                'half_life_days': 365.0,
+                'weight_factor': 0.15
+            }
+        
+        # Apply Bayesian ranking
+        ranking_result = compute_bayesian_ranking(
+            professors=result.data,
+            C=confidence,
+            min_reviews=0,  # Already filtered in query
+            exclude_unverified=False,  # Already filtered in query
+            recency_weighting=recency_config,
+            limit=limit
         )
         
-        print("🏆 Top 10 after sorting:")
-        for i, prof in enumerate(sorted_professors[:10]):
-            print(f"  {i+1}. {prof.get('name')} - {prof.get('total_reviews')} reviews, {prof.get('average_rating')} rating")
+        ranked = ranking_result['ranked_professors']
+        stats = ranking_result['stats']
         
-        # Take top N professors after sorting
-        top_professors = sorted_professors[:limit]
+        print(f"🏆 Top {min(5, len(ranked))} professors after Bayesian ranking:")
+        for i, prof in enumerate(ranked[:5]):
+            recency_note = f", recency={prof.get('recency_factor', 1.0):.2f}" if enable_recency else ""
+            print(f"  {i+1}. {prof['name']} - Score: {prof['bayesian_score']:.3f} "
+                  f"(reviews={prof['total_reviews']}, rating={prof['average_rating']:.1f}{recency_note})")
         
-        # Transform data
+        # Transform for API response
         professors = []
-        for prof in top_professors:
+        for prof in ranked:
             professors.append({
                 'id': prof['id'],
                 'name': prof['name'],
                 'department': prof.get('department', 'N/A'),
                 'college_id': prof['college_id'],
                 'rating': round(float(prof.get('average_rating', 0.0)), 1),
-                'reviews': int(prof.get('total_reviews', 0))
+                'reviews': int(prof.get('total_reviews', 0)),
+                'bayesian_score': round(prof['bayesian_score'], 3),
+                'explainability': prof.get('explainability', '')
             })
         
-        print(f"✅ Returning {len(professors)} professors")
+        print(f"✅ Returning {len(professors)} professors (Global mean: {stats['global_mean']}, C={stats['confidence_param']})")
         return JSONResponse(content=professors)
         
     except Exception as e:
-        print(f"❌ Error fetching top-rated professors: {e}")
+        print(f"❌ Error in Bayesian ranking: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch top-rated professors: {str(e)}"
+            detail=f"Failed to compute rankings: {str(e)}"
         )
 
 @router.get("", response_model=ProfessorsResponse)
