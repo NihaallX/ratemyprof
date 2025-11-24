@@ -8,7 +8,7 @@ from supabase import Client, create_client
 import uuid
 import os
 
-from src.lib.database import get_supabase
+from src.lib.database import get_supabase, get_supabase_service
 from src.lib.auth import get_current_user
 from src.lib.cache import cache_response, medium_cache
 
