@@ -106,11 +106,17 @@ async def get_top_rated_professors(
             supabase.table('professors')
             .select('id, name, department, college_id, average_rating, total_reviews')
             .gte('total_reviews', 1)  # At least 1 review to be considered
+            .eq('is_verified', True)  # Only show verified professors
             .limit(200)  # Get enough to sort properly
         )
         
         result = query.execute()
         print(f"📊 Fetched {len(result.data)} professors with reviews")
+        
+        # Handle empty result
+        if not result.data or len(result.data) == 0:
+            print("⚠️ No professors found with reviews, returning empty array")
+            return JSONResponse(content=[])
         
         # Sort by: 1) Review count (descending), 2) Rating (descending)
         # This ensures Dr. Jupinder Kaur (3 reviews, 4.7) ranks higher than 

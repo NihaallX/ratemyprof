@@ -331,10 +331,17 @@ async def get_college(
         
         college_data = result.data[0]
         
+        # Calculate total professors count (verified only)
+        prof_count_result = supabase.table('professors').select(
+            'id', count='exact'
+        ).eq('college_id', college_id).eq('is_verified', True).execute()
+        
+        college_data['total_professors'] = prof_count_result.count if prof_count_result.count else 0
+        
         # Calculate college rating based on professor ratings
         prof_query = supabase.table('professors').select(
             'average_rating, total_reviews'
-        ).eq('college_id', college_id)
+        ).eq('college_id', college_id).eq('is_verified', True)
         prof_result = prof_query.execute()
         
         if prof_result.data:
