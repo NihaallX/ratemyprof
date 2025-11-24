@@ -56,7 +56,7 @@ async def search_colleges(
     q: Optional[str] = Query(None, description="Search query (college name)"),
     state: Optional[str] = Query(None, max_length=50, description="Filter by Indian state"),
     city: Optional[str] = Query(None, max_length=100, description="Filter by city"),
-    limit: int = Query(20, ge=1, le=50, description="Maximum results to return"),
+    limit: int = Query(20, ge=1, le=1000, description="Maximum results to return"),
     supabase: Client = Depends(get_supabase)
 ):
     """Search colleges by name, city, or state.
