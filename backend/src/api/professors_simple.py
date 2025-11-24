@@ -100,7 +100,6 @@ async def get_top_rated_professors(
     """
     try:
         print(f"🔍 Fetching top {limit} professors...")
-        print(f"🔑 Using service role client: {supabase._headers.get('apikey', 'unknown')[:20]}...")
         
         # Get ALL professors with reviews (we'll sort them in Python for better control)
         try:
