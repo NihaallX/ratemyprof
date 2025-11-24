@@ -74,7 +74,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     Initializes Supabase connection and performs cleanup.
     """
     # Startup
-    print("🚀 Starting RateMyProf API server v1.0.1...")
+    print("🚀 Starting RateMyProf API server v1.0.2...")
     await init_db()
     print("✅ Supabase connection initialized")
     
@@ -97,7 +97,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 app = FastAPI(
     title="RateMyProf India API",
     description="Backend API for the RateMyProf India platform - helping students find and review professors across Indian colleges and universities.",
-    version="1.0.1",
+    version="1.0.2",
     docs_url="/docs" if DOCS_ENABLED else None,
     redoc_url="/redoc" if DOCS_ENABLED else None,
     lifespan=lifespan,
@@ -116,13 +116,28 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=["*"],  # Allow all headers
     expose_headers=["*"],
     max_age=3600,
 )
 
 print(f"✅ CORS middleware active with {len(ALLOWED_ORIGINS)} allowed origins")
+
+
+# Add explicit OPTIONS handler for all routes
+@app.options("/{full_path:path}")
+async def options_handler(full_path: str):
+    """Handle OPTIONS requests for CORS preflight."""
+    return JSONResponse(
+        content={},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Max-Age": "3600",
+        }
+    )
 
 
 # Global exception handler

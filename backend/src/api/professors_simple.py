@@ -8,7 +8,7 @@ from supabase import Client, create_client
 import uuid
 import os
 
-from src.lib.database import get_supabase
+from src.lib.database import get_supabase, get_supabase_service
 from src.lib.auth import get_current_user
 from src.lib.cache import cache_response, medium_cache
 
@@ -88,7 +88,7 @@ async def get_platform_stats(
 @cache_response(ttl_seconds=300)  # Cache for 5 minutes
 async def get_top_rated_professors(
     limit: int = Query(6, ge=1, le=50, description="Number of top professors to return"),
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase_service)
 ):
     """Get top-rated professors for landing page showcase.
     
@@ -100,18 +100,24 @@ async def get_top_rated_professors(
     """
     try:
         print(f"🔍 Fetching top {limit} professors...")
+        print(f"🔑 Using service role client: {supabase._headers.get('apikey', 'unknown')[:20]}...")
         
         # Get ALL professors with reviews (we'll sort them in Python for better control)
-        query = (
-            supabase.table('professors')
-            .select('id, name, department, college_id, average_rating, total_reviews')
-            .gte('total_reviews', 1)  # At least 1 review to be considered
-            .eq('is_verified', True)  # Only show verified professors
-            .limit(200)  # Get enough to sort properly
-        )
-        
-        result = query.execute()
-        print(f"📊 Fetched {len(result.data)} professors with reviews")
+        try:
+            query = (
+                supabase.table('professors')
+                .select('id, name, department, college_id, average_rating, total_reviews')
+                .gte('total_reviews', 1)  # At least 1 review to be considered
+                .eq('is_verified', True)  # Only show verified professors
+                .limit(200)  # Get enough to sort properly
+            )
+            
+            result = query.execute()
+            print(f"📊 Fetched {len(result.data)} professors with reviews")
+        except Exception as db_error:
+            print(f"❌ Database query failed: {db_error}")
+            # Return empty result instead of crashing
+            return JSONResponse(content=[])
         
         # Handle empty result
         if not result.data or len(result.data) == 0:
@@ -166,7 +172,7 @@ async def search_professors(
     department: Optional[str] = Query(None, description="Filter by department"),
     limit: int = Query(20, ge=1, le=200, description="Maximum results to return"),
     offset: int = Query(0, ge=0, description="Number of records to skip"),
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase_service)
 ):
     """Search professors with college information."""
     try:
