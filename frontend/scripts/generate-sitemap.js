@@ -37,7 +37,7 @@ const STATIC_PAGES = [
 async function fetchProfessors() {
   try {
     console.log('📚 Fetching professors from API...');
-    const response = await fetch(`${API_URL}/professors?limit=1000`);
+    const response = await fetch(`${API_URL}/professors?limit=200`);
     
     if (!response.ok) {
       throw new Error(`API returned ${response.status}`);
@@ -60,7 +60,7 @@ async function fetchProfessors() {
 async function fetchColleges() {
   try {
     console.log('🏫 Fetching colleges from API...');
-    const response = await fetch(`${API_URL}/colleges?limit=1000`);
+    const response = await fetch(`${API_URL}/colleges?limit=200`);
     
     if (!response.ok) {
       throw new Error(`API returned ${response.status}`);
