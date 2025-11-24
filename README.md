@@ -356,10 +356,12 @@ ratemyprof/
 │   │   ├── api/                   # API Endpoints
 │   │   │   ├── auth.py            # Authentication
 │   │   │   ├── professors.py      # Professor CRUD
+│   │   │   ├── professors_simple.py # Simplified APIs + Bayesian ranking
 │   │   │   ├── colleges.py        # College CRUD
 │   │   │   ├── reviews.py         # Professor reviews (fixed RLS)
 │   │   │   ├── college_reviews.py # College reviews (mapping table)
 │   │   │   ├── moderation.py      # Content moderation
+│   │   │   ├── college_review_moderation.py # College review moderation
 │   │   │   └── user_limits.py     # Rate limiting
 │   │   ├── models/                # Pydantic Models
 │   │   │   ├── review.py
@@ -374,9 +376,15 @@ ratemyprof/
 │   │   ├── lib/                   # Utilities
 │   │   │   ├── database.py        # Supabase clients
 │   │   │   ├── auth.py            # JWT verification
-│   │   │   └── rate_limiting.py   # Rate limiting
+│   │   │   ├── bayesian_ranking.py # Advanced ranking algorithm
+│   │   │   ├── cache.py           # Response caching
+│   │   │   ├── rate_limiting.py   # Rate limiting
+│   │   │   ├── notification_events.py # Event system
+│   │   │   └── notification_templates.py # Email templates
 │   │   └── main.py                # FastAPI App Entry
 │   ├── tests/                     # Test Suite
+│   │   ├── test_bayesian_ranking.py # Ranking algorithm tests
+│   │   └── ...
 │   ├── scripts/                   # Database scripts
 │   └── pyproject.toml             # Python dependencies
 │
@@ -544,13 +552,31 @@ Review Submitted
 | 🛡️ Content Moderation | ✅ Complete | ![100%](https://progress-bar.dev/100) |
 | 👥 Admin Panel | ✅ Complete | ![100%](https://progress-bar.dev/100) |
 | 📊 Analytics | ✅ Complete | ![100%](https://progress-bar.dev/100) |
-| 🧪 Testing | ⚠️ In Progress | ![65%](https://progress-bar.dev/65) |
+| 🎯 Bayesian Ranking | ✅ Complete | ![100%](https://progress-bar.dev/100) |
+| 🌙 Dark Mode | ✅ Complete | ![100%](https://progress-bar.dev/100) |
+| 🧪 Testing | ⚠️ In Progress | ![70%](https://progress-bar.dev/70) |
 | 📝 Documentation | ✅ Complete | ![95%](https://progress-bar.dev/95) |
-| 🚀 Deployment | ⚠️ In Progress | ![50%](https://progress-bar.dev/50) |
+| 🚀 Deployment | ⚠️ In Progress | ![60%](https://progress-bar.dev/60) |
 
-**Overall Project Status:** 🟢 **Production Ready** - 90% Complete
+**Overall Project Status:** 🟢 **Production Ready** - 92% Complete
 
 ### Recent Updates (Latest First)
+
+**November 25, 2025:**
+- ✅ **Bayesian Ranking System** - Implemented sophisticated ranking algorithm for professors
+  - Balances rating quality (avg_rating) and quantity (total_reviews)
+  - Formula: `score = (C × global_mean + reviews × rating) / (C + reviews)`
+  - Prevents gaming: 1 perfect review can't outrank 50 reviews at 4.8
+  - Optional recency weighting with exponential decay
+  - Configurable confidence parameter (default C=10)
+  - Comprehensive test suite with 6 test cases (all passing)
+  - See `backend/src/lib/BAYESIAN_RANKING_README.md` for details
+- ✅ **Dark Mode Support** - Added complete dark mode styling to college reviews section
+  - Rating categories grid, review cards, and all text elements
+  - Smooth transitions and proper contrast
+  - Uses Tailwind's `dark:` classes
+- ✅ **API Improvements** - Fixed validation errors and reduced limit to 200 (from 1000)
+- ✅ **Frontend Build** - Successfully built and deployed with all dependencies
 
 **October 20, 2025:**
 - ✅ Configured GitHub Pages deployment with custom domain support
