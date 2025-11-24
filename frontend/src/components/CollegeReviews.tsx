@@ -326,8 +326,8 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
   return (
     <div className="space-y-6">
       {/* Main Rating Dashboard */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors duration-200">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-700 dark:to-purple-700 text-white p-6">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold mb-2">{collegeName}</h2>
@@ -343,7 +343,7 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
             {/* Always show Rate button */}
             <button 
               onClick={() => setShowReviewForm(true)}
-              className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center space-x-2 shadow-md"
+              className="bg-white dark:bg-gray-100 text-blue-600 dark:text-blue-700 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 dark:hover:bg-gray-200 transition-colors flex items-center space-x-2 shadow-md"
             >
               <Plus className="w-5 h-5" />
               <span>Rate</span>
@@ -353,7 +353,7 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
 
         {/* Rating Categories Grid */}
         {averageRatings && (
-          <div className="p-6">
+          <div className="p-6 dark:bg-gray-800 transition-colors duration-200">
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
               {RATING_CATEGORIES.map((category) => {
                 const rating = averageRatings[category.key as keyof CollegeRatings];
@@ -364,7 +364,7 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
                     <div className={`${category.color} text-white p-4 rounded-lg mb-2 mx-auto w-16 h-16 flex items-center justify-center shadow-md`}>
                       <IconComponent className="w-6 h-6" />
                     </div>
-                    <div className="text-sm font-medium text-gray-700 mb-1">{category.label}</div>
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{category.label}</div>
                     <div className={`inline-block px-3 py-1 rounded-full border text-lg font-bold ${getRatingColor(rating)}`}>
                       {formatRating(rating)}
                     </div>
@@ -374,7 +374,7 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
             </div>
             
             <div className="mt-6 text-center">
-              <p className="text-gray-600 text-sm">
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
                 Based on {total} student review{total !== 1 ? 's' : ''}
               </p>
             </div>
@@ -382,16 +382,16 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
         )}
 
         {!averageRatings && (
-          <div className="p-8 text-center">
+          <div className="p-8 text-center dark:bg-gray-800 transition-colors duration-200">
             <div className="mb-4">
-              <MessageSquare className="w-16 h-16 mx-auto text-gray-300" />
+              <MessageSquare className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">No reviews yet</h3>
-            <p className="text-gray-500 mb-6">Be the first to review {collegeName}!</p>
+            <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">No reviews yet</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">Be the first to review {collegeName}!</p>
             {/* Always show Rate button */}
             <button 
               onClick={() => setShowReviewForm(true)}
-              className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center space-x-2 mx-auto shadow-md"
+              className="bg-blue-600 dark:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors flex items-center space-x-2 mx-auto shadow-md"
             >
               <Plus className="w-5 h-5" />
               <span>Write First Review</span>
@@ -402,19 +402,19 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
 
       {/* Recent Reviews */}
       {reviews.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Reviews</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-200">
+          <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Reviews</h3>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
             {reviews.slice(0, 3).map((review) => (
-              <div key={review.id} className="p-6 hover:bg-gray-50 transition-colors">
+              <div key={review.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-4">
                     <div className={`inline-block px-3 py-1 rounded-full border text-lg font-bold ${getRatingColor(review.ratings.overall)}`}>
                       {formatRating(review.ratings.overall)}
                     </div>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
                       <span className="font-medium">{review.course_name}</span>
                       <span className="mx-2">•</span>
                       <span>{review.year_of_study}</span>
@@ -426,7 +426,7 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2 text-sm text-gray-500">
+                  <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
                     <Clock className="w-4 h-4" />
                     <span>{new Date(review.created_at).toLocaleDateString()}</span>
                   </div>
@@ -438,7 +438,7 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
                     const rating = review.ratings[category.key as keyof CollegeRatings];
                     return (
                       <div key={category.key} className="text-center">
-                        <div className="text-xs text-gray-600 mb-1">{category.label}</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">{category.label}</div>
                         <div className={`inline-block px-2 py-1 rounded text-sm font-medium ${getRatingColor(rating)}`}>
                           {formatRating(rating)}
                         </div>
@@ -448,10 +448,10 @@ export default function CollegeReviews({ collegeId, collegeName, canReview, onRe
                 </div>
                 
                 {review.review_text && (
-                  <p className="text-gray-700 mb-4 line-clamp-3">{review.review_text}</p>
+                  <p className="text-gray-700 dark:text-gray-300 mb-4 line-clamp-3">{review.review_text}</p>
                 )}
                 
-                <div className="flex items-center justify-between text-sm text-gray-500">
+                <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
                   <div className="flex items-center space-x-2">
                     <Users className="w-4 h-4" />
                     <span>Anonymous Student</span>
