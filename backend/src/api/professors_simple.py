@@ -169,7 +169,7 @@ async def search_professors(
     college_id: Optional[str] = Query(None, description="Filter by college ID"),
     q: Optional[str] = Query(None, description="Search by professor name"),
     department: Optional[str] = Query(None, description="Filter by department"),
-    limit: int = Query(20, ge=1, le=1000, description="Maximum results to return"),
+    limit: int = Query(20, ge=1, le=100, description="Maximum results to return"),
     offset: int = Query(0, ge=0, description="Number of records to skip"),
     supabase: Client = Depends(get_supabase)
 ):
