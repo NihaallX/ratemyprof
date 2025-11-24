@@ -88,7 +88,7 @@ async def get_platform_stats(
 @cache_response(ttl_seconds=300)  # Cache for 5 minutes
 async def get_top_rated_professors(
     limit: int = Query(6, ge=1, le=50, description="Number of top professors to return"),
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase_service)
 ):
     """Get top-rated professors for landing page showcase.
     
@@ -160,7 +160,7 @@ async def search_professors(
     department: Optional[str] = Query(None, description="Filter by department"),
     limit: int = Query(20, ge=1, le=200, description="Maximum results to return"),
     offset: int = Query(0, ge=0, description="Number of records to skip"),
-    supabase: Client = Depends(get_supabase)
+    supabase: Client = Depends(get_supabase_service)
 ):
     """Search professors with college information."""
     try:
