@@ -100,17 +100,23 @@ async def get_top_rated_professors(
     """
     try:
         print(f"🔍 Fetching top {limit} professors...")
+        print(f"🔑 Using service role client: {supabase._headers.get('apikey', 'unknown')[:20]}...")
         
         # Get ALL professors with reviews (we'll sort them in Python for better control)
-        query = (
-            supabase.table('professors')
-            .select('id, name, department, college_id, average_rating, total_reviews')
-            .gte('total_reviews', 1)  # At least 1 review to be considered
-            .limit(200)  # Get enough to sort properly
-        )
-        
-        result = query.execute()
-        print(f"📊 Fetched {len(result.data)} professors with reviews")
+        try:
+            query = (
+                supabase.table('professors')
+                .select('id, name, department, college_id, average_rating, total_reviews')
+                .gte('total_reviews', 1)  # At least 1 review to be considered
+                .limit(200)  # Get enough to sort properly
+            )
+            
+            result = query.execute()
+            print(f"📊 Fetched {len(result.data)} professors with reviews")
+        except Exception as db_error:
+            print(f"❌ Database query failed: {db_error}")
+            # Return empty result instead of crashing
+            return JSONResponse(content=[])
         
         # Sort by: 1) Review count (descending), 2) Rating (descending)
         # This ensures Dr. Jupinder Kaur (3 reviews, 4.7) ranks higher than 
