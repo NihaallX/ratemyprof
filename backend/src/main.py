@@ -111,27 +111,18 @@ if AUTO_BAN_ENABLED:
     app.middleware("http")(ip_ban_middleware)
     print("✅ IP ban middleware enabled")
 
-# CORS middleware - Restrict to allowed origins
-# Important: This must be added AFTER other middleware but BEFORE routes
+# CORS middleware - Configure to allow frontend origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=[
-        "Accept",
-        "Accept-Language",
-        "Content-Type",
-        "Authorization",
-        "X-Requested-With",
-        "Origin",
-        "X-CSRF-Token",
-    ],
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
     expose_headers=["*"],
-    max_age=3600,  # Cache preflight requests for 1 hour
+    max_age=3600,
 )
 
-print(f"✅ CORS middleware configured for: {', '.join(ALLOWED_ORIGINS)}")
+print(f"✅ CORS middleware active with {len(ALLOWED_ORIGINS)} allowed origins")
 
 
 # Global exception handler

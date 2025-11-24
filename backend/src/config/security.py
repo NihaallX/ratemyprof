@@ -19,24 +19,19 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))  # 24 hours default
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
-# CORS Configuration
-# Always allow these origins regardless of environment variable
-DEFAULT_ORIGINS = [
-    "https://ratemyprof.me",
-    "https://www.ratemyprof.me",
-    "http://localhost:3000",
-    "http://localhost:3001"
-]
+# CORS Configuration - Allow all necessary origins
+ALLOWED_ORIGINS_RAW = os.getenv(
+    "ALLOWED_ORIGINS",
+    "https://ratemyprof.me,https://www.ratemyprof.me,http://localhost:3000,http://localhost:3001"
+)
+ALLOWED_ORIGINS = [origin.strip() for origin in ALLOWED_ORIGINS_RAW.split(",") if origin.strip()]
 
-# Get additional origins from environment variable if set
-env_origins = os.getenv("ALLOWED_ORIGINS", "").strip()
-if env_origins:
-    additional_origins = [origin.strip() for origin in env_origins.split(",") if origin.strip()]
-    ALLOWED_ORIGINS = list(set(DEFAULT_ORIGINS + additional_origins))
-else:
-    ALLOWED_ORIGINS = DEFAULT_ORIGINS
-
-print(f"✅ CORS enabled for origins: {ALLOWED_ORIGINS}")
+# Log CORS configuration at startup
+print(f"\n{'='*60}")
+print(f"🌐 CORS Configuration:")
+for origin in ALLOWED_ORIGINS:
+    print(f"   ✓ {origin}")
+print(f"{'='*60}\n")
 
 # Rate Limiting Configuration
 RATE_LIMIT_LOGIN_ATTEMPTS = int(os.getenv("RATE_LIMIT_LOGIN_ATTEMPTS", "5"))
