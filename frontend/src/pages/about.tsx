@@ -96,18 +96,27 @@ export default function AboutPage() {
               {/* Founders */}
               <section className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
                 <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-6 text-center">The Founders</h2>
-                <div className="grid md:grid-cols-2 gap-8">
+                <div className="grid md:grid-cols-3 gap-8">
                   <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border dark:border-gray-700 transition-all duration-300">
                     <div className="w-24 h-24 mx-auto mb-4 bg-indigo-600 dark:bg-indigo-500 rounded-full flex items-center justify-center text-white text-3xl font-bold">
                       N
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Nihal Pardeshi</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Co-Founder</p>
                   </div>
                   <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border dark:border-gray-700 transition-all duration-300">
                     <div className="w-24 h-24 mx-auto mb-4 bg-indigo-600 dark:bg-indigo-500 rounded-full flex items-center justify-center text-white text-3xl font-bold">
                       G
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Gaurav Guddeti</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Co-Founder</p>
+                  </div>
+                  <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border dark:border-gray-700 transition-all duration-300">
+                    <div className="w-24 h-24 mx-auto mb-4 bg-indigo-600 dark:bg-indigo-500 rounded-full flex items-center justify-center text-white text-3xl font-bold">
+                      A
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Aishwarya Zinjurte</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Creative Director</p>
                   </div>
                 </div>
               </section>
