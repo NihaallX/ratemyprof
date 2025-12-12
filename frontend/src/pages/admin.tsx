@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
-import { Shield, Users, Flag, Check, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare, Bell, Settings, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { Shield, Users, Flag, Check, ArrowLeft, ThumbsUp, ThumbsDown, MessageSquare, Bell, Settings, ChevronLeft, ChevronRight, Trash2, ArrowUp } from 'lucide-react';
 import Link from 'next/link';
 import AdminLoginModal from '../components/AdminLoginModal';
 import NotificationSenderTemplates from '../components/NotificationSenderTemplates';
