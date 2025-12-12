@@ -181,6 +181,30 @@ async def mark_notifications_read(
     }
 
 
+@router.patch("/{notification_id}/read")
+async def mark_single_notification_read(
+    notification_id: str,
+    current_user = Depends(get_current_user)
+):
+    """Mark a single notification as read"""
+    supabase = get_supabase_service()
+    user_id = current_user.get('id')
+    
+    response = supabase.table("notifications")\
+        .update({"is_read": True, "read_at": datetime.utcnow().isoformat()})\
+        .eq("id", notification_id)\
+        .eq("user_id", user_id)\
+        .execute()
+    
+    if not response.data:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    
+    return {
+        "success": True,
+        "message": "Notification marked as read"
+    }
+
+
 @router.delete("/{notification_id}")
 async def delete_notification(
     notification_id: str,
