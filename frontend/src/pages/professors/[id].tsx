@@ -13,7 +13,6 @@ import ReviewSubmissionForm from '../../components/ReviewSubmissionForm';
 import FlagReviewButton from '../../components/FlagReviewButton';
 import ReviewVoting from '../../components/ReviewVoting';
 import CompareProfessors from '../../components/CompareProfessors';
-import ReviewThread from '../../components/ReviewThread';
 import { API_BASE_URL } from '../../config/api';
 import { 
   ArrowLeft, 
