@@ -263,7 +263,8 @@ async def create_college_review(
     The authenticated client ensures the user's JWT is included in all requests.
     """
     try:
-        print(f"\n{'='*80}")
+        separator = '=' * 80
+        print(f"\n{separator}")
         print(f"📝 CREATING COLLEGE REVIEW")
         print(f"   College ID: {request.college_id}")
         print(f"   User: {current_user['email']}")
@@ -394,7 +395,8 @@ async def create_college_review(
         }
         
         print(f"✅ COLLEGE REVIEW CREATED SUCCESSFULLY!")
-        print(f"{'='*80}\n")
+        separator = '=' * 80
+        print(f"{separator}\n")
         return CollegeReview(**response_data)
         
     except HTTPException:

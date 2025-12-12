@@ -27,11 +27,12 @@ ALLOWED_ORIGINS_RAW = os.getenv(
 ALLOWED_ORIGINS = [origin.strip() for origin in ALLOWED_ORIGINS_RAW.split(",") if origin.strip()]
 
 # Log CORS configuration at startup
-print(f"\n{'='*60}")
+separator = '=' * 60
+print(f"\n{separator}")
 print(f"🌐 CORS Configuration:")
 for origin in ALLOWED_ORIGINS:
     print(f"   ✓ {origin}")
-print(f"{'='*60}\n")
+print(f"{separator}\n")
 
 # Rate Limiting Configuration
 RATE_LIMIT_LOGIN_ATTEMPTS = int(os.getenv("RATE_LIMIT_LOGIN_ATTEMPTS", "5"))

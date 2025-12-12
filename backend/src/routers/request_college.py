@@ -110,7 +110,7 @@ def send_email(request: CollegeRequest):
     Name: {request.requester_name}
     Email: {request.requester_email}
     
-    {f"Additional Information:\n{request.additional_info}\n" if request.additional_info else ""}
+    {f"Additional Information:" if request.additional_info else ""}{f"{chr(10)}{request.additional_info}{chr(10)}" if request.additional_info else ""}
     
     Submitted: {datetime.now().strftime('%B %d, %Y at %I:%M %p IST')}
     
