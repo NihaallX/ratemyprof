@@ -13,6 +13,7 @@ from supabase import Client, create_client
 from src.lib.database import get_supabase, get_supabase_service
 from src.lib.auth import get_current_user, get_optional_current_user, get_authenticated_supabase
 from src.services.auto_flagging import AutoFlaggingSystem
+from src.lib.events import emit_review_created, emit_review_helpful_vote
 
 router = APIRouter()
 security = HTTPBearer()
@@ -275,6 +276,19 @@ async def create_review(
         
         print(f"✅ Review created successfully: {review_data['id']}")
         print(f"📊 Review data keys: {review_data.keys()}")
+        
+        # Emit event for notification system (async, non-blocking)
+        try:
+            await emit_review_created(
+                review_id=str(review_data['id']),
+                author_id=current_user['id'],
+                professor_id=request.professor_id,
+                rating=float(review_data['overall_rating'])
+            )
+            print(f"📢 Review created event emitted for review {review_data['id']}")
+        except Exception as event_error:
+            # Log but don't fail the request if event emission fails
+            print(f"⚠️ Failed to emit review created event: {str(event_error)}")
         
         # Return simple dict response (avoid Pydantic serialization issues)
         return {
@@ -838,6 +852,19 @@ async def vote_on_review(
                     'helpful_count': new_helpful,
                     'not_helpful_count': new_not_helpful
                 }).eq('id', review_id).execute()
+                
+                # Emit event for helpful votes (notifications only for helpful, not downvotes)
+                if helpful_delta > 0 and new_helpful > 0:
+                    try:
+                        await emit_review_helpful_vote(
+                            review_id=review_id,
+                            voter_id=user_id,
+                            vote_count=new_helpful
+                        )
+                        print(f"📢 Review helpful vote event emitted: review={review_id}, count={new_helpful}")
+                    except Exception as event_error:
+                        # Log but don't fail the request
+                        print(f"⚠️ Failed to emit helpful vote event: {str(event_error)}")
                 
                 return {
                     "message": f"Vote {action}",

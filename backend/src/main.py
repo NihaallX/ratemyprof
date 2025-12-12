@@ -29,7 +29,8 @@ from src.api.college_reviews import router as college_reviews_router
 from src.api.moderation import router as moderation_router
 from src.api.user_limits import router as user_limits_router
 from src.api.college_review_moderation import router as college_review_moderation_router
-from src.routers.notifications import router as notifications_router
+from src.api.notifications import router as notifications_router  # Updated to new unified system
+from src.api.comments import router as comments_router  # Threaded comments system
 from src.routers.settings import router as settings_router
 from src.routers.request_college import router as request_college_router
 from src.config.security import ALLOWED_ORIGINS, SECURITY_HEADERS, DOCS_ENABLED, AUTO_BAN_ENABLED
@@ -389,6 +390,18 @@ app.include_router(
     request_college_router,
     prefix="/api",
     tags=["College Requests"]
+)
+
+app.include_router(
+    comments_router,
+    prefix="/v1/comments",
+    tags=["Comments"]
+)
+
+app.include_router(
+    comments_router,
+    prefix="/api/comments",
+    tags=["Comments (Legacy)"]
 )
 
 

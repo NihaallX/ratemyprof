@@ -3,8 +3,8 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   
-  // Enable static export for GitHub Pages
-  output: 'export',
+  // Enable static export for GitHub Pages (disabled for local dev)
+  // output: 'export',
   
   // Add trailing slash to URLs for GitHub Pages compatibility
   trailingSlash: true,

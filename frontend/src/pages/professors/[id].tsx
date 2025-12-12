@@ -13,6 +13,7 @@ import ReviewSubmissionForm from '../../components/ReviewSubmissionForm';
 import FlagReviewButton from '../../components/FlagReviewButton';
 import ReviewVoting from '../../components/ReviewVoting';
 import CompareProfessors from '../../components/CompareProfessors';
+import ReviewThread from '../../components/ReviewThread';
 import { API_BASE_URL } from '../../config/api';
 import { 
   ArrowLeft, 
@@ -735,6 +736,15 @@ export default function ProfessorProfile() {
                               // Optionally refresh reviews or show a success message
                               console.log('Review flagged successfully');
                             }}
+                          />
+                        </div>
+
+                        {/* Comments Thread */}
+                        <div className="mt-4 border-t border-gray-100 dark:border-gray-700 pt-4">
+                          <ReviewThread 
+                            resourceType="review"
+                            resourceId={review.id}
+                            className="bg-gray-50 dark:bg-gray-900/30 p-4 rounded-lg"
                           />
                         </div>
                       </div>
