@@ -737,15 +737,6 @@ export default function ProfessorProfile() {
                             }}
                           />
                         </div>
-
-                        {/* Comments Thread */}
-                        <div className="mt-4 border-t border-gray-100 dark:border-gray-700 pt-4">
-                          <ReviewThread 
-                            resourceType="review"
-                            resourceId={review.id}
-                            className="bg-gray-50 dark:bg-gray-900/30 p-4 rounded-lg"
-                          />
-                        </div>
                       </div>
                     ))}
                   </div>
