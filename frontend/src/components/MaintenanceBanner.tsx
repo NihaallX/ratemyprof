@@ -11,7 +11,7 @@ export default function MaintenanceBanner() {
         // Use v1 route directly (API_BASE_URL already has /v1)
         const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replaceAll('/v1', '') || 
                        (typeof window !== 'undefined' && window.location.hostname !== 'localhost' 
-                         ? 'https://ratemyprof-production-2993.up.railway.app' 
+                         ? 'https://ratemyprof-bay.vercel.app' 
                          : 'http://localhost:8000');
         
         const response = await fetch(`${apiUrl}/api/settings/maintenance`)
