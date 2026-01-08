@@ -15,7 +15,7 @@ const path = require('path');
 
 // Configuration
 const SITE_URL = 'https://ratemyprof.me';
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.ratemyprof.me/v1';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ratemyprof-backend.onrender.com/v1';
 const OUTPUT_PATH = path.join(__dirname, '../public/sitemap.xml');
 
 // Static pages with priority and change frequency
