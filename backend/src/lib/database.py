@@ -15,14 +15,18 @@ import pathlib
 # The .env file is in the backend directory (2 levels up from src/lib/)
 backend_env_path = pathlib.Path(__file__).parent.parent.parent / ".env"
 
-# Load from backend directory
-if backend_env_path.exists():
-    load_dotenv(backend_env_path)
-    print(f"✅ Loaded .env from backend directory: {backend_env_path}")
+# Skip dotenv loading on Vercel (uses environment variables directly)
+if not os.getenv("SKIP_DOTENV"):
+    # Load from backend directory
+    if backend_env_path.exists():
+        load_dotenv(backend_env_path)
+        print(f"✅ Loaded .env from backend directory: {backend_env_path}")
+    else:
+        print(f"⚠️ .env not found at: {backend_env_path}")
+        print(f"Current file: {__file__}")
+        print(f"Calculated backend path: {backend_env_path}")
 else:
-    print(f"⚠️ .env not found at: {backend_env_path}")
-    print(f"Current file: {__file__}")
-    print(f"Calculated backend path: {backend_env_path}")
+    print("ℹ️ Skipping .env file (using environment variables directly)")
 
 # Supabase configuration
 SUPABASE_URL = os.getenv("SUPABASE_URL")
