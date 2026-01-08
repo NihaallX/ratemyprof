@@ -12,5 +12,5 @@ sys.path.insert(0, str(backend_dir))
 
 from src.main import app
 
-# Vercel will call this handler
-handler = app
+# Export for Vercel ASGI
+app = app
