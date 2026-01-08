@@ -799,7 +799,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 - All beta testers and early users
 - Contributors to open-source dependencies
 - Supabase for excellent BaaS platform
-- Vercel for Next.js framework
+- Next.js team for amazing React framework
 - FastAPI team for amazing Python framework
 
 ### Compliance
