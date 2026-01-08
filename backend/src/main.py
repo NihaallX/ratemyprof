@@ -252,7 +252,7 @@ async def health_check(request: Request):
 @app.get("/", tags=["Root"], include_in_schema=False)
 async def root():
     """Root endpoint - Returns minimal API information."""
-    base_url = "https://ratemyprof-production.up.railway.app" if os.getenv("ENVIRONMENT") == "production" else "http://localhost:8000"
+    base_url = "https://ratemyprof-backend.onrender.com" if os.getenv("ENVIRONMENT") == "production" else "http://localhost:8000"
     
     return {
         "service": "RateMyProf India API",

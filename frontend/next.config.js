@@ -18,7 +18,7 @@ const nextConfig = {
   // basePath: '/ratemyprof', // Uncomment if using project pages instead of custom domain
   
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://ratemyprof-backend.onrender.com/v1',
   },
   
   // Note: rewrites() doesn't work with static export
