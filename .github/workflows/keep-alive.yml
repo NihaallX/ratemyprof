@@ -14,7 +14,7 @@ jobs:
       - name: Ping Health Endpoint
         run: |
           echo "🤖 Pinging backend to prevent cold start..."
-          response=$(curl -s -o /dev/null -w "%{http_code}" https://your-app.onrender.com/health)
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://ratemyprof-backend.onrender.com/health)
           
           if [ $response -eq 200 ]; then
             echo "✅ Backend is alive! Status: $response"
