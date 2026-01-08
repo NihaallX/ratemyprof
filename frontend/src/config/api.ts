@@ -4,9 +4,9 @@
  */
 
 // Backend API base URL
-// Priority: env variable > production URL (always use in build) > localhost fallback
+// Priority: env variable > production Render URL
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 
-                            'https://ratemyprof-bay.vercel.app/v1';
+                            'https://ratemyprof-backend.onrender.com/v1';
 
 // API base without /v1 suffix for endpoints that don't use it
 export const API_BASE = API_BASE_URL.replaceAll('/v1', '');

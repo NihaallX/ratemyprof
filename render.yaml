@@ -27,7 +27,7 @@ services:
       
       # CORS Configuration
       - key: ALLOWED_ORIGINS
-        value: http://localhost:3000,https://yourdomain.com,https://www.yourdomain.com
+        value: http://localhost:3000,https://ratemyprof.me,https://www.ratemyprof.me,https://ratemyprof-backend.onrender.com
       
       # Database Configuration
       - key: DATABASE_URL

@@ -8,7 +8,7 @@ from datetime import datetime
 import sys
 
 # Configuration
-BACKEND_URL = "https://your-app.onrender.com/health"  # Replace with your Render URL
+BACKEND_URL = "https://ratemyprof-backend.onrender.com/health"
 INTERVAL_SECONDS = 840  # 14 minutes
 TIMEOUT = 30  # Request timeout in seconds
 
