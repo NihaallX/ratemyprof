@@ -26,6 +26,13 @@ ALLOWED_ORIGINS_RAW = os.getenv(
 )
 ALLOWED_ORIGINS = [origin.strip() for origin in ALLOWED_ORIGINS_RAW.split(",") if origin.strip()]
 
+# Ensure critical domains are always included (production safety)
+CRITICAL_DOMAINS = ["https://ratemyprof.me", "https://www.ratemyprof.me"]
+for domain in CRITICAL_DOMAINS:
+    if domain not in ALLOWED_ORIGINS:
+        ALLOWED_ORIGINS.append(domain)
+        print(f"⚠️  Added missing critical domain: {domain}")
+
 # Log CORS configuration at startup
 separator = '=' * 60
 print(f"\n{separator}")
