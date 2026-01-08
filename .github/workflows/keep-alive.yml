@@ -1,0 +1,27 @@
+name: Keep Backend Alive on Render
+
+on:
+  schedule:
+    # Runs every 14 minutes (keeps free tier awake)
+    - cron: '*/14 * * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  ping-backend:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Ping Health Endpoint
+        run: |
+          echo "🤖 Pinging backend to prevent cold start..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://your-app.onrender.com/health)
+          
+          if [ $response -eq 200 ]; then
+            echo "✅ Backend is alive! Status: $response"
+          else
+            echo "⚠️ Backend returned status: $response"
+            exit 1
+          fi
+      
+      - name: Log Timestamp
+        run: echo "Last ping at $(date)"
