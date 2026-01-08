@@ -9,7 +9,9 @@ import { BackgroundPaths } from '../../components/ui/background-paths';
 import { FeaturesSectionWithHoverEffects } from '../../components/ui/feature-section-with-hover-effects';
 
 // Use Next.js environment variable for API URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1';
+import { API_BASE_URL } from '../../config/api';
+
+const API_URL = API_BASE_URL;
 
 console.log('Landing Page - Using API URL:', API_URL);
 

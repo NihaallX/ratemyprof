@@ -89,7 +89,7 @@ export default function CollegeDetail() {
         setIsLoading(true);
         
         // Fetch college details - using validated ID parameter
-        const collegeUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1'}/colleges/${collegeId}`;
+        const collegeUrl = `${process.env.NEXT_PUBLIC_API_URL || 'https://ratemyprof-backend.onrender.com/v1'}/colleges/${collegeId}`;
         console.log('🔍 Fetching college from:', collegeUrl);
         const collegeResponse = await fetch(collegeUrl);
         console.log('📡 College response status:', collegeResponse.status);
@@ -105,7 +105,7 @@ export default function CollegeDetail() {
         setCollege(collegeData);
         
         // Fetch ALL professors for this college (backend max limit is 200) - using validated ID
-        const professorsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1'}/professors?college_id=${collegeId}&limit=200`);
+        const professorsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://ratemyprof-backend.onrender.com/v1'}/professors?college_id=${collegeId}&limit=200`);
         
         if (professorsResponse.ok) {
           const professorsData = await professorsResponse.json();

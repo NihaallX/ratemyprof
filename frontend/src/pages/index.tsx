@@ -142,7 +142,7 @@ function AuthenticatedHomePage() {
   const loadTopRated = async () => {
     try {
       // Load top-rated professors - use the new endpoint with proper sorting
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/v1';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ratemyprof-backend.onrender.com/v1';
       console.log('Fetching top-rated from:', `${apiUrl}/professors/top-rated?limit=6`);
       
       const profResponse = await fetch(`${apiUrl}/professors/top-rated?limit=6`, {

@@ -10,9 +10,7 @@ export default function MaintenanceBanner() {
       try {
         // Use v1 route directly (API_BASE_URL already has /v1)
         const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replaceAll('/v1', '') || 
-                       (typeof window !== 'undefined' && window.location.hostname !== 'localhost' 
-                         ? 'https://ratemyprof-bay.vercel.app' 
-                         : 'http://localhost:8000');
+                       'https://ratemyprof-backend.onrender.com';
         
         const response = await fetch(`${apiUrl}/api/settings/maintenance`)
         

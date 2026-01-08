@@ -138,7 +138,7 @@ export default function PrivacyPage() {
               </p>
               <ul className="list-disc pl-6 space-y-2 text-gray-700 mb-4">
                 <li><strong>Supabase</strong> - Database hosting provider (encrypted storage)</li>
-                <li><strong>Railway/Vercel</strong> - Application hosting providers</li>
+                <li><strong>Render</strong> - Application hosting provider</li>
                 <li><strong>Sentry</strong> - Error monitoring (anonymized error logs only)</li>
               </ul>
               
