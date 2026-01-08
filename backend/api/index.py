@@ -15,6 +15,14 @@ sys.path.insert(0, str(backend_dir))
 # Vercel doesn't use .env files, so skip dotenv loading
 os.environ['SKIP_DOTENV'] = '1'
 
+# Debug: Print environment to verify variables are loaded
+print("=" * 60)
+print("🔍 Vercel Environment Check:")
+print(f"SUPABASE_URL: {'✅ Set' if os.getenv('SUPABASE_URL') else '❌ Missing'}")
+print(f"JWT_SECRET_KEY: {'✅ Set' if os.getenv('JWT_SECRET_KEY') else '❌ Missing'}")
+print(f"ALLOWED_ORIGINS: {os.getenv('ALLOWED_ORIGINS', 'Not set')}")
+print("=" * 60)
+
 try:
     from src.main import app
     
@@ -28,7 +36,17 @@ except Exception as e:
     print(f"❌ Error loading FastAPI app: {str(e)}")
     import traceback
     traceback.print_exc()
-    raise
+    # Create a minimal error app
+    from fastapi import FastAPI
+    app = FastAPI()
+    
+    @app.get("/")
+    async def error():
+        return {"error": str(e), "message": "Failed to load main app"}
+    
+    @app.get("/health")
+    async def health():
+        return {"status": "error", "details": str(e)}
 
 # Export for Vercel ASGI
 app = app
