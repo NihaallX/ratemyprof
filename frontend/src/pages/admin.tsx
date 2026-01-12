@@ -13,7 +13,7 @@ import { supabase } from '../lib/supabase';
 import { Professor } from '../services/api';
 import { API_BASE_URL, API_BASE } from '../config/api';
 
-type AdminTab = 'dashboard' | 'reviews' | 'professors' | 'users' | 'all-professors' | 'pending-approval' | 'professor-reviews' | 'college-reviews' | 'community-threads' | 'notifications' | 'settings';
+type AdminTab = 'dashboard' | 'reviews' | 'professors' | 'users' | 'all-professors' | 'pending-approval' | 'professor-reviews' | 'college-reviews' | 'notifications' | 'settings';
 
 const AdminPage: NextPage = () => {
   const router = useRouter();
@@ -85,10 +85,6 @@ const AdminPage: NextPage = () => {
   });
   const [collegeReviewStatusFilter, setCollegeReviewStatusFilter] = useState<string>('pending');
   const [isLoadingCollegeReviews, setIsLoadingCollegeReviews] = useState(false);
-
-  // Community Threads state
-  const [communityThreads, setCommunityThreads] = useState([]);
-  const [isLoadingCommunityThreads, setIsLoadingCommunityThreads] = useState(false);
 
   // Maintenance mode state
   const [maintenanceModeEnabled, setMaintenanceModeEnabled] = useState(false);
@@ -1050,77 +1046,6 @@ const AdminPage: NextPage = () => {
     }
   };
 
-  // Community Threads Functions
-  const loadCommunityThreads = async () => {
-    setIsLoadingCommunityThreads(true);
-    try {
-      const adminToken = getAdminToken();
-      if (!adminToken) {
-        setIsLoadingCommunityThreads(false);
-        return;
-      }
-
-      const headers = {
-        'Authorization': `Bearer ${adminToken}`,
-        'Content-Type': 'application/json'
-      };
-
-      const response = await fetch(
-        `${API_BASE}/api/comments/community/00000000-0000-0000-0000-000000000000`,
-        { headers }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        setCommunityThreads(data.comments || []);
-      } else {
-        console.error('Failed to load community threads:', response.status);
-      }
-    } catch (error) {
-      console.error('Failed to load community threads:', error);
-      showToast('Failed to load community threads', 'error');
-    } finally {
-      setIsLoadingCommunityThreads(false);
-    }
-  };
-
-  const deleteCommunityThread = async (threadId: string) => {
-    showConfirm(
-      'Are you sure you want to DELETE this thread? This action cannot be undone!',
-      async () => {
-        try {
-          const adminToken = getAdminToken();
-          if (!adminToken) {
-            showToast('Admin session not found. Please refresh the page.', 'error');
-            return;
-          }
-
-          const response = await fetch(
-            `${API_BASE}/api/comments/${threadId}`,
-            {
-              method: 'DELETE',
-              headers: {
-                'Authorization': `Bearer ${adminToken}`,
-                'Content-Type': 'application/json'
-              }
-            }
-          );
-
-          if (response.ok) {
-            showToast('Thread deleted successfully', 'success');
-            await loadCommunityThreads(); // Reload
-          } else {
-            const errorData = await response.json().catch(() => ({}));
-            showToast(`Failed to delete thread: ${errorData.detail || response.statusText}`, 'error');
-          }
-        } catch (error) {
-          console.error('Failed to delete thread:', error);
-          showToast('Network error: Failed to delete thread', 'error');
-        }
-      }
-    );
-  };
-
   const handleCollegeReviewFlagAction = async (flagId: string, action: 'approve_flag' | 'dismiss_flag') => {
     try {
       // Get admin token - check sessionStorage first (new secure method), then localStorage (legacy)
@@ -1188,13 +1113,6 @@ const AdminPage: NextPage = () => {
       loadProfessorReviews();
     }
   }, [isAdmin, activeTab, professorReviewStatusFilter]);
-
-  // Load community threads when tab changes
-  useEffect(() => {
-    if (isAdmin && activeTab === 'community-threads') {
-      loadCommunityThreads();
-    }
-  }, [isAdmin, activeTab]);
 
   // Handle navigation scroll arrows
   useEffect(() => {
@@ -1513,17 +1431,6 @@ const AdminPage: NextPage = () => {
                 }`}
               >
                 College Reviews
-              </button>
-              <button
-                onClick={() => setActiveTab('community-threads')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-1 ${
-                  activeTab === 'community-threads'
-                    ? 'border-indigo-500 text-indigo-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <MessageSquare className="w-4 h-4" />
-                Community Threads
               </button>
               <button
                 onClick={() => setActiveTab('notifications')}
@@ -2649,116 +2556,6 @@ const AdminPage: NextPage = () => {
                         </div>
                       </div>
                     ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Community Threads Tab */}
-          {activeTab === 'community-threads' && (
-            <div className="bg-white rounded-lg shadow">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Community Forum Threads</h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  Manage and moderate community forum threads. Delete inappropriate or spam threads.
-                </p>
-              </div>
-              <div className="p-6">
-                {isLoadingCommunityThreads ? (
-                  <div className="flex flex-col items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-                    <p className="text-gray-600">Loading threads...</p>
-                  </div>
-                ) : communityThreads.length === 0 ? (
-                  <div className="text-center py-8">
-                    <MessageSquare className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                    <p className="text-gray-500">No community threads found</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {communityThreads.map((thread: any) => {
-                      // Parse content: [CATEGORY:category]\nTitle\n\nBody
-                      const parseContent = (content: string) => {
-                        const lines = content.split('\\n');
-                        let category = 'General';
-                        let title = 'Untitled';
-                        let body = content;
-                        
-                        if (lines[0].startsWith('[CATEGORY:')) {
-                          const categoryMatch = lines[0].match(/\\[CATEGORY:(.+?)\\]/);
-                          if (categoryMatch) {
-                            const parts = categoryMatch[1].split(':');
-                            category = parts[parts.length - 1];
-                          }
-                          title = lines[1] || 'Untitled';
-                          body = lines.slice(2).join('\\n').trim();
-                        } else {
-                          title = lines[0] || 'Untitled';
-                          body = lines.slice(1).join('\\n').trim();
-                        }
-                        
-                        return { category, title, body };
-                      };
-
-                      const { category, title, body } = parseContent(thread.content);
-                      const authorName = thread.author?.first_name 
-                        ? `${thread.author.first_name} ${thread.author.last_name}` 
-                        : thread.author?.email?.split('@')[0] || 'Anonymous';
-
-                      return (
-                        <div key={thread.id} className="border rounded-lg p-4 hover:bg-gray-50">
-                          <div className="flex justify-between items-start mb-3">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 font-medium">
-                                  {category}
-                                </span>
-                                <span className="text-sm text-gray-500">
-                                  by {authorName}
-                                </span>
-                              </div>
-                              <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                                {title}
-                              </h4>
-                              <div className={expandedReviews.has(thread.id) ? '' : 'line-clamp-2'}>
-                                <p className="text-gray-700 text-sm whitespace-pre-wrap">
-                                  {body}
-                                </p>
-                              </div>
-                              {body.length > 150 && (
-                                <button
-                                  onClick={() => toggleReviewExpansion(thread.id)}
-                                  className="text-indigo-600 hover:text-indigo-800 text-sm font-medium mt-2"
-                                >
-                                  {expandedReviews.has(thread.id) ? 'Show Less' : 'Read More'}
-                                </button>
-                              )}
-                            </div>
-                            <button
-                              onClick={() => deleteCommunityThread(thread.id)}
-                              className="ml-4 flex items-center gap-1 px-3 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                              Delete
-                            </button>
-                          </div>
-                          <div className="flex items-center gap-4 text-sm text-gray-500 mt-3 pt-3 border-t border-gray-100">
-                            <span className="flex items-center gap-1">
-                              <ArrowUp className="w-4 h-4" />
-                              {thread.upvotes} upvotes
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <MessageSquare className="w-4 h-4" />
-                              {thread.reply_count} replies
-                            </span>
-                            <span className="ml-auto">
-                              {new Date(thread.created_at).toLocaleString()}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
                   </div>
                 )}
               </div>

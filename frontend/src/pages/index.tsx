@@ -487,12 +487,6 @@ function AuthenticatedHomePage() {
               {/* Navigation Links - Only for logged in users */}
               {user ? (
                 <>
-                  <Link
-                    href="/community"
-                    className="text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium"
-                  >
-                    Community
-                  </Link>
                   {user.email?.endsWith('@ratemyprof.in') && (
                     <Link
                       href="/admin"
@@ -557,14 +551,6 @@ function AuthenticatedHomePage() {
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Add Professor
-                    </Link>
-                    
-                    <Link
-                      href="/community"
-                      className="text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Community Forum
                     </Link>
                     
                     {user.email?.endsWith('@ratemyprof.in') && (
