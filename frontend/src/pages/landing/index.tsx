@@ -24,6 +24,7 @@ export default function EnhancedLandingPage() {
   const [statsLoading, setStatsLoading] = useState(true);
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [topProfessors, setTopProfessors] = useState<Professor[]>([]);
+  const [mounted, setMounted] = useState(false);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll();
@@ -33,6 +34,11 @@ export default function EnhancedLandingPage() {
 
   const { user, loading } = useAuth();
   const isAuthenticated = !loading && !!user;
+
+  // Mount detection for SSR
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fetch real data from your backend
   useEffect(() => {
