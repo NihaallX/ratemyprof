@@ -7,6 +7,7 @@ import ProfessorCard, { Professor } from '../../components/landing/ProfessorCard
 import { throttle, prefersReducedMotion, isLowPowerMode } from '../../utils/landing/helpers';
 import { BackgroundPaths } from '../../components/ui/background-paths';
 import { FeaturesSectionWithHoverEffects } from '../../components/ui/feature-section-with-hover-effects';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Use Next.js environment variable for API URL
 import { API_BASE_URL } from '../../config/api';
@@ -23,7 +24,6 @@ export default function EnhancedLandingPage() {
   const [statsLoading, setStatsLoading] = useState(true);
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [topProfessors, setTopProfessors] = useState<Professor[]>([]);
-  const [mounted, setMounted] = useState(false);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll();
@@ -31,53 +31,8 @@ export default function EnhancedLandingPage() {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 0.3], [1, 0.8]);
 
-  // Check if user is already authenticated - show them a redirect option
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
-  // Mount detection for SSR
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-  
-  useEffect(() => {
-    // Check for session in localStorage (Supabase auth)
-    const checkAuth = async () => {
-      try {
-        // Only check if on landing page AND not coming from app (prevent redirect loops)
-        const fromApp = sessionStorage.getItem('from_app');
-        if (fromApp === 'true') {
-          // User just signed out from app, don't redirect back
-          sessionStorage.removeItem('from_app');
-          return;
-        }
-        
-        // Check for Supabase session in localStorage
-        const supabaseAuthKey = Object.keys(localStorage).find(key => 
-          key.startsWith('sb-') && key.includes('-auth-token')
-        );
-        
-        if (supabaseAuthKey) {
-          const authData = localStorage.getItem(supabaseAuthKey);
-          if (authData) {
-            try {
-              const parsed = JSON.parse(authData);
-              // Check if session exists and is valid (not expired)
-              if (parsed && parsed.access_token) {
-                setIsAuthenticated(true);
-              }
-            } catch (e) {
-              console.log('Error parsing auth data');
-            }
-          }
-        }
-      } catch (error) {
-        // Not authenticated, stay on landing page
-        console.log('User not authenticated, showing landing page');
-      }
-    };
-    
-    checkAuth();
-  }, []);
+  const { user, loading } = useAuth();
+  const isAuthenticated = !loading && !!user;
 
   // Fetch real data from your backend
   useEffect(() => {
@@ -243,7 +198,7 @@ export default function EnhancedLandingPage() {
                 }}
                 className="px-4 sm:px-6 py-2 bg-white text-green-600 rounded-full text-sm font-bold hover:bg-gray-100 transition-colors shadow-lg flex items-center gap-2"
               >
-                <span>Go to App</span>
+                <span>Go to site</span>
                 <span className="text-lg">→</span>
               </motion.button>
             </div>
@@ -263,22 +218,36 @@ export default function EnhancedLandingPage() {
           </motion.div>
           
           <div className="flex gap-4 items-center">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleAuthClick('signin')}
-              className="px-6 py-2 text-white hover:text-primary transition-colors"
-            >
-              Sign In
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(99, 102, 241, 0.5)' }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleAuthClick('signup')}
-              className="px-6 py-2 bg-gradient-to-r from-primary to-secondary rounded-full text-white font-semibold"
-            >
-              Sign Up
-            </motion.button>
+            {isAuthenticated ? (
+              <motion.button
+                whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(99, 102, 241, 0.5)' }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => goToApp('/')}
+                className="px-6 py-2 bg-gradient-to-r from-primary to-secondary rounded-full text-white font-semibold flex items-center gap-2"
+              >
+                <span>Go to site</span>
+                <span>→</span>
+              </motion.button>
+            ) : (
+              <>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleAuthClick('signin')}
+                  className="px-6 py-2 text-white hover:text-primary transition-colors"
+                >
+                  Sign In
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(99, 102, 241, 0.5)' }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleAuthClick('signup')}
+                  className="px-6 py-2 bg-gradient-to-r from-primary to-secondary rounded-full text-white font-semibold"
+                >
+                  Sign Up
+                </motion.button>
+              </>
+            )}
           </div>
         </div>
       </nav>
