@@ -286,57 +286,113 @@ export default function EnhancedLandingPage() {
       {/* Hero Section */}
       <motion.section
         style={{ opacity: heroOpacity, scale: heroScale }}
-        className="relative min-h-screen h-screen flex items-center justify-center overflow-hidden pt-20 pb-24 sm:pb-32"
+        className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
       >
-        {/* Animated background paths */}
-        <div className="absolute inset-0">
-          <BackgroundPaths 
-            title="Rate My Prof"
-            buttonText="Explore"
-            onButtonClick={() => {
-              // Set flag to show main app (browse mode) for unauthenticated users
-              sessionStorage.setItem('browse_app', 'true');
-              window.location.href = '/';
-            }}
-          />
+        {/* Animated background — purely decorative, no content */}
+        <div className="absolute inset-0 pointer-events-none">
+          {/* Gradient background */}
+          <div className="absolute inset-0 bg-gray-950" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[1200px] bg-gradient-to-br from-indigo-600/30 via-indigo-500/20 to-blue-600/30 rounded-full blur-3xl" />
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-br from-indigo-500/20 via-indigo-400/15 to-transparent rounded-full blur-2xl" />
+          {/* Floating animated paths (SVG lines) */}
+          <svg className="w-full h-full absolute inset-0" viewBox="0 0 696 316" fill="none" preserveAspectRatio="xMidYMid slice">
+            <title>Background Paths</title>
+            <defs>
+              <linearGradient id="heroGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#6366f1" stopOpacity="0.8" />
+                <stop offset="50%" stopColor="#818cf8" stopOpacity="0.6" />
+                <stop offset="100%" stopColor="#a5b4fc" stopOpacity="0.4" />
+              </linearGradient>
+            </defs>
+            {Array.from({ length: 20 }, (_, i) => (
+              <path
+                key={i}
+                d={`M-${380 - i * 5} -${189 + i * 6}C-${380 - i * 5} -${189 + i * 6} -${312 - i * 5} ${216 - i * 6} ${152 - i * 5} ${343 - i * 6}C${616 - i * 5} ${470 - i * 6} ${684 - i * 5} ${875 - i * 6} ${684 - i * 5} ${875 - i * 6}`}
+                stroke="url(#heroGradient)"
+                strokeWidth={0.5 + i * 0.04}
+                strokeOpacity={0.15 + i * 0.02}
+              />
+            ))}
+          </svg>
         </div>
 
-        {/* Overlay content - subtitle and stats */}
-        <div className="absolute bottom-16 sm:bottom-24 md:bottom-32 left-0 right-0 z-20 text-center px-4">
+        {/* Hero content — single vertical column, no overlap */}
+        <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 w-full pt-24 pb-16 gap-6 sm:gap-8">
+
+          {/* Main title with letter animation */}
+          <motion.h1
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 2 }}
+            className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-hero leading-tight text-white"
+            style={{ textShadow: '0 0 60px rgba(99,102,241,0.5), 0 0 30px rgba(129,140,248,0.3)' }}
+          >
+            {'Rate My Prof'.split(' ').map((word, wi) => (
+              <span key={wi} className="inline-block mr-4 last:mr-0">
+                {word.split('').map((letter, li) => (
+                  <motion.span
+                    key={`${wi}-${li}`}
+                    initial={{ y: 100, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: wi * 0.1 + li * 0.03, type: 'spring', stiffness: 150, damping: 25 }}
+                    className="inline-block cursor-default"
+                  >
+                    {letter}
+                  </motion.span>
+                ))}
+              </span>
+            ))}
+          </motion.h1>
+
+          {/* Subtitle */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
-            className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-300 dark:text-gray-400 mb-8 sm:mb-10 md:mb-12 max-w-2xl mx-auto px-4"
+            className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-300 max-w-2xl"
           >
-            India's Premier Platform for Professor Reviews & Ratings
+            India's Premier Platform for Professor Reviews &amp; Ratings
           </motion.p>
 
-          {/* Stats */}
+          {/* CTA Button */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-            className="flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-8 lg:gap-12 text-white"
+            transition={{ duration: 0.8, delay: 0.9 }}
           >
-            <div className="text-center backdrop-blur-sm bg-indigo-500/10 dark:bg-indigo-900/20 px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-indigo-400/20 dark:border-indigo-500/20 min-w-[100px] sm:min-w-[120px]">
-              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gradient mb-1">
-                {statsLoading ? '...' : stats.professors.toLocaleString()}
+            <button
+              onClick={() => { window.location.href = '/auth/login'; }}
+              className="group px-8 py-4 text-base sm:text-lg font-semibold backdrop-blur-md
+                bg-white/10 hover:bg-white/20 text-white transition-all duration-300
+                border border-white/20 hover:border-white/40 rounded-2xl
+                hover:shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5"
+            >
+              <span className="opacity-90 group-hover:opacity-100 transition-opacity">Get Started</span>
+              <span className="ml-3 opacity-70 group-hover:opacity-100 group-hover:translate-x-1.5 transition-all duration-300 inline-block">→</span>
+            </button>
+          </motion.div>
+
+          {/* Stats row */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.1 }}
+            className="flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-8 lg:gap-12 text-white mt-2"
+          >
+            {[
+              { value: stats.professors, label: 'Professors' },
+              { value: stats.colleges,   label: 'Colleges'   },
+            ].map(({ value, label }) => (
+              <div
+                key={label}
+                className="text-center backdrop-blur-sm bg-indigo-500/10 px-4 sm:px-6 py-2 sm:py-3 rounded-xl border border-indigo-400/20 min-w-[100px] sm:min-w-[120px]"
+              >
+                <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gradient mb-1">
+                  {statsLoading ? '...' : value.toLocaleString()}
+                </div>
+                <div className="text-xs sm:text-sm text-indigo-300">{label}</div>
               </div>
-              <div className="text-xs sm:text-sm text-indigo-300 dark:text-indigo-400">Professors</div>
-            </div>
-            <div className="text-center backdrop-blur-sm bg-indigo-500/10 dark:bg-indigo-900/20 px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-indigo-400/20 dark:border-indigo-500/20 min-w-[100px] sm:min-w-[120px]">
-              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gradient mb-1">
-                {statsLoading ? '...' : stats.reviews.toLocaleString()}
-              </div>
-              <div className="text-xs sm:text-sm text-indigo-300 dark:text-indigo-400">Reviews</div>
-            </div>
-            <div className="text-center backdrop-blur-sm bg-indigo-500/10 dark:bg-indigo-900/20 px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl border border-indigo-400/20 dark:border-indigo-500/20 min-w-[100px] sm:min-w-[120px]">
-              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-gradient mb-1">
-                {statsLoading ? '...' : stats.colleges.toLocaleString()}
-              </div>
-              <div className="text-xs sm:text-sm text-indigo-300 dark:text-indigo-400">Colleges</div>
-            </div>
+            ))}
           </motion.div>
         </div>
       </motion.section>

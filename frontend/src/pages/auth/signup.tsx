@@ -137,7 +137,7 @@ export default function Signup() {
         <div className="max-w-md w-full space-y-8">
           {/* Header */}
           <div className="text-center">
-            <Link href="/" className="text-2xl font-bold text-indigo-600 hover:text-indigo-700">
+            <Link href="/landing" className="text-2xl font-bold text-indigo-600 hover:text-indigo-700">
               RateMyProf India
             </Link>
             <h2 className="mt-6 text-3xl font-extrabold text-gray-900">

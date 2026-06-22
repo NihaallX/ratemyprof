@@ -10,78 +10,108 @@ import MaintenanceBanner from '../components/MaintenanceBanner'
 import { swrConfig } from '../lib/swr-config'
 import '../styles/globals.css'
 
+// Pages that are publicly accessible WITHOUT being logged in
+const PUBLIC_PATHS = [
+  '/landing',
+  '/auth/login',
+  '/auth/signup',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+  '/auth/verify-email',
+  '/auth/callback',
+  '/auth/debug',
+  '/admin-login',
+  '/privacy',
+  '/terms',
+  '/guidelines',
+  '/about',
+  '/contact',
+  '/help',
+  '/copyright',
+  '/data-collection',
+]
+
+// Allowed exact redirect destination paths (XSS guard)
+const ALLOWED_EXACT_PATHS = [
+  '/',
+  '/dashboard',
+  '/profile',
+  '/settings',
+  '/login',
+  '/signup',
+  '/admin-login',
+  '/about',
+  '/contact',
+  '/privacy',
+  '/terms',
+]
+
+// Allowed dynamic redirect patterns (XSS guard)
+const ALLOWED_PATH_PATTERNS = [
+  /^\/professors\/[a-f0-9-]{36}$/,
+  /^\/colleges\/[a-f0-9-]{36}$/,
+  /^\/professors\/[a-f0-9-]{36}\/reviews$/,
+  /^\/colleges\/[a-f0-9-]{36}\/professors$/,
+]
+
+function isPublicPath(path: string): boolean {
+  return PUBLIC_PATHS.some(
+    p => path === p || path.startsWith(p + '/') || path.startsWith(p + '?')
+  )
+}
+
+function isValidRedirect(url: string | null | undefined): boolean {
+  if (!url || typeof url !== 'string') return false
+  if (!url.startsWith('/')) return false
+  if (url.startsWith('//')) return false
+  if (/[<>"'#]/.test(url)) return false
+  if (ALLOWED_EXACT_PATHS.includes(url)) return true
+  if (ALLOWED_PATH_PATTERNS.some(pattern => pattern.test(url))) return true
+  return false
+}
+
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter()
 
-  // Whitelist of allowed redirect paths (exact matches)
-  const ALLOWED_EXACT_PATHS = [
-    '/',
-    '/dashboard',
-    '/profile',
-    '/settings',
-    '/login',
-    '/signup',
-    '/admin-login',
-    // Removed /search - search pages shouldn't be redirect targets (query params complicate validation)
-    '/about',
-    '/contact',
-    '/privacy',
-    '/terms'
-  ]
-
-  // Whitelist of allowed path patterns (for dynamic routes)
-  const ALLOWED_PATH_PATTERNS = [
-    /^\/professors\/[a-f0-9-]{36}$/,           // /professors/:uuid
-    /^\/colleges\/[a-f0-9-]{36}$/,             // /colleges/:uuid
-    /^\/professors\/[a-f0-9-]{36}\/reviews$/,  // /professors/:uuid/reviews
-    /^\/colleges\/[a-f0-9-]{36}\/professors$/, // /colleges/:uuid/professors
-    // Removed overly broad /search pattern - use exact path instead
-  ]
-
-  // Helper function to validate redirect URLs with strict whitelist checking
-  const isValidRedirect = (url: string | null | undefined): boolean => {
-    if (!url || typeof url !== 'string') return false
-    
-    // Must start with / (relative path)
-    if (!url.startsWith('/')) return false
-    
-    // Must NOT start with // (protocol-relative URL like //evil.com)
-    if (url.startsWith('//')) return false
-    
-    // Explicitly reject suspicious characters that could be used for XSS
-    // Block: < > " ' and fragments (#)
-    if (/[<>"'#]/.test(url)) return false
-    
-    // Check if it's an exact match in the whitelist
-    if (ALLOWED_EXACT_PATHS.includes(url)) return true
-    
-    // Check if it matches any allowed pattern
-    if (ALLOWED_PATH_PATTERNS.some(pattern => pattern.test(url))) return true
-    
-    // If not in whitelist, default to blocking
-    return false
-  }
-
+  // Global auth guard — runs on every route change
   useEffect(() => {
-    // Handle GitHub Pages SPA redirect from 404 page
+    const currentPath = router.pathname
+
+    // Public pages are always accessible
+    if (isPublicPath(currentPath)) return
+
+    // Check for a valid Supabase session token in localStorage
+    const hasSupabaseSession = Object.keys(localStorage).some(
+      key => key.startsWith('sb-') && key.includes('-auth-token')
+    )
+
+    // Also accept an active admin session
+    const hasAdminSession =
+      !!sessionStorage.getItem('adminSession') ||
+      !!localStorage.getItem('adminSession')
+
+    if (!hasSupabaseSession && !hasAdminSession) {
+      // Not authenticated — send to login, preserve intended destination
+      const intendedPath = currentPath !== '/' ? encodeURIComponent(currentPath) : ''
+      router.replace(`/auth/login${intendedPath ? `?redirect=${intendedPath}` : ''}`)
+    }
+  }, [router.pathname])
+
+  // Handle GitHub Pages SPA 404-redirect flow
+  useEffect(() => {
     const redirect = sessionStorage.getItem('redirect')
     if (redirect) {
       sessionStorage.removeItem('redirect')
-      // Only allow redirecting to whitelisted paths
-      const validatedRedirect = isValidRedirect(redirect) ? redirect : '/'
-      // Use router.push instead of setting location to prevent XSS
-      router.push(validatedRedirect)
+      const safe = isValidRedirect(redirect) ? redirect : '/'
+      router.push(safe)
       return
     }
 
-    // Also handle redirect query parameter
     const urlParams = new URLSearchParams(window.location.search)
     const redirectParam = urlParams.get('redirect')
     if (redirectParam) {
-      // Only allow redirecting to whitelisted paths
-      const validatedRedirect = isValidRedirect(redirectParam) ? redirectParam : '/'
-      // Use router.push instead of setting location to prevent XSS
-      router.push(validatedRedirect)
+      const safe = isValidRedirect(redirectParam) ? redirectParam : '/'
+      router.push(safe)
     }
   }, [router])
 

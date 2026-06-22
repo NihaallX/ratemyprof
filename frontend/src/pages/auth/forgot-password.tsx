@@ -67,7 +67,7 @@ export default function ForgotPassword() {
           <div className="max-w-md w-full space-y-8">
             {/* Header */}
             <div className="text-center">
-              <Link href="/" className="text-3xl font-logo text-indigo-600 hover:text-indigo-700 inline-block" style={{ letterSpacing: '0.02em' }}>
+              <Link href="/landing" className="text-3xl font-logo text-indigo-600 hover:text-indigo-700 inline-block" style={{ letterSpacing: '0.02em' }}>
                 RateMyProf
               </Link>
             </div>
@@ -134,7 +134,7 @@ export default function ForgotPassword() {
         <div className="max-w-md w-full space-y-8">
           {/* Header */}
           <div className="text-center">
-            <Link href="/" className="text-3xl font-logo text-indigo-600 hover:text-indigo-700 inline-block" style={{ letterSpacing: '0.02em' }}>
+            <Link href="/landing" className="text-3xl font-logo text-indigo-600 hover:text-indigo-700 inline-block" style={{ letterSpacing: '0.02em' }}>
               RateMyProf
             </Link>
             <h2 className="mt-6 text-3xl font-extrabold text-gray-900 font-heading">
